@@ -36,16 +36,26 @@ typedef enum modbus_exception_code
     MODBUS_EX_SERVER_FAILURE = 0x04,
 } modbus_exception_code_t;
 
+typedef enum modbus_query_state
+{
+    MODBUS_QUERY_ST_OK,          // No errors
+    MODBUS_QUERY_ST_BAD_ADDRESS, // Address doesn't exist or invalid
+    MODBUS_QUERY_ST_FAILURE,     // Something went wrong in the retrieval
+} modbus_query_state_t;
+
 // Function defs
 
-typedef bool (*modbus_read_coils_fn)(uint16_t start_addr, bool *dest, uint16_t quantity);
+typedef modbus_query_state_t (*modbus_read_coils_fn)(uint16_t start_addr, bool *dest,
+                                                     uint16_t quantity);
 
-typedef bool (*modbus_write_coils_fn)(uint16_t start_addr, const bool *src, uint16_t quantity);
+typedef modbus_query_state_t (*modbus_write_coils_fn)(uint16_t start_addr, const bool *src,
+                                                      uint16_t quantity);
 
-typedef bool (*modbus_read_registers_fn)(uint16_t start_addr, uint16_t *dest, uint16_t quantity);
+typedef modbus_query_state_t (*modbus_read_registers_fn)(uint16_t start_addr, uint16_t *dest,
+                                                         uint16_t quantity);
 
-typedef bool (*modbus_write_registers_fn)(uint16_t start_addr, const uint16_t *src,
-                                          uint16_t quantity);
+typedef modbus_query_state_t (*modbus_write_registers_fn)(uint16_t start_addr, const uint16_t *src,
+                                                          uint16_t quantity);
 
 // Modbus context does not own any of its values
 typedef struct modbus_context
@@ -68,6 +78,7 @@ typedef struct modbus_context
 // Outputs response/exception length
 // If a context function is not implemented, the corresponding instruction will be considered
 // not implemented.
+// If return is 0, it indicates capacity was not sufficient
 size_t modbus_dispatch_PDU(modbus_context_t *context, const uint8_t *wire_request,
                            uint8_t request_length, uint8_t *wire_response,
                            uint8_t response_capacity);
