@@ -1,6 +1,7 @@
 # Define the static library target
 add_library(modbus STATIC
     Src/modbus.c
+    Src/modbus_helpers.c
 )
 
 # Expose the include directories to anyone who links this library
