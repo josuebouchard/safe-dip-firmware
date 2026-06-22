@@ -1,0 +1,27 @@
+# Build output
+build/
+mx.scratch/
+
+# VSCode
+.vscode/*
+!.vscode/c_cpp_properties.json
+!.vscode/settings.json
+!.vscode/tasks.json
+
+# Compiled output
+*.elf
+*.bin
+*.hex
+*.map
+
+# Object files and dependency tracking
+*.o
+*.d
+*.a
+*.su
+
+# OS debris
+.DS_Store
+Thumbs.db
+
+!.settings
