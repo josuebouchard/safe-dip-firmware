@@ -1,6 +1,7 @@
 #include "modbus_discrete_inputs.h"
 #include "modbus_helpers.h"
 
+// Function code: 0x02
 size_t dispatch_read_discrete_inputs(modbus_context_t *context, const uint8_t *wire_request,
                                      uint8_t request_length, uint8_t *wire_response,
                                      uint8_t response_capacity)
@@ -31,15 +32,17 @@ size_t dispatch_read_discrete_inputs(modbus_context_t *context, const uint8_t *w
         context->read_discrete_inputs(starting_address, discrete_inputs_values, quantity_of_inputs);
 
     // Validation - discrete inputs query
-    if (query_success == MODBUS_QUERY_ST_BAD_ADDRESS)
+    switch (query_success)
     {
+
+    case MODBUS_QUERY_ST_BAD_ADDRESS:
         return generate_exception_response(function_code, MODBUS_EX_ILLEGAL_DATA_ADDRESS,
                                            wire_response, response_capacity);
-    }
-    else if (query_success == MODBUS_QUERY_ST_FAILURE)
-    {
+    case MODBUS_QUERY_ST_FAILURE:
         return generate_exception_response(function_code, MODBUS_EX_SERVER_FAILURE, wire_response,
                                            response_capacity);
+    case MODBUS_QUERY_ST_OK:
+        break;
     }
 
     // Final response
