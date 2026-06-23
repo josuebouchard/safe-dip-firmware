@@ -1,4 +1,5 @@
 #include "modbus_helpers.h"
+#include <stdbool.h>
 #include <stdint.h>
 
 #define MIN(x, y) ((x) <= (y) ? x : y)
@@ -36,6 +37,44 @@ bool modbus_pack_bools_to_u8_array(const bool *src, uint16_t bools_quantity, uin
         uint8_t chunk = MIN(8, bools_quantity);
         success = _pack_bools_to_u8(src, chunk, dest + i);
         src += chunk;
+        bools_quantity -= 8; // This might underflow, but at that point it's unused
+        if (!success)
+            return false;
+    }
+
+    return true;
+}
+
+static bool _unpack_bools_from_u8(const uint8_t src, uint16_t quantity, bool *dest)
+{
+    if (quantity > 8)
+    {
+        return false;
+    }
+
+    for (uint8_t i = 0; i < quantity; i++)
+    {
+        dest[i] = (src >> i) & 1;
+    }
+    return true;
+}
+
+bool modbus_unpack_bools_from_u8_array(const uint8_t *src, uint16_t bools_quantity, bool *dest,
+                                       uint8_t byte_count)
+{
+    // Assert - sanity check
+    if (byte_count != modbus_byte_count(bools_quantity))
+    {
+        return false;
+    }
+
+    // Process data
+    bool success;
+    for (uint8_t i = 0; i < byte_count; i++)
+    {
+        uint8_t chunk = MIN(8, bools_quantity);
+        success = _unpack_bools_from_u8(src[i], chunk, dest + i);
+        src++;
         bools_quantity -= 8; // This might underflow, but at that point it's unused
         if (!success)
             return false;
