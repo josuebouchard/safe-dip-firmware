@@ -1,4 +1,5 @@
 #include "modbus_helpers.h"
+#include "modbus_types.h"
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -83,20 +84,22 @@ bool modbus_unpack_bools_from_u8_array(const uint8_t *src, uint16_t bools_quanti
     return true;
 }
 
-size_t generate_exception_response(uint8_t function_code, uint8_t exception_code,
-                                   uint8_t *wire_response, uint8_t response_capacity)
+modbus_dispatch_result_t generate_exception_response(uint8_t function_code, uint8_t exception_code,
+                                                     uint8_t *wire_response,
+                                                     uint8_t response_capacity)
 {
     // Set MSB to 1
     uint8_t exception_function_code = function_code | mask_u8(7);
 
     if (response_capacity < 2)
     {
-        // @todo: notify caller that it's not possible to write response
-        return 0;
+        return (modbus_dispatch_result_t){.response_length = 0,
+                                          .status = MODBUS_DISPATCH_ST_RESPONSE_TOO_SMALL};
     }
 
+    // Response
     wire_response[0] = exception_function_code;
     wire_response[1] = exception_code;
 
-    return 2;
+    return (modbus_dispatch_result_t){.response_length = 2, .status = MODBUS_DISPATCH_ST_OK};
 }

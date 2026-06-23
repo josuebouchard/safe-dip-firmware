@@ -56,6 +56,24 @@ typedef modbus_query_state_t (*modbus_read_registers_fn)(uint16_t start_addr, ui
 typedef modbus_query_state_t (*modbus_write_registers_fn)(uint16_t start_addr, const uint16_t *src,
                                                           uint16_t quantity);
 
+// Dispatcher response codes
+
+typedef enum modbus_dispatch_status
+{
+    MODBUS_DISPATCH_ST_OK,
+
+    MODBUS_DISPATCH_ST_NO_CONTEXT,
+    MODBUS_DISPATCH_ST_MALFORMED_PDU,
+    MODBUS_DISPATCH_ST_RESPONSE_TOO_SMALL,
+    MODBUS_DISPATCH_ST_INTERNAL_ERROR
+} modbus_dispatch_status_t;
+
+typedef struct
+{
+    modbus_dispatch_status_t status;
+    uint16_t response_length;
+} modbus_dispatch_result_t;
+
 // Modbus context does not own any of its values
 typedef struct modbus_context
 {

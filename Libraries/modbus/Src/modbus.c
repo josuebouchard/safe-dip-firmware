@@ -1,18 +1,31 @@
 #include "modbus.h"
-#include "modbus_coils.h"
 #include "modbus_helpers.h"
 
+#include "modbus_coils.h"
 #include "modbus_discrete_inputs.h"
-#include "modbus_types.h"
 
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
-size_t modbus_dispatch_PDU(modbus_context_t *context, const uint8_t *wire_request,
-                           uint8_t request_length, uint8_t *wire_response,
-                           uint8_t response_capacity)
+modbus_dispatch_result_t modbus_dispatch_PDU(modbus_context_t *context, const uint8_t *wire_request,
+                                             uint8_t request_length, uint8_t *wire_response,
+                                             uint8_t response_capacity)
 {
+    // Validate context has been set
+    if (context == NULL)
+    {
+        return (modbus_dispatch_result_t){.response_length = 0,
+                                          .status = MODBUS_DISPATCH_ST_NO_CONTEXT};
+    }
+
+    // Validate wire request length before reading
+    if (request_length < 1)
+    {
+        return (modbus_dispatch_result_t){.response_length = 0,
+                                          .status = MODBUS_DISPATCH_ST_MALFORMED_PDU};
+    }
+
     uint8_t function_code = wire_request[0];
     switch (function_code)
     {

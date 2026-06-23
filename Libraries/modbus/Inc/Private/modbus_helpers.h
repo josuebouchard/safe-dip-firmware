@@ -1,6 +1,7 @@
 #ifndef MODBUS_HELPERS_H
 #define MODBUS_HELPERS_H
 
+#include "modbus_types.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -34,7 +35,8 @@ bool modbus_pack_bools_to_u8_array(const bool *src, uint16_t bools_quantity, uin
 bool modbus_unpack_bools_from_u8_array(const uint8_t *src, uint16_t bools_quantity, bool *dest,
                                        uint8_t byte_count);
 
-size_t generate_exception_response(uint8_t function_code, uint8_t exception_code,
-                                   uint8_t *wire_response, uint8_t response_capacity);
+modbus_dispatch_result_t generate_exception_response(uint8_t function_code, uint8_t exception_code,
+                                                     uint8_t *wire_response,
+                                                     uint8_t response_capacity);
 
 #endif // MODBUS_HELPERS_H
