@@ -49,6 +49,22 @@ This was achieved through `modbus_context_t` holding function pointers rather th
 
 Variable Length Arrays (VLAs) (ex: `bool coils[quantity_of_coils]`) are used for temporary stack buffers sized at runtime. This is intentional — `malloc` is either unavailable or undesirable on bare-metal targets. The implication is that stack usage scales with request size, which is bounded by the Modbus spec at 2000 coils / 125 registers. This is known and acceptable.
 
+### VLAs are fine for now, but know the exit path
+
+MISRA bans VLAs because their size is a runtime value — static analysers cannot compute worst-case stack usage when the size depends on external input. The quantity field is validated before the VLA is allocated, so the worst case is actually bounded, but the tooling can't prove that.
+
+The cleanest solution for stricter environments is not a fixed-size array but letting the caller provide the buffer:
+
+```c
+size_t modbus_dispatch_PDU(...,
+                           bool    *coil_buffer,
+                           uint16_t coil_buffer_size);
+```
+
+This pushes the allocation decision entirely to the caller — they can use stack, static storage, or whatever the application requires. The library becomes a pure function over caller-owned memory with no allocation policy of its own. It also makes the worst-case memory usage visible at the call site, which is exactly what MISRA requires.
+
+The tradeoff is a more complex API. On the STM32F446RE with 128KB of SRAM the VLAs are safe and the simpler API is the right call. If this library ever targets more constrained hardware or needs to be MISRA-compliant, the caller-provided buffer pattern is the right path forward — and it's worth knowing that before starting, not after.
+
 ### Validate in the right order
 
 For write operations with variable-length payloads (`dispatch_write_multiple_coils`), validation order matters:

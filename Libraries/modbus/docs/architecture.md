@@ -142,6 +142,28 @@ bool coils_values[quantity_of_coils];
 
 This is a hard requirement for bare-metal embedded targets, where dynamic allocation is either unavailable, unreliable, or prohibited by coding standards (MISRA, DO-178C, and others forbid it). Stack usage is bounded by the Modbus specification itself — a maximum of 2000 coils or 125 registers per request — so the worst-case stack depth is known at design time.
 
+### Known limitation: VLAs and MISRA
+ 
+VLAs are valid C99 but are banned by MISRA-C because their size is determined at runtime, which prevents static analysers from computing worst-case stack usage at compile time. In this library the quantity field is validated against the Modbus maximum before the VLA is allocated, so the worst case is bounded — but the static analyser cannot see that guarantee.
+ 
+For stricter environments, the right solution is not a fixed-size array but a **caller-provided buffer**:
+ 
+```c
+size_t modbus_dispatch_PDU(modbus_context_t *context,
+                           const uint8_t    *wire_request,
+                           uint8_t           request_length,
+                           uint8_t          *wire_response,
+                           uint8_t           response_capacity,
+                           bool             *coil_buffer,
+                           uint16_t          coil_buffer_size,
+                           uint16_t         *register_buffer,
+                           uint16_t          register_buffer_size);
+```
+ 
+The caller decides where the memory lives — stack, static storage, or elsewhere — and the library makes no allocation decision at all. This is the most embedded-friendly pattern: the library is a pure function over caller-owned memory, with zero allocation policy of its own.
+ 
+The tradeoff is API complexity. For the current target (STM32F446RE, 128KB SRAM) VLAs are perfectly safe and the simpler API is the right call. The caller-provided buffer pattern is the path forward if this library is ever used on more constrained hardware or in a MISRA-compliant codebase.
+
 ---
 
 ## Inline vs. Out-of-Line Functions
