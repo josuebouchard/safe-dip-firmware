@@ -4,9 +4,6 @@ mx.scratch/
 
 # VSCode
 .vscode/*
-!.vscode/c_cpp_properties.json
-!.vscode/settings.json
-!.vscode/tasks.json
 
 # Compiled output
 *.elf
