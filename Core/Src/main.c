@@ -24,10 +24,14 @@
 
 #include "ethernet_if.h" // Middleman between W5500 and STM32 HAL
 #include "socket.h"      // BSD socket for W5500
+#include "w5500.h"
+
+#include "modbus_tcp.h" // Modbus TCP
+
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_def.h"
 #include "stm32f4xx_hal_uart.h"
-#include "w5500.h"
+
 #include <stdint.h>
 #include <stdio.h>
 
@@ -41,7 +45,7 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define ECHO_SOCKET 0
-#define ECHO_PORT 8080
+#define ECHO_PORT 502
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -55,6 +59,8 @@ SPI_HandleTypeDef hspi1;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
+
+static bool coils[4] = {0};
 
 /* USER CODE END PV */
 
@@ -81,6 +87,30 @@ int __io_putchar(int ch)
     ((byte) & 0x80 ? '1' : '0'), ((byte) & 0x40 ? '1' : '0'), ((byte) & 0x20 ? '1' : '0'),         \
         ((byte) & 0x10 ? '1' : '0'), ((byte) & 0x08 ? '1' : '0'), ((byte) & 0x04 ? '1' : '0'),     \
         ((byte) & 0x02 ? '1' : '0'), ((byte) & 0x01 ? '1' : '0')
+
+modbus_query_state_t read_coils(uint16_t start_addr, bool *dest, uint16_t quantity)
+{
+    if (!(start_addr < 4 && start_addr + quantity <= 4))
+        return MODBUS_QUERY_ST_BAD_ADDRESS;
+
+    for (uint8_t i = 0; i < quantity; i++)
+    {
+        dest[i] = coils[start_addr + i];
+    }
+    return MODBUS_QUERY_ST_OK;
+}
+
+modbus_query_state_t write_coils(uint16_t start_addr, const bool *src, uint16_t quantity)
+{
+    if (!(start_addr < 4 && start_addr + quantity <= 4))
+        return MODBUS_QUERY_ST_BAD_ADDRESS;
+
+    for (uint8_t i = 0; i < quantity; i++)
+    {
+        coils[start_addr + i] = src[i];
+    }
+    return MODBUS_QUERY_ST_OK;
+}
 
 /* USER CODE END 0 */
 
@@ -122,6 +152,19 @@ int main(void)
     printf("W5500 version register: 0x%02X (expect 0x04)\r\n", version);
 
     static uint8_t last_state = 0xFF; // force first print
+    uint8_t req_data_buffer[1024];
+    uint8_t res_data_buffer[255];
+
+    modbus_context_t modbus_ctx = {
+        .read_coils = read_coils,
+        .write_coils = write_coils,
+    };
+
+    modbus_tcp_fsm_t fsm = {
+        .context = &modbus_ctx,
+    };
+
+    modbus_tcp_fsm_reset(&fsm);
 
     /* USER CODE END 2 */
 
@@ -169,27 +212,46 @@ int main(void)
 
         case SOCK_ESTABLISHED:
         {
-            uint16_t rx_received_size = getSn_RX_RSR(0);
+            uint16_t rx_received_size = getSn_RX_RSR(ECHO_SOCKET);
+            uint8_t read_size = modbus_tcp_fsm_read_length(&fsm);
+            // uint8_t write_size = modbus_tcp_fsm_write_length(&fsm);
 
-            if (rx_received_size > 0)
+            if (rx_received_size >= read_size)
             {
-                uint8_t data[1024];
-                if (rx_received_size > sizeof(data))
+                // Get data
+                int32_t read_bytes = recv(ECHO_SOCKET, req_data_buffer, read_size);
+                if (read_bytes != read_size)
                 {
-                    rx_received_size = sizeof(data);
+                    disconnect(ECHO_SOCKET); // Fatal flaw happened - ethernet adapter
+                    break;
                 }
-                int32_t read_bytes = recv(0, data, rx_received_size);
-                if (read_bytes > 0)
+
+                // Process data - should return the size of write
+                modbus_tcp_dispatch_result_t dispatch =
+                    modbus_tcp_fsm_dispatch(&fsm, req_data_buffer, res_data_buffer, 1024);
+                if (dispatch.status != MODBUS_TCP_DISPATCH_ST_OK)
                 {
-                    send(0, data, read_bytes);
+                    modbus_tcp_fsm_reset(&fsm);
+                    break;
+                }
+
+                // Send response
+                if (dispatch.write_size > 0)
+                {
+                    int32_t sent_bytes = send(ECHO_SOCKET, res_data_buffer, dispatch.write_size);
+                    if (sent_bytes != dispatch.write_size)
+                    {
+                        disconnect(ECHO_SOCKET); // Fatal flaw happened - ethernet adapter
+                        break;
+                    }
                 }
             }
             break;
         }
 
         case SOCK_CLOSE_WAIT:
-            disconnect(0);
-            wiznet_close(0);
+            disconnect(ECHO_SOCKET);
+            wiznet_close(ECHO_SOCKET);
             break;
 
         default:
