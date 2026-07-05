@@ -4,6 +4,7 @@ add_library(modbus STATIC
     Src/modbus_helpers.c
     Src/modbus_discrete_inputs.c
     Src/modbus_coils.c
+    Src/modbus_tcp.c
 )
 
 # Expose the include directories to anyone who links this library
