@@ -2,6 +2,9 @@
 build/
 mx.scratch/
 
+# Other artifacts
+.settings/
+
 # VSCode
 .vscode/*
 
@@ -20,5 +23,3 @@ mx.scratch/
 # OS debris
 .DS_Store
 Thumbs.db
-
-!.settings
