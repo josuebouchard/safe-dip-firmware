@@ -70,7 +70,7 @@ The tradeoff is a more complex API. On the STM32F446RE with 128KB of SRAM the VL
 For write operations with variable-length payloads (`dispatch_write_multiple_coils`), validation order matters:
 
 1. Validate quantity range first — before allocating a VLA sized by quantity
-2. Validate `byte_count` against `modbus_byte_count(quantity)` — treat wire fields as cross-checks, not sources of truth
+2. Validate `byte_count` against `modbus_packed_bits_to_bytes_count(quantity)` — treat wire fields as cross-checks, not sources of truth
 3. Unpack the payload — only after both quantity and byte_count are known good
 4. Check response capacity
 5. Call the context function

@@ -26,7 +26,7 @@ bool modbus_pack_bools_to_u8_array(const bool *src, uint16_t bools_quantity, uin
                                    uint8_t byte_count)
 {
     // Assert - sanity check
-    if (byte_count != modbus_byte_count(bools_quantity))
+    if (byte_count != modbus_packed_bits_to_bytes_count(bools_quantity))
     {
         return false;
     }
@@ -64,7 +64,7 @@ bool modbus_unpack_bools_from_u8_array(const uint8_t *src, uint16_t bools_quanti
                                        uint8_t byte_count)
 {
     // Assert - sanity check
-    if (byte_count != modbus_byte_count(bools_quantity))
+    if (byte_count != modbus_packed_bits_to_bytes_count(bools_quantity))
     {
         return false;
     }

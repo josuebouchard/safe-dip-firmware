@@ -39,7 +39,7 @@ modbus_dispatch_result_t dispatch_read_coils(modbus_context_t *context, const ui
     }
 
     // Response calculations
-    uint8_t byte_count = modbus_byte_count(quantity_of_coils);
+    uint8_t byte_count = modbus_packed_bits_to_bytes_count(quantity_of_coils);
     uint8_t total_response_size = READ_COILS_FIXED_RESPONSE_SIZE +
                                   byte_count; // FC (1), Byte Count (1), Coil Status (byte_count)
 
@@ -207,7 +207,7 @@ modbus_dispatch_result_t dispatch_write_multiple_coils(modbus_context_t *context
                                            wire_response, response_capacity);
     }
     // Validations - byte_count well calculated
-    if (byte_count != modbus_byte_count(quantity_of_outputs))
+    if (byte_count != modbus_packed_bits_to_bytes_count(quantity_of_outputs))
     {
         return generate_exception_response(function_code, MODBUS_EX_ILLEGAL_DATA_VALUE,
                                            wire_response, response_capacity);

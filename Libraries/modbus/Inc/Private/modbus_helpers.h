@@ -21,7 +21,7 @@ static inline void modbus_write_u16_be(uint8_t *bytes, uint16_t value)
 }
 
 // Calculates `ceil(n/8)`
-static inline uint8_t modbus_byte_count(uint16_t n)
+static inline uint8_t modbus_packed_bits_to_bytes_count(uint16_t n)
 {
     // 8 = 2^3 = 1 << 3;
     // 1/8 = 1 >> 3

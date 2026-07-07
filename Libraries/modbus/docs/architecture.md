@@ -122,7 +122,7 @@ Every dispatch function validates inputs before using them, in a deliberate orde
 This order matters. In `dispatch_write_multiple_coils`, for example, the request includes a `byte_count` field that is mathematically derivable from `quantity_of_outputs`. Rather than trusting the wire value, the library computes the expected value and returns an exception response if they disagree:
 
 ```c
-if (byte_count != modbus_byte_count(quantity_of_outputs))
+if (byte_count != modbus_packed_bits_to_bytes_count(quantity_of_outputs))
 {
     return generate_exception_response(..., MODBUS_EX_ILLEGAL_DATA_VALUE, ...);
 }

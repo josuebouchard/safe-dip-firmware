@@ -31,7 +31,7 @@ modbus_dispatch_result_t dispatch_read_discrete_inputs(modbus_context_t *context
     // Parse rest of the request
     uint16_t starting_address = modbus_read_u16_be(wire_request + 1);
     uint16_t quantity_of_inputs = modbus_read_u16_be(wire_request + 3);
-    uint8_t byte_count = modbus_byte_count(quantity_of_inputs);
+    uint8_t byte_count = modbus_packed_bits_to_bytes_count(quantity_of_inputs);
 
     // Validations - quantity of inputs
     if (!(1 <= quantity_of_inputs && quantity_of_inputs <= 2000))
