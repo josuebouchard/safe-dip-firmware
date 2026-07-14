@@ -2,7 +2,6 @@
 #include "main.h"
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_gpio.h"
-#include "w5500.h"
 #include "wizchip_conf.h"
 #include <stdint.h>
 
