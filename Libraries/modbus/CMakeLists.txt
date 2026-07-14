@@ -2,9 +2,10 @@
 add_library(modbus STATIC
     Src/modbus.c
     Src/modbus_helpers.c
-    Src/modbus_discrete_inputs.c
-    Src/modbus_holding_registers.c
     Src/modbus_coils.c
+    Src/modbus_discrete_inputs.c
+    Src/modbus_input_registers.c
+    Src/modbus_holding_registers.c
     Src/modbus_tcp.c
 )
 

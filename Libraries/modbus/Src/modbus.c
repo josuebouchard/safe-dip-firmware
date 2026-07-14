@@ -4,6 +4,8 @@
 #include "modbus_coils.h"
 #include "modbus_discrete_inputs.h"
 #include "modbus_holding_registers.h"
+#include "modbus_input_registers.h"
+#include "modbus_types.h"
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -41,6 +43,9 @@ modbus_dispatch_result_t modbus_dispatch_PDU(modbus_context_t *context, const ui
                                           response_capacity);
     case MODBUS_FC_WRITE_MULTIPLE_COILS:
         return dispatch_write_multiple_coils(context, wire_request, request_length, wire_response,
+                                             response_capacity);
+    case MODBUS_FC_READ_INPUT_REGISTERS:
+        return dispatch_read_input_registers(context, wire_request, request_length, wire_response,
                                              response_capacity);
     case MODBUS_FC_READ_HOLDING_REGISTERS:
         return dispatch_read_holding_registers(context, wire_request, request_length, wire_response,
