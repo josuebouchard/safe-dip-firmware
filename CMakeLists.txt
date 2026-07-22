@@ -63,6 +63,7 @@ list(REMOVE_ITEM CMAKE_C_IMPLICIT_LINK_LIBRARIES ob)
 
 # Add libraries subdirectory
 add_subdirectory(Libraries/WIZNET)
+set(MODBUS_WARNINGS_AS_ERRORS OFF)
 add_subdirectory(Libraries/modbus)
 
 # Add linked libraries
