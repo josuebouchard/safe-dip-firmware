@@ -1,0 +1,43 @@
+#include "stm32_output_compare_channel.hpp"
+#include "stm32f4xx_hal_tim.h"
+
+void STM32OutputCompareChannel::start_interrupt() noexcept
+{
+    HAL_TIM_OC_Start_IT(config_.timer, config_.timer_channel);
+}
+
+void STM32OutputCompareChannel::stop_interrupt() noexcept
+{
+    HAL_TIM_OC_Stop_IT(config_.timer, config_.timer_channel);
+}
+
+std::uint32_t STM32OutputCompareChannel::counter() const noexcept
+{
+    return __HAL_TIM_GET_COUNTER(config_.timer);
+}
+
+std::uint32_t STM32OutputCompareChannel::compare() const noexcept
+{
+    return __HAL_TIM_GET_COMPARE(config_.timer, config_.timer_channel);
+}
+
+void STM32OutputCompareChannel::set_compare(std::uint32_t value) noexcept
+{
+    switch (config_.timer_channel)
+    {
+    case TIM_CHANNEL_1:
+        (config_.timer)->Instance->CCR1 = value;
+        return;
+    case TIM_CHANNEL_2:
+        (config_.timer)->Instance->CCR2 = value;
+        return;
+    case TIM_CHANNEL_3:
+        (config_.timer)->Instance->CCR3 = value;
+        return;
+    case TIM_CHANNEL_4:
+        (config_.timer)->Instance->CCR4 = value;
+        return;
+    default:
+        return; // @todo: panic
+    }
+}

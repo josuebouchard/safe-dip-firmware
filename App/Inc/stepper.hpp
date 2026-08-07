@@ -1,6 +1,7 @@
 #ifndef STEPPER_HPP
 #define STEPPER_HPP
 
+#include "stepper_pulse_generator.hpp"
 #include <cstdint>
 
 enum class MotionStatus
@@ -20,11 +21,12 @@ struct SpeedProfile
 
 class Stepper
 {
+    StepperPulseGenerator &pulse_generator_;
     // Target
     std::int32_t position_target_signed_ = 0;
 
     // Current
-    std::int32_t position_current_signed_ = 0;
+    std::int32_t position_current_signed() const noexcept;
     double speed_current_signed_ = 0; // microsteps / ms
 
     // Last
@@ -38,14 +40,18 @@ class Stepper
     std::int8_t speed_versor() const noexcept;
     std::int8_t target_versor() const noexcept;
 
+    void stop_immediately() noexcept;
     bool should_decelerate() const noexcept;
 
   public:
-    explicit Stepper(SpeedProfile speed_profile, std::uint32_t now_ms)
-        : last_ms_(now_ms), speed_profile_(speed_profile) {};
+    explicit Stepper(SpeedProfile speed_profile, StepperPulseGenerator &pulse_generator,
+                     std::uint32_t now_ms)
+        : pulse_generator_(pulse_generator), last_ms_(now_ms), speed_profile_(speed_profile) {};
 
     // Movement interface
     void move_to_steps(std::int32_t target_microsteps) noexcept;
+    void move_continously(std::int32_t direction) noexcept;
+
     void process(std::uint32_t now_ms) noexcept;
 
     // Configuration interface
