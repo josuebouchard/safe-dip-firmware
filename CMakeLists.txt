@@ -49,8 +49,8 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     Core/Src/ethernet_if.c
-    App/Src/stepper.cpp
-    App/Src/stepper_pulse_generator.cpp
+    App/Src/stepper_motion_planner.cpp
+    App/Src/stepper_driver.cpp
     App/Src/stm32_output_compare_channel.cpp
 )
 

@@ -3,12 +3,33 @@
 
 void STM32OutputCompareChannel::start_interrupt() noexcept
 {
+    // Reconfigure the OC reference to inactive (logical low).
+    TIM_OC_InitTypeDef oc = {
+        .OCMode = TIM_OCMODE_TOGGLE,
+        .Pulse = 0,
+        .OCPolarity = TIM_OCPOLARITY_HIGH,
+        .OCFastMode = TIM_OCFAST_DISABLE,
+    };
+
+    HAL_TIM_OC_ConfigChannel(config_.timer, &oc, config_.timer_channel);
+
+    // Start CC interrupt
     HAL_TIM_OC_Start_IT(config_.timer, config_.timer_channel);
 }
 
 void STM32OutputCompareChannel::stop_interrupt() noexcept
 {
     HAL_TIM_OC_Stop_IT(config_.timer, config_.timer_channel);
+
+    // Reconfigure the OC reference to inactive (logical low).
+    TIM_OC_InitTypeDef oc = {
+        .OCMode = TIM_OCMODE_FORCED_INACTIVE,
+        .Pulse = 0,
+        .OCPolarity = TIM_OCPOLARITY_HIGH,
+        .OCFastMode = TIM_OCFAST_DISABLE,
+    };
+
+    HAL_TIM_OC_ConfigChannel(config_.timer, &oc, config_.timer_channel);
 }
 
 std::uint32_t STM32OutputCompareChannel::counter() const noexcept
