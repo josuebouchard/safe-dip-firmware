@@ -24,10 +24,7 @@
 
 #include "ethernet_if.h" // Middleman between W5500 and STM32 HAL
 #include "modbus_tcp_task.h"
-#include "socket.h" // BSD socket for W5500
 #include "w5500.h"
-
-#include "modbus_tcp.h" // Modbus TCP
 
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_def.h"
@@ -152,6 +149,7 @@ int main(void)
     MX_SPI1_Init();
     MX_TIM2_Init();
     /* USER CODE BEGIN 2 */
+
     ethernet_W5500_init(); // Initialize W5500
 
     uint8_t version = getVERSIONR();
