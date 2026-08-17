@@ -5,7 +5,6 @@
 #include <span>
 
 #include "operation.hpp"
-#include "sequencer_instructions.hpp"
 
 // === SEQUENCER STATE MACHINE ===
 
@@ -38,12 +37,5 @@ class Sequencer
 
     void run_current_instruction() noexcept;
 };
-
-// === EXTERNAL FUNCTIONS ===
-
-extern void modules_start_instruction(SequencerInstruction instruction) noexcept;
-extern void modules_dispatch_abort() noexcept;
-extern void modules_dispatch_restart() noexcept;
-extern SequencerInstructionState modules_instruction_state() noexcept;
 
 #endif // SEQUENCER_HPP
