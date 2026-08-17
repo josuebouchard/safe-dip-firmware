@@ -1,0 +1,92 @@
+#include "entrypoint.hpp"
+
+#include "movement_module.hpp"
+#include "operation.hpp"
+#include "sequencer.hpp"
+#include "stepper_driver.hpp"
+#include "stepper_motion_planner.hpp"
+#include "stm32_output_compare_channel.hpp"
+
+#include "stm32f4xx_hal.h"
+
+#include <array>
+#include <cstdint>
+#include <span>
+
+extern TIM_HandleTypeDef htim2;
+
+static STM32OutputCompareChannel OC_timer_channel_x(STM32OutputCompareChannel::Config{
+    .timer = &htim2,
+    .timer_channel = 1,
+});
+static StepperDriver stepper_driver_x(StepperDriver::Config{
+    .timer_channel = OC_timer_channel_x,
+    .direction =
+        StepperDriver::DirectionPin{
+            .port = GPIOA,
+            .pin = 12,
+            .electrical_state_clockwise = GPIO_PIN_SET,
+
+        },
+    .timer_ticks_per_ms = 1000,
+});
+
+static StepperMotionPlanner stepper_movement_x(
+    StepperMotionPlanner::SpeedProfile{
+        .max_speed = 1000,
+        .acceleration = 200,
+        .deceleration = 200,
+    },
+    stepper_driver_x, 0);
+
+static STM32OutputCompareChannel OC_timer_channel_y(STM32OutputCompareChannel::Config{
+    .timer = &htim2,
+    .timer_channel = 2,
+});
+
+static StepperDriver stepper_driver_y(StepperDriver::Config{
+    .timer_channel = OC_timer_channel_y,
+    .direction =
+        StepperDriver::DirectionPin{
+            .port = GPIOA,
+            .pin = 13,
+            .electrical_state_clockwise = GPIO_PIN_SET,
+
+        },
+    .timer_ticks_per_ms = 1000,
+});
+
+static StepperMotionPlanner stepper_movement_y(
+    StepperMotionPlanner::SpeedProfile{
+        .max_speed = 1000,
+        .acceleration = 200,
+        .deceleration = 200,
+    },
+    stepper_driver_y, 0);
+
+// === Operations ===
+static MoveStepperOperation move_x_input{stepper_movement_x, 0};
+static MoveStepperOperation move_x_dip{stepper_movement_x, 500};
+static MoveStepperOperation move_x_output{stepper_movement_x, 1000};
+
+static MoveStepperOperation move_y_up{stepper_movement_y, 0};
+static MoveStepperOperation move_y_down{stepper_movement_y, 500};
+
+std::array<Operation *, 2> operations = {
+    &move_x_input,
+    &move_x_output,
+};
+
+static Sequencer sequencer{std::span<Operation *>(operations)};
+
+void setup() {}
+
+void loop()
+{
+    const uint32_t now = HAL_GetTick();
+
+    sequencer.sequencer_step();
+
+    stepper_movement_x.process(now);
+    stepper_movement_y.process(now);
+}

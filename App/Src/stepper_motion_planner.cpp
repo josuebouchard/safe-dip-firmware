@@ -11,6 +11,11 @@ std::int32_t StepperMotionPlanner::position_current_signed() const noexcept
     return stepper_driver_.pulse_count();
 }
 
+bool StepperMotionPlanner::is_at_target() const noexcept
+{
+    return position_current_signed() == position_target_signed_;
+}
+
 std::int8_t StepperMotionPlanner::speed_versor() const noexcept
 {
     if (speed_current_signed_ > 0)
@@ -68,9 +73,8 @@ void StepperMotionPlanner::process(std::uint32_t now_ms) noexcept
     last_ms_ = now_ms;
 
     bool is_stopped = std::abs(speed_current_signed_) == 0;
-    bool is_at_target = position_current_signed() == position_target_signed_;
 
-    if (is_stopped && is_at_target)
+    if (is_stopped && is_at_target())
         return; // No-op - should be idle
 
     const auto speed_current_magnitude = std::abs(speed_current_signed_);

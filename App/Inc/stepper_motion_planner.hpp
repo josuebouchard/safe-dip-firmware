@@ -15,7 +15,7 @@ class StepperMotionPlanner
     };
 
     explicit StepperMotionPlanner(SpeedProfile speed_profile, StepperDriver &pulse_generator,
-                     std::uint32_t now_ms)
+                                  std::uint32_t now_ms)
         : stepper_driver_(pulse_generator), last_ms_(now_ms), speed_profile_(speed_profile) {};
 
     // Movement interface
@@ -29,6 +29,8 @@ class StepperMotionPlanner
     void set_speed_profile(SpeedProfile speed_profile) noexcept;
 
     const SpeedProfile &speed_profile() const noexcept { return speed_profile_; }
+    std::int32_t position_current_signed() const noexcept;
+    bool is_at_target() const noexcept;
 
   private:
     StepperDriver &stepper_driver_;
@@ -36,7 +38,6 @@ class StepperMotionPlanner
     std::int32_t position_target_signed_ = 0;
 
     // Current
-    std::int32_t position_current_signed() const noexcept;
     double speed_current_signed_ = 0; // microsteps / ms
 
     // Last

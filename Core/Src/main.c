@@ -22,9 +22,11 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+#include "entrypoint.hpp"
 #include "ethernet_if.h" // Middleman between W5500 and STM32 HAL
 #include "modbus_tcp_task.h"
 #include "w5500.h"
+
 
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_def.h"
@@ -162,6 +164,8 @@ int main(void)
 
     modbus_tcp_task_init(&modbus_task, ECHO_SOCKET, ECHO_PORT, &modbus_ctx);
 
+    setup();
+
     /* USER CODE END 2 */
 
     /* Infinite loop */
@@ -170,6 +174,7 @@ int main(void)
     while (1)
     {
         modbus_tcp_task_run(&modbus_task);
+        loop();
 
         HAL_Delay(200);
 
