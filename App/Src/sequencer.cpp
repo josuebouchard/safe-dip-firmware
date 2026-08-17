@@ -1,15 +1,15 @@
 #include "sequencer.hpp"
 
-void Sequencer::reset_instruction_index() noexcept { instruction_index_ = 0; }
+void Sequencer::reset_operation_index() noexcept { operation_index_ = 0; }
 
-void Sequencer::advance_instruction() noexcept
+void Sequencer::advance_operation() noexcept
 {
-    instruction_index_ = (instruction_index_ + 1) % instructions_.size();
+    operation_index_ = (operation_index_ + 1) % operations_.size();
 }
 
-Operation &Sequencer::current_instruction() const noexcept
+Operation &Sequencer::current_operation() const noexcept
 {
-    return *(instructions_[instruction_index_]);
+    return *(operations_[operation_index_]);
 }
 
 void Sequencer::abort() noexcept { system_status_ = SequencerSystemStatus::stopping; }
@@ -19,13 +19,13 @@ void Sequencer::sequencer_step() noexcept
     switch (system_status_)
     {
     case SequencerSystemStatus::running:
-        run_current_instruction();
+        run_current_operation();
         break;
     case SequencerSystemStatus::stopping:
-        current_instruction().cancel();
-        reset_instruction_index();
+        current_operation().cancel();
         system_status_ = SequencerSystemStatus::stopped;
-        is_current_instruction_started_ = false;
+        is_current_operation_started_ = false;
+        reset_operation_index();
         break;
     case SequencerSystemStatus::stopped:
         // No-op
@@ -36,25 +36,25 @@ void Sequencer::sequencer_step() noexcept
     }
 }
 
-void Sequencer::run_current_instruction() noexcept
+void Sequencer::run_current_operation() noexcept
 {
-    if (!is_current_instruction_started_) // Instruction hasn't started
+    if (!is_current_operation_started_) // operation hasn't started
     {
-        is_current_instruction_started_ = true;
-        current_instruction().start();
+        is_current_operation_started_ = true;
+        current_operation().start();
         return;
     }
-    else // Instruction has been started
+    else // operation has been started
     {
-        switch (current_instruction().poll())
+        switch (current_operation().poll())
         {
         case Operation::PollResult::running:
             // No-op - all work should be done in processing the modules
             break;
 
         case Operation::PollResult::finished:
-            is_current_instruction_started_ = false;
-            advance_instruction();
+            is_current_operation_started_ = false;
+            advance_operation();
             break;
         }
     }

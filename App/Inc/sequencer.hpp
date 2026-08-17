@@ -11,8 +11,8 @@
 class Sequencer
 {
   public:
-    explicit Sequencer(const std::span<Operation *> instructions)
-        : system_status_(SequencerSystemStatus::stopped), instructions_(instructions) {};
+    explicit Sequencer(const std::span<Operation *> operations)
+        : system_status_(SequencerSystemStatus::stopped), operations_(operations) {};
 
     void sequencer_step() noexcept;
     void abort() noexcept;
@@ -27,15 +27,15 @@ class Sequencer
 
     SequencerSystemStatus system_status_;
 
-    const std::span<Operation *> instructions_;
-    std::size_t instruction_index_ = 0;
-    bool is_current_instruction_started_ = false;
+    const std::span<Operation *> operations_;
+    std::size_t operation_index_ = 0;
+    bool is_current_operation_started_ = false;
 
-    void reset_instruction_index() noexcept;
-    void advance_instruction() noexcept;
-    Operation &current_instruction() const noexcept;
+    void reset_operation_index() noexcept;
+    void advance_operation() noexcept;
+    Operation &current_operation() const noexcept;
 
-    void run_current_instruction() noexcept;
+    void run_current_operation() noexcept;
 };
 
 #endif // SEQUENCER_HPP
