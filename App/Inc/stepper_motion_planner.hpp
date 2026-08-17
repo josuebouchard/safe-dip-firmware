@@ -14,9 +14,10 @@ class StepperMotionPlanner
         double deceleration;
     };
 
-    explicit StepperMotionPlanner(SpeedProfile speed_profile, StepperDriver &pulse_generator,
-                                  std::uint32_t now_ms)
-        : stepper_driver_(pulse_generator), last_ms_(now_ms), speed_profile_(speed_profile) {};
+    explicit StepperMotionPlanner(SpeedProfile speed_profile, StepperDriver &pulse_generator)
+        : stepper_driver_(pulse_generator), last_ms_(0), speed_profile_(speed_profile) {};
+
+    void initialize(std::uint32_t now) { last_ms_ = now; }
 
     // Movement interface
     void move_to_steps(std::int32_t target_microsteps) noexcept;

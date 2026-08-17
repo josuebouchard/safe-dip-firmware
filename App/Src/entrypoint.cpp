@@ -13,6 +13,9 @@
 #include <cstdint>
 #include <span>
 
+constexpr std::uint32_t ECHO_SOCKET = 0;
+constexpr std::uint32_t ECHO_PORT = 502;
+
 extern TIM_HandleTypeDef htim2;
 
 static STM32OutputCompareChannel OC_timer_channel_x(STM32OutputCompareChannel::Config{
@@ -37,7 +40,7 @@ static StepperMotionPlanner stepper_movement_x(
         .acceleration = 200,
         .deceleration = 200,
     },
-    stepper_driver_x, 0);
+    stepper_driver_x);
 
 static STM32OutputCompareChannel OC_timer_channel_y(STM32OutputCompareChannel::Config{
     .timer = &htim2,
@@ -62,7 +65,7 @@ static StepperMotionPlanner stepper_movement_y(
         .acceleration = 200,
         .deceleration = 200,
     },
-    stepper_driver_y, 0);
+    stepper_driver_y);
 
 // === Operations ===
 static MoveStepperOperation move_x_input{stepper_movement_x, 0};
@@ -79,7 +82,13 @@ std::array<Operation *, 2> operations = {
 
 static Sequencer sequencer{std::span<Operation *>(operations)};
 
-void setup() {}
+void setup()
+{
+    const uint32_t now = HAL_GetTick();
+
+    stepper_movement_x.initialize(now);
+    stepper_movement_y.initialize(now);
+}
 
 void loop()
 {
