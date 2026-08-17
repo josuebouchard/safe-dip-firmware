@@ -20,7 +20,10 @@ void StepperDriver::on_compare_elapsed() noexcept
         const auto speed_requested = speed_requested_.load(std::memory_order_relaxed);
 
         if (speed_requested == 0) // Graceful stop
-            return;               // Interrupt should be cancelled from main
+        {
+            speed_current_ = 0;
+            return; // Interrupt should be cancelled from main
+        }
 
         // Convert speed to direction and velocity
         const auto velocity_requested = std::abs(speed_requested);
@@ -62,6 +65,7 @@ void StepperDriver::stop_immediately() noexcept
 {
     config_.timer_channel.stop_interrupt();
     speed_requested_.store(0, std::memory_order_release);
+    speed_current_.store(0, std::memory_order_relaxed);
 }
 
 void StepperDriver::write_direction_pin(Direction direction) noexcept
