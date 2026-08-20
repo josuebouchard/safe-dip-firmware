@@ -48,10 +48,10 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
-    Core/Src/ethernet_if.c
     App/Src/effector_driver.cpp
     App/Src/effector_operations.cpp
     App/Src/entrypoint.cpp
+    App/Src/ethernet_if.c
     App/Src/modbus_tcp_task.c
     App/Src/movement_operations.cpp
     App/Src/sequencer.cpp
