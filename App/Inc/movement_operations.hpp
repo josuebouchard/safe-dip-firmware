@@ -1,5 +1,5 @@
-#ifndef MOVEMENT_MODULE_HPP
-#define MOVEMENT_MODULE_HPP
+#ifndef MOVEMENT_OPERATIONS_HPP
+#define MOVEMENT_OPERATIONS_HPP
 
 #include "operation.hpp"
 #include "stepper_motion_planner.hpp"
@@ -25,4 +25,4 @@ class MoveStepperOperation : public Operation
     std::int32_t position_;
 };
 
-#endif // MOVEMENT_MODULE_HPP
+#endif // MOVEMENT_OPERATIONS_HPP

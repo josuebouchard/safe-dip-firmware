@@ -1,8 +1,8 @@
 #include "entrypoint.hpp"
 
 #include "effector_driver.hpp"
-#include "effector_module.hpp"
-#include "movement_module.hpp"
+#include "effector_operations.hpp"
+#include "movement_operations.hpp"
 #include "operation.hpp"
 #include "sequencer.hpp"
 #include "stepper_driver.hpp"

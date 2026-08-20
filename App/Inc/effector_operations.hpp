@@ -1,5 +1,5 @@
-#ifndef EFFECTOR_MODULE_HPP
-#define EFFECTOR_MODULE_HPP
+#ifndef EFFECTOR_OPERATIONS_HPP
+#define EFFECTOR_OPERATIONS_HPP
 
 #include "effector_driver.hpp"
 #include "operation.hpp"
@@ -38,4 +38,4 @@ class EffectorDisengageOperation : public EffectorOperation
     void start() noexcept override;
 };
 
-#endif // EFFECTOR_MODULE_HPP
+#endif // EFFECTOR_OPERATIONS_HPP
