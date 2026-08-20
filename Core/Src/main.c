@@ -29,7 +29,6 @@
 #include "stm32f4xx_hal_uart.h"
 
 #include <stdint.h>
-#include <stdio.h>
 
 /* USER CODE END Includes */
 
