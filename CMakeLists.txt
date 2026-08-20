@@ -49,6 +49,8 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     Core/Src/ethernet_if.c
+    App/Src/effector_driver.cpp
+    App/Src/effector_module.cpp
     App/Src/entrypoint.cpp
     App/Src/modbus_tcp_task.c
     App/Src/movement_module.cpp
@@ -56,7 +58,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     App/Src/stepper_driver.cpp
     App/Src/stepper_motion_planner.cpp
     App/Src/stm32_output_compare_channel.cpp
-    App/Src/stm32_sequencer_modules.cpp
+    App/Src/timer_operations.cpp
 )
 
 # Add include paths

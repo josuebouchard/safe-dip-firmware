@@ -15,6 +15,7 @@ class Sequencer
         : system_status_(SequencerSystemStatus::stopped), operations_(operations) {};
 
     void sequencer_step() noexcept;
+    void start() noexcept;
     void abort() noexcept;
 
   private:

@@ -12,6 +12,14 @@ Operation &Sequencer::current_operation() const noexcept
     return *(operations_[operation_index_]);
 }
 
+void Sequencer::start() noexcept
+{
+    if (system_status_ == SequencerSystemStatus::stopped)
+    {
+        system_status_ = SequencerSystemStatus::running;
+    }
+}
+
 void Sequencer::abort() noexcept { system_status_ = SequencerSystemStatus::stopping; }
 
 void Sequencer::sequencer_step() noexcept

@@ -28,13 +28,14 @@ static STM32OutputCompareChannel OC_timer_channel_x{
         .timer_channel = 1,
     },
 };
+// @todo: placeholder pin pending real hardware pin-out.
 static StepperDriver stepper_driver_x{
     StepperDriver::Config{
         .timer_channel = OC_timer_channel_x,
         .direction =
             StepperDriver::DirectionPin{
                 .port = GPIOA,
-                .pin = 12,
+                .pin = GPIO_PIN_12,
                 .electrical_state_clockwise = GPIO_PIN_SET,
             },
         .timer_ticks_per_ms = 1000,
@@ -57,13 +58,14 @@ static STM32OutputCompareChannel OC_timer_channel_y{
     },
 };
 
+// @todo: placeholder pin pending real hardware pin-out (not PA13 - that's SWDIO/debug).
 static StepperDriver stepper_driver_y{
     StepperDriver::Config{
         .timer_channel = OC_timer_channel_y,
         .direction =
             StepperDriver::DirectionPin{
                 .port = GPIOA,
-                .pin = 13,
+                .pin = GPIO_PIN_15,
                 .electrical_state_clockwise = GPIO_PIN_SET,
 
             },
@@ -80,9 +82,10 @@ static StepperMotionPlanner stepper_movement_y{
     stepper_driver_y,
 };
 
+// @todo: placeholder pin pending real hardware pin-out.
 static EffectorDriver effector{
     GPIOA,
-    23,
+    GPIO_PIN_11,
 };
 
 static std::uint32_t dwell_time_ms = 200;
@@ -100,7 +103,7 @@ static EffectorDisengageOperation effector_disengage{effector};
 
 static DwellOperation dwell_operation{dwell_time_ms};
 
-std::array<Operation *, 2> operations = {
+static std::array<Operation *, 2> operations = {
     &move_x_input,
     &move_x_output,
 };
@@ -113,6 +116,8 @@ void setup()
 
     stepper_movement_x.initialize(now);
     stepper_movement_y.initialize(now);
+
+    sequencer.start();
 }
 
 void loop()
@@ -123,4 +128,24 @@ void loop()
 
     stepper_movement_x.process(now);
     stepper_movement_y.process(now);
+}
+
+extern "C" void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
+{
+    if (htim->Instance != TIM2)
+    {
+        return;
+    }
+
+    switch (htim->Channel)
+    {
+    case HAL_TIM_ACTIVE_CHANNEL_1:
+        stepper_driver_x.on_compare_elapsed();
+        break;
+    case HAL_TIM_ACTIVE_CHANNEL_2:
+        stepper_driver_y.on_compare_elapsed();
+        break;
+    default:
+        break;
+    }
 }
