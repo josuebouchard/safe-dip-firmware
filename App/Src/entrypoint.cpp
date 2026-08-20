@@ -2,6 +2,8 @@
 
 #include "effector_driver.hpp"
 #include "effector_operations.hpp"
+#include "ethernet_if.h"
+#include "modbus_tcp_task.h"
 #include "movement_operations.hpp"
 #include "operation.hpp"
 #include "sequencer.hpp"
@@ -12,15 +14,20 @@
 #include "stm32f446xx.h"
 #include "stm32f4xx_hal.h"
 #include "timer_operations.hpp"
+#include "w5500.h"
 
 #include <array>
 #include <cstdint>
+#include <cstdio>
 #include <span>
 
-constexpr std::uint32_t ECHO_SOCKET = 0;
-constexpr std::uint32_t ECHO_PORT = 502;
+constexpr std::uint8_t ECHO_SOCKET = 0;
+constexpr std::uint16_t ECHO_PORT = 502;
 
 extern TIM_HandleTypeDef htim2;
+
+static modbus_tcp_task_t modbus_task;
+static modbus_context_t modbus_ctx{};
 
 static STM32OutputCompareChannel OC_timer_channel_x{
     STM32OutputCompareChannel::Config{
@@ -118,11 +125,20 @@ void setup()
     stepper_movement_y.initialize(now);
 
     sequencer.start();
+
+    ethernet_W5500_init();
+
+    uint8_t version = getVERSIONR();
+    printf("W5500 version register: 0x%02X (expect 0x04)\r\n", version);
+
+    modbus_tcp_task_init(&modbus_task, ECHO_SOCKET, ECHO_PORT, &modbus_ctx);
 }
 
 void loop()
 {
     const uint32_t now = HAL_GetTick();
+
+    modbus_tcp_task_run(&modbus_task);
 
     sequencer.sequencer_step();
 

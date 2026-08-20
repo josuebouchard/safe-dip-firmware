@@ -23,10 +23,6 @@
 /* USER CODE BEGIN Includes */
 
 #include "entrypoint.hpp"
-#include "ethernet_if.h" // Middleman between W5500 and STM32 HAL
-#include "modbus_tcp_task.h"
-#include "w5500.h"
-
 
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_def.h"
@@ -44,8 +40,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define ECHO_SOCKET 0
-#define ECHO_PORT 502
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -61,9 +56,6 @@ TIM_HandleTypeDef htim2;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-
-static bool coils[4] = {0};
-static modbus_tcp_task_t modbus_task;
 
 /* USER CODE END PV */
 
@@ -84,36 +76,6 @@ int __io_putchar(int ch)
 {
     HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
     return ch;
-}
-
-#define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
-#define BYTE_TO_BINARY(byte)                                                                       \
-    ((byte) & 0x80 ? '1' : '0'), ((byte) & 0x40 ? '1' : '0'), ((byte) & 0x20 ? '1' : '0'),         \
-        ((byte) & 0x10 ? '1' : '0'), ((byte) & 0x08 ? '1' : '0'), ((byte) & 0x04 ? '1' : '0'),     \
-        ((byte) & 0x02 ? '1' : '0'), ((byte) & 0x01 ? '1' : '0')
-
-modbus_query_state_t read_coils(uint16_t start_addr, bool *dest, uint16_t quantity)
-{
-    if (!(start_addr < 4 && start_addr + quantity <= 4))
-        return MODBUS_QUERY_ST_BAD_ADDRESS;
-
-    for (uint8_t i = 0; i < quantity; i++)
-    {
-        dest[i] = coils[start_addr + i];
-    }
-    return MODBUS_QUERY_ST_OK;
-}
-
-modbus_query_state_t write_coils(uint16_t start_addr, const bool *src, uint16_t quantity)
-{
-    if (!(start_addr < 4 && start_addr + quantity <= 4))
-        return MODBUS_QUERY_ST_BAD_ADDRESS;
-
-    for (uint8_t i = 0; i < quantity; i++)
-    {
-        coils[start_addr + i] = src[i];
-    }
-    return MODBUS_QUERY_ST_OK;
 }
 
 /* USER CODE END 0 */
@@ -152,18 +114,6 @@ int main(void)
     MX_TIM2_Init();
     /* USER CODE BEGIN 2 */
 
-    ethernet_W5500_init(); // Initialize W5500
-
-    uint8_t version = getVERSIONR();
-    printf("W5500 version register: 0x%02X (expect 0x04)\r\n", version);
-
-    modbus_context_t modbus_ctx = {
-        .read_coils = read_coils,
-        .write_coils = write_coils,
-    };
-
-    modbus_tcp_task_init(&modbus_task, ECHO_SOCKET, ECHO_PORT, &modbus_ctx);
-
     setup();
 
     /* USER CODE END 2 */
@@ -173,7 +123,6 @@ int main(void)
 
     while (1)
     {
-        modbus_tcp_task_run(&modbus_task);
         loop();
 
         HAL_Delay(200);
