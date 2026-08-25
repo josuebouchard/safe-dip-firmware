@@ -32,7 +32,7 @@ static modbus_context_t modbus_ctx{};
 static STM32OutputCompareChannel OC_timer_channel_x{
     STM32OutputCompareChannel::Config{
         .timer = &htim2,
-        .timer_channel = 1,
+        .timer_channel = TIM_CHANNEL_1,
     },
 };
 // @todo: placeholder pin pending real hardware pin-out.
@@ -49,19 +49,23 @@ static StepperDriver stepper_driver_x{
     },
 };
 
+// Named rather than a temporary: StepperMotionPlanner stores the profile by
+// reference, so a temporary would not bind and would dangle if it did.
+static StepperMotionPlanner::SpeedProfile speed_profile_x{
+    .max_speed = 1000,
+    .acceleration = 200,
+    .deceleration = 200,
+};
+
 static StepperMotionPlanner stepper_movement_x{
-    StepperMotionPlanner::SpeedProfile{
-        .max_speed = 1000,
-        .acceleration = 200,
-        .deceleration = 200,
-    },
+    speed_profile_x,
     stepper_driver_x,
 };
 
 static STM32OutputCompareChannel OC_timer_channel_y{
     STM32OutputCompareChannel::Config{
         .timer = &htim2,
-        .timer_channel = 2,
+        .timer_channel = TIM_CHANNEL_2,
     },
 };
 
@@ -80,12 +84,14 @@ static StepperDriver stepper_driver_y{
     },
 };
 
+static StepperMotionPlanner::SpeedProfile speed_profile_y{
+    .max_speed = 1000,
+    .acceleration = 200,
+    .deceleration = 200,
+};
+
 static StepperMotionPlanner stepper_movement_y{
-    StepperMotionPlanner::SpeedProfile{
-        .max_speed = 1000,
-        .acceleration = 200,
-        .deceleration = 200,
-    },
+    speed_profile_y,
     stepper_driver_y,
 };
 
