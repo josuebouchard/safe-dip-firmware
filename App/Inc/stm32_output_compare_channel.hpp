@@ -16,7 +16,9 @@ class STM32OutputCompareChannel
 
     STM32OutputCompareChannel(Config config) : config_(config) {}
 
-    void start_interrupt() noexcept;
+    // initial_offset_ticks schedules the first compare match relative to the
+    // timer's current (free-running) counter value.
+    void start_interrupt(std::uint32_t initial_offset_ticks) noexcept;
     void stop_interrupt() noexcept;
 
     std::uint32_t counter() const noexcept;

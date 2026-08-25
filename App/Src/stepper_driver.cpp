@@ -31,7 +31,10 @@ void StepperDriver::on_compare_elapsed() noexcept
             speed_requested >= 0 ? Direction::clockwise : Direction::counterclockwise;
 
         // Calculate half_period_ticks
-        half_period_ticks_ = config_.timer_ticks_per_ms / (2U * velocity_requested);
+        if (!set_half_period_ticks(config_.timer_ticks_per_ms / (2U * velocity_requested)))
+        {
+            return; // @todo: should be unreachable, speed_requested == 0 handled above
+        }
 
         // Store new speed and direction
         direction_current_ = direction_requested;
@@ -51,7 +54,21 @@ void StepperDriver::set_speed(std::int32_t microsteps_per_ms) noexcept
     // Comming back from stopped
     if (is_stopped() && microsteps_per_ms != 0)
     {
-        config_.timer_channel.start_interrupt();
+        // Seed the period/direction/edge state before arming the interrupt,
+        // since on_compare_elapsed() only recomputes them on falling edges
+        // and the first call is always a rising edge.
+        const auto velocity_requested = static_cast<std::uint32_t>(std::abs(microsteps_per_ms));
+        if (!set_half_period_ticks(config_.timer_ticks_per_ms / (2U * velocity_requested)))
+        {
+            return; // @todo: should be unreachable, microsteps_per_ms != 0 guaranteed above
+        }
+
+        direction_current_ =
+            microsteps_per_ms >= 0 ? Direction::clockwise : Direction::counterclockwise;
+        write_direction_pin(direction_current_);
+        is_step_output_high_ = false;
+
+        config_.timer_channel.start_interrupt(half_period_ticks_);
     }
     else if (microsteps_per_ms == 0)
     {
@@ -66,6 +83,17 @@ void StepperDriver::stop_immediately() noexcept
     config_.timer_channel.stop_interrupt();
     speed_requested_.store(0, std::memory_order_release);
     speed_current_.store(0, std::memory_order_relaxed);
+}
+
+bool StepperDriver::set_half_period_ticks(std::uint32_t half_period_ticks) noexcept
+{
+    if (half_period_ticks == 0)
+    {
+        return false;
+    }
+
+    half_period_ticks_ = half_period_ticks;
+    return true;
 }
 
 void StepperDriver::write_direction_pin(Direction direction) noexcept

@@ -1,12 +1,13 @@
 #include "stm32_output_compare_channel.hpp"
 #include "stm32f4xx_hal_tim.h"
 
-void STM32OutputCompareChannel::start_interrupt() noexcept
+void STM32OutputCompareChannel::start_interrupt(std::uint32_t initial_offset_ticks) noexcept
 {
-    // Reconfigure the OC reference to inactive (logical low).
+    // Schedule relative to the current counter - it's free-running and may
+    // already be far past 0, so a fixed Pulse would wait for a full wrap.
     TIM_OC_InitTypeDef oc = {
         .OCMode = TIM_OCMODE_TOGGLE,
-        .Pulse = 0,
+        .Pulse = counter() + initial_offset_ticks,
         .OCPolarity = TIM_OCPOLARITY_HIGH,
         .OCFastMode = TIM_OCFAST_DISABLE,
     };
