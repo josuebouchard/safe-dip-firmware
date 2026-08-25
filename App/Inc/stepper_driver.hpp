@@ -58,6 +58,22 @@ class StepperDriver
         return pulse_count_.load(std::memory_order_relaxed);
     }
 
+    // Redefines the current step count - used to establish an origin after
+    // homing. Only meaningful while stopped: the ISR writes pulse_count_ on
+    // every rising edge, so an in-flight increment could land after this
+    // store if the channel is still armed.
+    void reset_pulse_count(std::int32_t value = 0) noexcept
+    {
+        pulse_count_.store(value, std::memory_order_relaxed);
+    }
+
+    // Highest step rate the timer can resolve: one tick per half-period is
+    // the floor, so the period cannot be shorter than 2 ticks.
+    [[nodiscard]] std::int32_t max_steps_per_second() const noexcept
+    {
+        return static_cast<std::int32_t>(config_.timer_ticks_per_second / 2U);
+    }
+
   private:
     const Config config_;
 
