@@ -72,6 +72,12 @@ class StepperDriver
     std::uint32_t half_period_ticks_{0U};
     bool is_step_output_high_{false};
 
+    // set_speed()/stop_immediately() owned (main context only, never touched
+    // from the ISR) - tracks whether the OC channel is currently armed, so
+    // repeated set_speed() calls don't re-arm/reconfigure it from scratch
+    // before the ISR has had a chance to run even once.
+    bool is_armed_{false};
+
     static GPIO_PinState opposite(GPIO_PinState state) noexcept
     {
         return state == GPIO_PIN_SET ? GPIO_PIN_RESET : GPIO_PIN_SET;

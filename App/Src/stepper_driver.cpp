@@ -51,8 +51,13 @@ void StepperDriver::on_compare_elapsed() noexcept
 
 void StepperDriver::set_speed(std::int32_t steps_per_second) noexcept
 {
-    // Comming back from stopped
-    if (is_stopped() && steps_per_second != 0)
+    // Comming back from stopped. Gated on is_armed_ rather than is_stopped()
+    // (which only reflects the ISR's last confirmed speed): if set_speed()
+    // is called repeatedly before the ISR ever gets a chance to run - e.g.
+    // from a tight loop - is_stopped() would stay true and every call would
+    // re-arm/reconfigure the channel from scratch, so it would never survive
+    // long enough to actually fire.
+    if (!is_armed_ && steps_per_second != 0)
     {
         // Seed the period/direction/edge state before arming the interrupt,
         // since on_compare_elapsed() only recomputes them on falling edges
@@ -69,10 +74,12 @@ void StepperDriver::set_speed(std::int32_t steps_per_second) noexcept
         is_step_output_high_ = false;
 
         config_.timer_channel.start_interrupt(half_period_ticks_);
+        is_armed_ = true;
     }
     else if (steps_per_second == 0)
     {
         config_.timer_channel.stop_interrupt();
+        is_armed_ = false;
     }
 
     speed_requested_.store(steps_per_second, std::memory_order_release);
@@ -83,6 +90,7 @@ void StepperDriver::stop_immediately() noexcept
     config_.timer_channel.stop_interrupt();
     speed_requested_.store(0, std::memory_order_release);
     speed_current_.store(0, std::memory_order_relaxed);
+    is_armed_ = false;
 }
 
 bool StepperDriver::set_half_period_ticks(std::uint32_t half_period_ticks) noexcept
