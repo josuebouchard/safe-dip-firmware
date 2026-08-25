@@ -14,7 +14,7 @@ class StepperMotionPlanner
         double deceleration;
     };
 
-    explicit StepperMotionPlanner(SpeedProfile speed_profile, StepperDriver &pulse_generator)
+    explicit StepperMotionPlanner(SpeedProfile& speed_profile, StepperDriver &pulse_generator)
         : stepper_driver_(pulse_generator), last_ms_(0), speed_profile_(speed_profile) {};
 
     void initialize(std::uint32_t now) { last_ms_ = now; }
@@ -44,7 +44,7 @@ class StepperMotionPlanner
     // Last
     std::uint32_t last_ms_;
 
-    SpeedProfile speed_profile_;
+    SpeedProfile& speed_profile_;
 
     void update_speed(double acceleration_signed, std::uint32_t delta_time) noexcept;
 
