@@ -29,30 +29,24 @@ static StepperDriver stepper_driver_x{
     },
 };
 
-// static StepperMotionPlanner::SpeedProfile speed_profile{
-//     .max_speed = 1000,
-//     .acceleration = 200,
-//     .deceleration = 200,
-// };
+static StepperMotionPlanner::SpeedProfile speed_profile{
+    .max_speed = 700,
+    .acceleration = 200,
+    .deceleration = 200,
+};
 
-// static StepperMotionPlanner stepper_movement_x{
-//     speed_profile,
-//     stepper_driver_x,
-// };
+static StepperMotionPlanner stepper_movement_x{
+    speed_profile,
+    stepper_driver_x,
+};
 
 void setup()
 {
-    // stepper_movement_x.initialize(HAL_GetTick());
-    // stepper_movement_x.move_continously(1);
-    // HAL_TIM_OC_Start_IT(&htim2, 1);
-    // set_speed() now takes steps/second (was steps/ms) - 1000 steps/sec reproduces
-    // the same 1kHz test signal (half_period_ticks_=500) verified working earlier.
-    stepper_driver_x.set_speed(1000);
+    stepper_movement_x.initialize(HAL_GetTick());
+    stepper_movement_x.move_continously(1);
 }
 
-void loop() {
-    // stepper_movement_x.process(HAL_GetTick());
-}
+void loop() { stepper_movement_x.process(HAL_GetTick()); }
 
 extern "C" void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
 {
