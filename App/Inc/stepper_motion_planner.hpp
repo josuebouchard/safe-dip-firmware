@@ -9,18 +9,18 @@ class StepperMotionPlanner
   public:
     struct SpeedProfile
     {
-        double max_speed;
-        double acceleration;
-        double deceleration;
+        float max_speed;
+        float acceleration;
+        float deceleration;
     };
 
     explicit StepperMotionPlanner(SpeedProfile& speed_profile, StepperDriver &pulse_generator)
         : stepper_driver_(pulse_generator), last_ms_(0), speed_profile_(speed_profile) {};
 
-    void initialize(std::uint32_t now) { last_ms_ = now; }
+    void initialize(std::uint32_t now_ms) { last_ms_ = now_ms; }
 
     // Movement interface
-    void move_to_steps(std::int32_t target_microsteps) noexcept;
+    void move_to_steps(std::int32_t target_steps) noexcept;
     void move_continously(std::int32_t direction) noexcept;
     void stop_immediately() noexcept;
 
@@ -39,14 +39,14 @@ class StepperMotionPlanner
     std::int32_t position_target_signed_ = 0;
 
     // Current
-    double speed_current_signed_ = 0; // microsteps / ms
+    float speed_current_signed_ = 0.0f; // steps / second
 
     // Last
     std::uint32_t last_ms_;
 
     SpeedProfile& speed_profile_;
 
-    void update_speed(double acceleration_signed, std::uint32_t delta_time) noexcept;
+    void update_speed(float acceleration_signed, std::uint32_t delta_time) noexcept;
 
     // Helpers
     std::int8_t speed_versor() const noexcept;

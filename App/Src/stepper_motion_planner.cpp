@@ -56,20 +56,21 @@ bool StepperMotionPlanner::should_decelerate() const noexcept
         return true;
     }
 
-    const double speed_magnitude = std::abs(speed_current_signed_);
+    const float speed_magnitude = std::abs(speed_current_signed_);
 
-    const double braking_distance =
-        (speed_magnitude * speed_magnitude) / (2.0 * speed_profile_.deceleration);
+    const float braking_distance =
+        (speed_magnitude * speed_magnitude) / (2.0f * speed_profile_.deceleration);
 
-    return std::abs(static_cast<double>(distance)) <= braking_distance;
+    return std::abs(static_cast<float>(distance)) <= braking_distance;
 }
 
 void StepperMotionPlanner::process(std::uint32_t now_ms) noexcept
 {
     // @todo: assert(now_ms >= last_ms_)
 
-    // Calculate delta time
-    const auto delta_time = now_ms - last_ms_;
+    // Calculate delta time - integer ms subtraction first (exact, wraparound-safe),
+    // then convert only the small delta to float seconds for the speed math.
+    const float delta_time_s = static_cast<float>(now_ms - last_ms_) / 1000.0f;
     last_ms_ = now_ms;
 
     bool is_stopped = std::abs(speed_current_signed_) == 0;
@@ -78,7 +79,7 @@ void StepperMotionPlanner::process(std::uint32_t now_ms) noexcept
         return; // No-op - should be idle
 
     const auto speed_current_magnitude = std::abs(speed_current_signed_);
-    double acceleration;
+    float acceleration;
     int8_t direction;
     if (should_decelerate())
     {
@@ -91,9 +92,8 @@ void StepperMotionPlanner::process(std::uint32_t now_ms) noexcept
         direction = target_versor();
     }
 
-    auto speed_new_magnitude =
-        std::clamp(speed_current_magnitude + acceleration * static_cast<double>(delta_time), 0.0,
-                   speed_profile_.max_speed);
+    auto speed_new_magnitude = std::clamp(speed_current_magnitude + acceleration * delta_time_s,
+                                          0.0f, speed_profile_.max_speed);
 
     // Apply speed
     speed_current_signed_ = speed_new_magnitude * direction;
@@ -101,9 +101,9 @@ void StepperMotionPlanner::process(std::uint32_t now_ms) noexcept
     stepper_driver_.set_speed(speed_current_signed_);
 }
 
-void StepperMotionPlanner::move_to_steps(std::int32_t target_microsteps) noexcept
+void StepperMotionPlanner::move_to_steps(std::int32_t target_steps) noexcept
 {
-    position_target_signed_ = target_microsteps;
+    position_target_signed_ = target_steps;
 }
 
 void StepperMotionPlanner::move_continously(std::int32_t direction) noexcept
@@ -118,7 +118,7 @@ void StepperMotionPlanner::move_continously(std::int32_t direction) noexcept
 
 void StepperMotionPlanner::stop_immediately() noexcept
 {
-    speed_current_signed_ = 0.0;
+    speed_current_signed_ = 0.0f;
     position_target_signed_ = position_current_signed();
 
     stepper_driver_.stop_immediately();

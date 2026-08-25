@@ -31,7 +31,7 @@ void StepperDriver::on_compare_elapsed() noexcept
             speed_requested >= 0 ? Direction::clockwise : Direction::counterclockwise;
 
         // Calculate half_period_ticks
-        if (!set_half_period_ticks(config_.timer_ticks_per_ms / (2U * velocity_requested)))
+        if (!set_half_period_ticks(config_.timer_ticks_per_second / (2U * velocity_requested)))
         {
             return; // @todo: should be unreachable, speed_requested == 0 handled above
         }
@@ -49,33 +49,33 @@ void StepperDriver::on_compare_elapsed() noexcept
     config_.timer_channel.set_compare(previous_compare + half_period_ticks_);
 }
 
-void StepperDriver::set_speed(std::int32_t microsteps_per_ms) noexcept
+void StepperDriver::set_speed(std::int32_t steps_per_second) noexcept
 {
     // Comming back from stopped
-    if (is_stopped() && microsteps_per_ms != 0)
+    if (is_stopped() && steps_per_second != 0)
     {
         // Seed the period/direction/edge state before arming the interrupt,
         // since on_compare_elapsed() only recomputes them on falling edges
         // and the first call is always a rising edge.
-        const auto velocity_requested = static_cast<std::uint32_t>(std::abs(microsteps_per_ms));
-        if (!set_half_period_ticks(config_.timer_ticks_per_ms / (2U * velocity_requested)))
+        const auto velocity_requested = static_cast<std::uint32_t>(std::abs(steps_per_second));
+        if (!set_half_period_ticks(config_.timer_ticks_per_second / (2U * velocity_requested)))
         {
-            return; // @todo: should be unreachable, microsteps_per_ms != 0 guaranteed above
+            return; // @todo: should be unreachable, steps_per_second != 0 guaranteed above
         }
 
         direction_current_ =
-            microsteps_per_ms >= 0 ? Direction::clockwise : Direction::counterclockwise;
+            steps_per_second >= 0 ? Direction::clockwise : Direction::counterclockwise;
         write_direction_pin(direction_current_);
         is_step_output_high_ = false;
 
         config_.timer_channel.start_interrupt(half_period_ticks_);
     }
-    else if (microsteps_per_ms == 0)
+    else if (steps_per_second == 0)
     {
         config_.timer_channel.stop_interrupt();
     }
 
-    speed_requested_.store(microsteps_per_ms, std::memory_order_release);
+    speed_requested_.store(steps_per_second, std::memory_order_release);
 }
 
 void StepperDriver::stop_immediately() noexcept

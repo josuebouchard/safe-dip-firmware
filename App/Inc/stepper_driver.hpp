@@ -30,7 +30,7 @@ class StepperDriver
         STM32OutputCompareChannel &timer_channel;
 
         DirectionPin direction;
-        std::uint32_t timer_ticks_per_ms;
+        std::uint32_t timer_ticks_per_second;
     };
 
     explicit StepperDriver(const Config &config) noexcept : config_{config} {};
@@ -38,7 +38,7 @@ class StepperDriver
     // Function to be called in ISR
     void on_compare_elapsed() noexcept;
 
-    void set_speed(std::int32_t microsteps_per_ms) noexcept;
+    void set_speed(std::int32_t steps_per_second) noexcept;
 
     void stop_immediately() noexcept;
 

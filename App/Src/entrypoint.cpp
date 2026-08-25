@@ -45,7 +45,7 @@ static StepperDriver stepper_driver_x{
                 .pin = GPIO_PIN_12,
                 .electrical_state_clockwise = GPIO_PIN_SET,
             },
-        .timer_ticks_per_ms = 1000,
+        .timer_ticks_per_second = 1000000,
     },
 };
 
@@ -76,7 +76,7 @@ static StepperDriver stepper_driver_y{
                 .electrical_state_clockwise = GPIO_PIN_SET,
 
             },
-        .timer_ticks_per_ms = 1000,
+        .timer_ticks_per_second = 1000000,
     },
 };
 

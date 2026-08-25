@@ -25,7 +25,7 @@ static StepperDriver stepper_driver_x{
                 .pin = DIR_x_Pin,
                 .electrical_state_clockwise = GPIO_PIN_SET,
             },
-        .timer_ticks_per_ms = 1000,
+        .timer_ticks_per_second = 1000000,
     },
 };
 
@@ -45,10 +45,9 @@ void setup()
     // stepper_movement_x.initialize(HAL_GetTick());
     // stepper_movement_x.move_continously(1);
     // HAL_TIM_OC_Start_IT(&htim2, 1);
-    // @todo: 200 (half_period_ticks_=2, i.e. a 2us reschedule window) is suspected too
-    // fast for the ISR chain to keep up with - testing at 1 (half_period_ticks_=500,
-    // 1kHz) to see if a sustained signal appears at a comfortably slow rate first.
-    stepper_driver_x.set_speed(1);
+    // set_speed() now takes steps/second (was steps/ms) - 1000 steps/sec reproduces
+    // the same 1kHz test signal (half_period_ticks_=500) verified working earlier.
+    stepper_driver_x.set_speed(1000);
 }
 
 void loop() {
