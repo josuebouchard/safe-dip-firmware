@@ -13,6 +13,7 @@
 
 #include "stm32f446xx.h"
 #include "stm32f4xx_hal.h"
+#include "stm32f4xx_hal_gpio.h"
 #include "timer_operations.hpp"
 #include "w5500.h"
 
@@ -20,6 +21,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <span>
+#include <stdbool.h>
 
 constexpr std::uint8_t ECHO_SOCKET = 0;
 constexpr std::uint16_t ECHO_PORT = 502;
@@ -127,10 +129,7 @@ void setup()
 {
     const uint32_t now = HAL_GetTick();
 
-    stepper_movement_x.initialize(now);
-    stepper_movement_y.initialize(now);
-
-    sequencer.start();
+    // Initalize ethernet
 
     ethernet_W5500_init();
 
@@ -138,18 +137,46 @@ void setup()
     std::printf("W5500 version register: 0x%02X (expect 0x04)\r\n", version);
 
     modbus_tcp_task_init(&modbus_task, ECHO_SOCKET, ECHO_PORT, &modbus_ctx);
+
+    // Initialize movement planners
+    stepper_movement_x.initialize(now);
+    stepper_movement_y.initialize(now);
 }
 
 void loop()
 {
-    const uint32_t now = HAL_GetTick();
+    // @todo: maybe convert to external interrupt
+    // @todo: placeholder values - change
+    bool is_e_stop_pressed = (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_1) != GPIO_PIN_SET);
+    if (is_e_stop_pressed)
+    {
+        sequencer.stop();
+        stepper_movement_x.stop_immediately();
+        stepper_movement_y.stop_immediately();
+        effector.engage();
+    }
+    else // Do work
+    {
+        const uint32_t now = HAL_GetTick();
+
+        // Start button process
+        // @todo: placeholder values - change
+        bool is_start_button_pressed = (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_2) != GPIO_PIN_SET);
+        if (!sequencer.is_running() && is_start_button_pressed)
+        {
+            // Start sequencer
+            sequencer.start();
+        }
+
+        // Sequencer step
+        sequencer.sequencer_step();
+
+        // Process the different modules
+        stepper_movement_x.process(now);
+        stepper_movement_y.process(now);
+    }
 
     modbus_tcp_task_run(&modbus_task);
-
-    sequencer.sequencer_step();
-
-    stepper_movement_x.process(now);
-    stepper_movement_y.process(now);
 }
 
 extern "C" void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
