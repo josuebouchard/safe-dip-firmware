@@ -14,33 +14,31 @@ Operation &Sequencer::current_operation() const noexcept
 
 void Sequencer::start() noexcept
 {
-    if (system_status_ == SequencerSystemStatus::stopped)
-    {
-        system_status_ = SequencerSystemStatus::running;
-    }
+    if (!is_system_running_)
+        is_system_running_ = true;
 }
 
-void Sequencer::abort() noexcept { system_status_ = SequencerSystemStatus::stopping; }
+void Sequencer::stop() noexcept
+{
+    if (!is_system_running_)
+        return;
+
+    // Stop
+    is_system_running_ = false;
+
+    // Reset
+    is_current_operation_started_ = false;
+    current_operation().cancel();
+    reset_operation_index();
+}
+
+bool Sequencer::is_running() const noexcept { return is_system_running_; }
 
 void Sequencer::sequencer_step() noexcept
 {
-    switch (system_status_)
+    if (is_system_running_)
     {
-    case SequencerSystemStatus::running:
         run_current_operation();
-        break;
-    case SequencerSystemStatus::stopping:
-        current_operation().cancel();
-        system_status_ = SequencerSystemStatus::stopped;
-        is_current_operation_started_ = false;
-        reset_operation_index();
-        break;
-    case SequencerSystemStatus::stopped:
-        // No-op
-        break;
-    default:
-        // TODO: Should be unreachable
-        break;
     }
 }
 

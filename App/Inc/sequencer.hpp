@@ -11,22 +11,16 @@
 class Sequencer
 {
   public:
-    explicit Sequencer(const std::span<Operation *> operations)
-        : system_status_(SequencerSystemStatus::stopped), operations_(operations) {};
+    explicit Sequencer(const std::span<Operation *> operations) : operations_(operations) {};
 
     void sequencer_step() noexcept;
     void start() noexcept;
-    void abort() noexcept;
+    void stop() noexcept;
+
+    bool is_running() const noexcept;
 
   private:
-    enum class SequencerSystemStatus
-    {
-        running,
-        stopping,
-        stopped
-    };
-
-    SequencerSystemStatus system_status_;
+    bool is_system_running_ = false;
 
     const std::span<Operation *> operations_;
     std::size_t operation_index_ = 0;
