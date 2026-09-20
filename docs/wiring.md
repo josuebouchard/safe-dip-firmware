@@ -39,8 +39,15 @@ whose anode sits on 5 V, so the MCU pin pulls the cathode down to light it.
 ```
 
 - **Pin released (high-Z)** → no current → opto off. **Pin driven low** → current flows → opto on.
-- Output compare polarity is `TIM_OCPOLARITY_LOW`, so a stopped axis parks with the pulse pin
-  released. One step is counted per active (falling) edge.
+- Output compare polarity is `TIM_OCPOLARITY_LOW`, so one step is counted per active (falling)
+  edge while the axis moves.
+- **Unverified on hardware:** when the channel is stopped, `HAL_TIM_OC_Stop_IT` clears `CCxE`, and
+  the polarity bit only inverts the compare output on its way to the pin. With the channel
+  disabled, the pin may sit driven low — which on an open-drain output means the opto conducts
+  continuously while idle. Check before trusting an idle axis: with no move running, either meter
+  A0/A1 against 5 V (released reads ~5 V, driven reads ~0.3 V) or read `TIM2->CCER` and `GPIOA->IDR`
+  in the debugger. If it parks low, `stop_interrupt()` needs to switch the pin to a plain GPIO
+  output held high and back to AF on start.
 - No internal pull-ups on these four pins: the driver's LED and its series resistor to 5 V are the
   pull-up. An internal pull-up to 3.3 V would fight that rail.
 - If the driver inputs need more than 5 V, or the anode rail is 12/24 V, **do not wire them
