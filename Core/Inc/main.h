@@ -60,20 +60,32 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define B1_Pin GPIO_PIN_13
 #define B1_GPIO_Port GPIOC
+#define DIR_y_Pin GPIO_PIN_1
+#define DIR_y_GPIO_Port GPIOC
+#define PULSE_x_Pin GPIO_PIN_0
+#define PULSE_x_GPIO_Port GPIOA
+#define PULSE_y_Pin GPIO_PIN_1
+#define PULSE_y_GPIO_Port GPIOA
 #define USART_TX_Pin GPIO_PIN_2
 #define USART_TX_GPIO_Port GPIOA
 #define USART_RX_Pin GPIO_PIN_3
 #define USART_RX_GPIO_Port GPIOA
+#define DIR_x_Pin GPIO_PIN_0
+#define DIR_x_GPIO_Port GPIOB
+#define EFFECTOR_Pin GPIO_PIN_10
+#define EFFECTOR_GPIO_Port GPIOB
 #define W5500_RST_Pin GPIO_PIN_7
 #define W5500_RST_GPIO_Port GPIOC
-#define DIR_x_Pin GPIO_PIN_9
-#define DIR_x_GPIO_Port GPIOA
 #define TMS_Pin GPIO_PIN_13
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14
 #define TCK_GPIO_Port GPIOA
 #define SWO_Pin GPIO_PIN_3
 #define SWO_GPIO_Port GPIOB
+#define START_Pin GPIO_PIN_4
+#define START_GPIO_Port GPIOB
+#define E_STOP_Pin GPIO_PIN_5
+#define E_STOP_GPIO_Port GPIOB
 #define SPI_CS_Pin GPIO_PIN_6
 #define SPI_CS_GPIO_Port GPIOB
 
