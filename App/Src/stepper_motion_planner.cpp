@@ -179,7 +179,7 @@ void StepperMotionPlanner::stop_immediately() noexcept
 
 void StepperMotionPlanner::reset_position(std::int32_t position) noexcept
 {
-    // Stop first: the ISR writes pulse_count_ on every rising edge, so
+    // Stop first: the ISR writes pulse_count_ on every active edge, so
     // resetting it while the channel is armed can lose an in-flight step.
     stop_immediately();
 

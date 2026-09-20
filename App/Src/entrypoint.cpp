@@ -11,6 +11,7 @@
 #include "stepper_motion_planner.hpp"
 #include "stm32_output_compare_channel.hpp"
 
+#include "main.h"
 #include "stm32f446xx.h"
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_gpio.h"
@@ -35,17 +36,18 @@ static STM32OutputCompareChannel OC_timer_channel_x{
     STM32OutputCompareChannel::Config{
         .timer = &htim2,
         .timer_channel = TIM_CHANNEL_1,
+        .polarity = TIM_OCPOLARITY_LOW,
     },
 };
-// @todo: placeholder pin pending real hardware pin-out.
 static StepperDriver stepper_driver_x{
     StepperDriver::Config{
         .timer_channel = OC_timer_channel_x,
         .direction =
             StepperDriver::DirectionPin{
-                .port = GPIOA,
-                .pin = GPIO_PIN_12,
-                .electrical_state_clockwise = GPIO_PIN_SET,
+                .port = DIR_x_GPIO_Port,
+                .pin = DIR_x_Pin,
+                // Sinking output: the driver sees current when the pin is low.
+                .electrical_state_clockwise = GPIO_PIN_RESET,
             },
         .timer_ticks_per_second = 1000000,
     },
@@ -68,19 +70,19 @@ static STM32OutputCompareChannel OC_timer_channel_y{
     STM32OutputCompareChannel::Config{
         .timer = &htim2,
         .timer_channel = TIM_CHANNEL_2,
+        .polarity = TIM_OCPOLARITY_LOW,
     },
 };
 
-// @todo: placeholder pin pending real hardware pin-out (not PA13 - that's SWDIO/debug).
 static StepperDriver stepper_driver_y{
     StepperDriver::Config{
         .timer_channel = OC_timer_channel_y,
         .direction =
             StepperDriver::DirectionPin{
-                .port = GPIOA,
-                .pin = GPIO_PIN_15,
-                .electrical_state_clockwise = GPIO_PIN_SET,
-
+                .port = DIR_y_GPIO_Port,
+                .pin = DIR_y_Pin,
+                // Sinking output: the driver sees current when the pin is low.
+                .electrical_state_clockwise = GPIO_PIN_RESET,
             },
         .timer_ticks_per_second = 1000000,
     },
@@ -97,10 +99,9 @@ static StepperMotionPlanner stepper_movement_y{
     stepper_driver_y,
 };
 
-// @todo: placeholder pin pending real hardware pin-out.
 static EffectorDriver effector{
-    GPIOA,
-    GPIO_PIN_11,
+    EFFECTOR_GPIO_Port,
+    EFFECTOR_Pin,
 };
 
 static std::uint32_t dwell_time_ms = 200;
@@ -146,8 +147,8 @@ void setup()
 void loop()
 {
     // @todo: maybe convert to external interrupt
-    // @todo: placeholder values - change
-    bool is_e_stop_pressed = (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_1) != GPIO_PIN_SET);
+    // Active low: the button pulls the pin to ground against its internal pull-up.
+    bool is_e_stop_pressed = (HAL_GPIO_ReadPin(E_STOP_GPIO_Port, E_STOP_Pin) != GPIO_PIN_SET);
     if (is_e_stop_pressed)
     {
         sequencer.stop();
@@ -160,8 +161,7 @@ void loop()
         const uint32_t now = HAL_GetTick();
 
         // Start button process
-        // @todo: placeholder values - change
-        bool is_start_button_pressed = (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_2) != GPIO_PIN_SET);
+        bool is_start_button_pressed = (HAL_GPIO_ReadPin(START_GPIO_Port, START_Pin) != GPIO_PIN_SET);
         if (!sequencer.is_running() && is_start_button_pressed)
         {
             // Start sequencer

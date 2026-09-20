@@ -60,7 +60,7 @@ class StepperDriver
 
     // Redefines the current step count - used to establish an origin after
     // homing. Only meaningful while stopped: the ISR writes pulse_count_ on
-    // every rising edge, so an in-flight increment could land after this
+    // every active edge, so an in-flight increment could land after this
     // store if the channel is still armed.
     void reset_pulse_count(std::int32_t value = 0) noexcept
     {
@@ -86,7 +86,7 @@ class StepperDriver
     std::uint32_t last_tick{0};
     Direction direction_current_{Direction::clockwise};
     std::uint32_t half_period_ticks_{0U};
-    bool is_step_output_high_{false};
+    bool is_step_output_active_{false};
 
     // set_speed()/stop_immediately() owned (main context only, never touched
     // from the ISR) - tracks whether the OC channel is currently armed, so

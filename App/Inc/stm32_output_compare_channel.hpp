@@ -12,6 +12,9 @@ class STM32OutputCompareChannel
     {
         TIM_HandleTypeDef *timer;
         std::uint32_t timer_channel;
+        // TIM_OCPOLARITY_LOW for a sinking (open-drain) output: the inactive
+        // OC reference then releases the pin and the opto stays dark.
+        std::uint32_t polarity;
     };
 
     STM32OutputCompareChannel(Config config) : config_(config) {}

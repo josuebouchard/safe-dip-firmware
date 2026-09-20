@@ -13,9 +13,9 @@ static STM32OutputCompareChannel OC_timer_channel_x{
     STM32OutputCompareChannel::Config{
         .timer = &htim2,
         .timer_channel = TIM_CHANNEL_1,
+        .polarity = TIM_OCPOLARITY_LOW,
     },
 };
-// @todo: placeholder pin pending real hardware pin-out.
 static StepperDriver stepper_driver_x{
     StepperDriver::Config{
         .timer_channel = OC_timer_channel_x,
@@ -23,7 +23,8 @@ static StepperDriver stepper_driver_x{
             StepperDriver::DirectionPin{
                 .port = DIR_x_GPIO_Port,
                 .pin = DIR_x_Pin,
-                .electrical_state_clockwise = GPIO_PIN_SET,
+                // Sinking output: the driver sees current when the pin is low.
+                .electrical_state_clockwise = GPIO_PIN_RESET,
             },
         .timer_ticks_per_second = 1000000,
     },

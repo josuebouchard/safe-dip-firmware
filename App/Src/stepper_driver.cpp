@@ -7,15 +7,15 @@
 
 void StepperDriver::on_compare_elapsed() noexcept
 {
-    // Toggle step output flag to match pin output
-    is_step_output_high_ = !is_step_output_high_;
+    // Toggle step output flag to match the compare reference
+    is_step_output_active_ = !is_step_output_active_;
 
-    // Count - only on rising edge
-    if (is_step_output_high_)
+    // Count - only on the active edge
+    if (is_step_output_active_)
     {
         pulse_count_.fetch_add(static_cast<int8_t>(direction_current_), std::memory_order_relaxed);
     }
-    else // On falling edge
+    else // On the inactive edge
     {
         // Load requested speed
         const auto speed_requested = speed_requested_.load(std::memory_order_relaxed);
@@ -73,8 +73,8 @@ void StepperDriver::set_speed(std::int32_t steps_per_second) noexcept
     if (!is_armed_ && steps_per_second != 0)
     {
         // Seed the period/direction/edge state before arming the interrupt,
-        // since on_compare_elapsed() only recomputes them on falling edges
-        // and the first call is always a rising edge.
+        // since on_compare_elapsed() only recomputes them on inactive edges
+        // and the first call is always an active edge.
         const auto velocity_requested = static_cast<std::uint32_t>(std::abs(steps_per_second));
         if (!set_half_period_ticks(config_.timer_ticks_per_second / (2U * velocity_requested)))
         {
@@ -84,7 +84,7 @@ void StepperDriver::set_speed(std::int32_t steps_per_second) noexcept
         direction_current_ =
             steps_per_second >= 0 ? Direction::clockwise : Direction::counterclockwise;
         write_direction_pin(direction_current_);
-        is_step_output_high_ = false;
+        is_step_output_active_ = false;
 
         config_.timer_channel.start_interrupt(half_period_ticks_);
         is_armed_ = true;
@@ -95,7 +95,7 @@ void StepperDriver::set_speed(std::int32_t steps_per_second) noexcept
         is_armed_ = false;
 
         // Publish the stop here: the ISR normally clears speed_current_ on
-        // its next falling edge, but we just disarmed the channel so no
+        // its next inactive edge, but we just disarmed the channel so no
         // further ISR will run - leaving speed()/is_stopped() reporting the
         // last moving speed forever.
         speed_current_.store(0, std::memory_order_relaxed);

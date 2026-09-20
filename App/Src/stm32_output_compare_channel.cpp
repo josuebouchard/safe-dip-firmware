@@ -8,7 +8,7 @@ void STM32OutputCompareChannel::start_interrupt(std::uint32_t initial_offset_tic
     TIM_OC_InitTypeDef oc = {
         .OCMode = TIM_OCMODE_TOGGLE,
         .Pulse = counter() + initial_offset_ticks,
-        .OCPolarity = TIM_OCPOLARITY_HIGH,
+        .OCPolarity = config_.polarity,
         .OCFastMode = TIM_OCFAST_DISABLE,
     };
 
@@ -26,7 +26,7 @@ void STM32OutputCompareChannel::stop_interrupt() noexcept
     TIM_OC_InitTypeDef oc = {
         .OCMode = TIM_OCMODE_FORCED_INACTIVE,
         .Pulse = 0,
-        .OCPolarity = TIM_OCPOLARITY_HIGH,
+        .OCPolarity = config_.polarity,
         .OCFastMode = TIM_OCFAST_DISABLE,
     };
 
