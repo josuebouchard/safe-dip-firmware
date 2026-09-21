@@ -41,19 +41,25 @@ whose anode sits on 5 V, so the MCU pin pulls the cathode down to light it.
 - **Pin released (high-Z)** → no current → opto off. **Pin driven low** → current flows → opto on.
 - Output compare polarity is `TIM_OCPOLARITY_LOW`, so one step is counted per active (falling)
   edge while the axis moves.
-- **Unverified on hardware:** when the channel is stopped, `HAL_TIM_OC_Stop_IT` clears `CCxE`, and
-  the polarity bit only inverts the compare output on its way to the pin. With the channel
-  disabled, the pin may sit driven low — which on an open-drain output means the opto conducts
-  continuously while idle. Check before trusting an idle axis: with no move running, either meter
-  A0/A1 against 5 V (released reads ~5 V, driven reads ~0.3 V) or read `TIM2->CCER` and `GPIOA->IDR`
-  in the debugger. If it parks low, `stop_interrupt()` needs to switch the pin to a plain GPIO
-  output held high and back to AF on start.
+- **Idle and boot:** a stopped channel is released, so the opto stays off. `HAL_TIM_OC_Stop_IT`
+  clears `CCxE`, and so does `MX_TIM2_Init` at boot. RM0390 defines that state as "Output Disabled
+  (not driven by the timer) — OCx=0, OCx_EN=0": the timer stops driving the pad and leaves it
+  tri-stated. TIM2 has no `BDTR.OSSR`, the only bit that would make a disabled output drive a level.
+  On an open-drain pin, tri-stated is the same as released, and the driver's pull-up to 5 V holds the
+  line high. The `FORCED_INACTIVE` mode that `stop_interrupt()` sets never reaches the pin while
+  `CCxE` is off; it is harmless. Never use `FORCED_ACTIVE` for parking: with the output enabled it
+  would hold the opto on.
+- This relies on open-drain. On a push-pull pin the same tri-state would leave the line floating
+  and it would need a pull resistor.
+- Bench confirmation: with no move running, A0/A1 should read ~5 V against GND (released). ~0.3 V
+  would mean driven low. The general-purpose timer wording comes from a search snippet of the
+  manual rather than a full extract, so this measurement is the final word.
 - No internal pull-ups on these four pins: the driver's LED and its series resistor to 5 V are the
   pull-up. An internal pull-up to 3.3 V would fight that rail.
 - If the driver inputs need more than 5 V, or the anode rail is 12/24 V, **do not wire them
   directly** — no STM32 pin tolerates that. Use series resistors sized for the rail or a buffer.
-- If an axis turns the wrong way, flip `electrical_state_clockwise` for that axis in
-  `App/Src/entrypoint.cpp`.
+- If an axis turns the wrong way, flip `electrical_state_clockwise` for that axis in the active
+  entrypoint (the one listed in `CMakeLists.txt`).
 
 ## 5 V tolerance
 
