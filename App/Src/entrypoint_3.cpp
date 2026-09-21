@@ -7,19 +7,27 @@
 
 #include <cstdint>
 
-// Each press of the blue user button (B1) turns the X axis 10 revolutions.
+// Each press of the blue user button (B1) turns the X axis 10 revolutions in 10 seconds.
 
 // 1.8 deg motor = 200 full steps/rev; the driver is set to 1600 pulses/rev (8x microstepping).
 constexpr std::int32_t STEPS_PER_REVOLUTION = 1600;
 constexpr std::int32_t TURNS_PER_PRESS = 10;
 constexpr std::int32_t STEPS_PER_PRESS = STEPS_PER_REVOLUTION * TURNS_PER_PRESS;
 
-// With 1000 steps/s^2 over 16000 steps the profile is triangular: it peaks
-// at 4000 steps/s halfway and never reaches max_speed. The move takes ~8 s.
+// Trapezoidal move: ramp up for 2 s (2000 steps), cruise at 2000 steps/s
+// for 6 s (12000 steps), ramp down for 2 s (2000 steps).
+constexpr float ACCELERATION = 1000.0f; // steps/s^2, the maximum allowed
+constexpr float CRUISE_SPEED = 2000.0f; // steps/s, solves distance/v + v/a = 10 s
+
+// A symmetric trapezoid lasts distance/v + v/a, provided the ramps fit in
+// the move (v^2/a <= distance) - otherwise it never reaches cruise speed.
+static_assert(CRUISE_SPEED * CRUISE_SPEED / ACCELERATION <= STEPS_PER_PRESS);
+static_assert(STEPS_PER_PRESS / CRUISE_SPEED + CRUISE_SPEED / ACCELERATION == 10.0f);
+
 static StepperMotionPlanner::SpeedProfile speed_profile{
-    .max_speed = 5000,
-    .acceleration = 1000,
-    .deceleration = 1000,
+    .max_speed = CRUISE_SPEED,
+    .acceleration = ACCELERATION,
+    .deceleration = ACCELERATION,
 };
 
 static StepperMotionPlanner stepper_movement_x{
