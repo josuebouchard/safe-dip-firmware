@@ -5,9 +5,10 @@
 #include "stm32f4xx_hal.h"
 
 static StepperMotionPlanner::SpeedProfile speed_profile{
-    .max_speed = 700,
-    .acceleration = 200,
-    .deceleration = 200,
+    700, // max_speed
+    200, // acceleration
+    200, // deceleration
+    50,  // landing_speed
 };
 
 static StepperMotionPlanner stepper_movement_x{

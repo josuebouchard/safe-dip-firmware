@@ -31,9 +31,10 @@ static modbus_context_t modbus_ctx{};
 // Named rather than a temporary: StepperMotionPlanner stores the profile by
 // reference, so a temporary would not bind and would dangle if it did.
 static StepperMotionPlanner::SpeedProfile speed_profile_x{
-    .max_speed = 1000,
-    .acceleration = 200,
-    .deceleration = 200,
+    1000, // max_speed
+    200,  // acceleration
+    200,  // deceleration
+    50,   // landing_speed
 };
 
 static StepperMotionPlanner stepper_movement_x{
@@ -42,9 +43,10 @@ static StepperMotionPlanner stepper_movement_x{
 };
 
 static StepperMotionPlanner::SpeedProfile speed_profile_y{
-    .max_speed = 1000,
-    .acceleration = 200,
-    .deceleration = 200,
+    1000, // max_speed
+    200,  // acceleration
+    200,  // deceleration
+    50,   // landing_speed
 };
 
 static StepperMotionPlanner stepper_movement_y{

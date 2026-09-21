@@ -18,6 +18,7 @@ constexpr std::int32_t STEPS_PER_PRESS = STEPS_PER_REVOLUTION * TURNS_PER_PRESS;
 // for 6 s (12000 steps), ramp down for 2 s (2000 steps).
 constexpr float ACCELERATION = 1000.0f; // steps/s^2, the maximum allowed
 constexpr float CRUISE_SPEED = 2000.0f; // steps/s, solves distance/v + v/a = 10 s
+constexpr float LANDING_SPEED = 50.0f;  // steps/s
 
 // A symmetric trapezoid lasts distance/v + v/a, provided the ramps fit in
 // the move (v^2/a <= distance) - otherwise it never reaches cruise speed.
@@ -25,9 +26,10 @@ static_assert(CRUISE_SPEED * CRUISE_SPEED / ACCELERATION <= STEPS_PER_PRESS);
 static_assert(STEPS_PER_PRESS / CRUISE_SPEED + CRUISE_SPEED / ACCELERATION == 10.0f);
 
 static StepperMotionPlanner::SpeedProfile speed_profile{
-    .max_speed = CRUISE_SPEED,
-    .acceleration = ACCELERATION,
-    .deceleration = ACCELERATION,
+    CRUISE_SPEED,  // max_speed
+    ACCELERATION,  // acceleration
+    ACCELERATION,  // deceleration
+    LANDING_SPEED, // landing_speed
 };
 
 static StepperMotionPlanner stepper_movement_x{

@@ -9,9 +9,14 @@ class StepperMotionPlanner
   public:
     struct SpeedProfile
     {
+        SpeedProfile(float max_speed, float acceleration, float deceleration,
+                     float landing_speed) noexcept;
+
         float max_speed;
         float acceleration;
         float deceleration;
+        // Braking settles at this speed, then the axis stops dead on the target step.
+        float landing_speed;
     };
 
     explicit StepperMotionPlanner(SpeedProfile& speed_profile, StepperDriver &pulse_generator)
@@ -54,6 +59,9 @@ class StepperMotionPlanner
     StepperDriver &stepper_driver_;
 
     ControlMode mode_ = ControlMode::position;
+
+    // Latched once braking starts, so the ramp never re-accelerates on approach.
+    bool is_landing_ = false;
 
     // Target
     std::int32_t position_target_signed_ = 0;
