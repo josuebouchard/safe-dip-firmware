@@ -2,25 +2,27 @@
 
 Board: NUCLEO-F446RE (STM32F446RET6, LQFP64). Pin assignments come from
 [`nucleo-project.ioc`](../nucleo-project.ioc); edit them in STM32CubeMX and regenerate.
+The driver objects that use these pins are created once in
+[`App/Src/hardware.cpp`](../App/Src/hardware.cpp) and shared by every entrypoint.
 
 ## Pinout
 
-| Signal | Label | Arduino | Header | MCU pin | Mode |
-|---|---|---|---|---|---|
-| X step | `PULSE_x` | A0 | CN8 | PA0 | TIM2_CH1, output compare toggle, **open-drain** |
-| Y step | `PULSE_y` | A1 | CN8 | PA1 | TIM2_CH2, output compare toggle, **open-drain** |
-| X direction | `DIR_x` | A3 | CN8 | PB0 | GPIO output, **open-drain**, idle released |
-| Y direction | `DIR_y` | A4 | CN8 | PC1 | GPIO output, **open-drain**, idle released |
-| Emergency stop | `E_STOP` | D4 | CN9 | PB5 | GPIO input, internal pull-up, active low |
-| Start button | `START` | D5 | CN9 | PB4 | GPIO input, internal pull-up, active low |
-| Effector | `EFFECTOR` | D6 | CN9 | PB10 | GPIO output, push-pull, idle low |
-| W5500 RST | `W5500_RST` | D9 | CN5 | PC7 | GPIO output, push-pull, idle high |
-| W5500 CS | `SPI_CS` | D10 | CN5 | PB6 | GPIO output, push-pull, idle high |
-| W5500 MOSI | — | D11 | CN5 | PA7 | SPI1_MOSI |
-| W5500 MISO | — | D12 | CN5 | PA6 | SPI1_MISO |
-| W5500 SCK | — | D13 | CN5 | PA5 | SPI1_SCK, 42 Mbit/s |
-| Debug UART | `USART_TX` / `USART_RX` | — | — | PA2 / PA3 | USART2 to the ST-LINK VCP, 115200 8N1 |
-| User button | `B1` | — | — | PC13 | on-board blue button, polled (no EXTI handler) |
+| Device | Signal | Label | Arduino | Header | MCU pin | Mode |
+|---|---|---|---|---|---|---|
+| X stepper driver | Step | `PULSE_x` | A0 | CN8 | PA0 | TIM2_CH1, output compare toggle, **open-drain** |
+| X stepper driver | Direction | `DIR_x` | A3 | CN8 | PB0 | GPIO output, **open-drain**, idle released |
+| Y stepper driver | Step | `PULSE_y` | A1 | CN8 | PA1 | TIM2_CH2, output compare toggle, **open-drain** |
+| Y stepper driver | Direction | `DIR_y` | A4 | CN8 | PC1 | GPIO output, **open-drain**, idle released |
+| Emergency stop button | Contact | `E_STOP` | D4 | CN9 | PB5 | GPIO input, internal pull-up, active low |
+| Start button | Contact | `START` | D5 | CN9 | PB4 | GPIO input, internal pull-up, active low |
+| Effector | Enable | `EFFECTOR` | D6 | CN9 | PB10 | GPIO output, push-pull, idle low |
+| W5500 Ethernet | Reset | `W5500_RST` | D9 | CN5 | PC7 | GPIO output, push-pull, idle high |
+| W5500 Ethernet | Chip select | `SPI_CS` | D10 | CN5 | PB6 | GPIO output, push-pull, idle high |
+| W5500 Ethernet | MOSI | — | D11 | CN5 | PA7 | SPI1_MOSI |
+| W5500 Ethernet | MISO | — | D12 | CN5 | PA6 | SPI1_MISO |
+| W5500 Ethernet | SCK | — | D13 | CN5 | PA5 | SPI1_SCK, 42 Mbit/s |
+| ST-LINK virtual COM port | TX / RX | `USART_TX` / `USART_RX` | — | — | PA2 / PA3 | USART2, 115200 8N1 |
+| On-board user button (B1) | Contact | `B1` | — | — | PC13 | blue button, polled (no EXTI handler) |
 
 Free on the headers: D2, D3 (SWO), D7, D8, D14, D15, A2, A5.
 
@@ -58,8 +60,8 @@ whose anode sits on 5 V, so the MCU pin pulls the cathode down to light it.
   pull-up. An internal pull-up to 3.3 V would fight that rail.
 - If the driver inputs need more than 5 V, or the anode rail is 12/24 V, **do not wire them
   directly** — no STM32 pin tolerates that. Use series resistors sized for the rail or a buffer.
-- If an axis turns the wrong way, flip `electrical_state_clockwise` for that axis in the active
-  entrypoint (the one listed in `CMakeLists.txt`).
+- If an axis turns the wrong way, flip `electrical_state_clockwise` for that axis in
+  `App/Src/hardware.cpp`; the fix then applies to every entrypoint.
 
 ## 5 V tolerance
 
