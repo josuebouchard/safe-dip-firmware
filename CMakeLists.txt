@@ -50,7 +50,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     App/Src/effector_driver.cpp
     App/Src/effector_operations.cpp
-    App/Src/entrypoint_2.cpp
+    App/Src/entrypoint_3.cpp
     App/Src/ethernet_if.c
     App/Src/modbus_tcp_task.c
     App/Src/movement_operations.cpp
