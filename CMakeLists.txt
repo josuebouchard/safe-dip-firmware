@@ -52,6 +52,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     App/Src/effector_operations.cpp
     App/Src/entrypoint_3.cpp
     App/Src/ethernet_if.c
+    App/Src/hardware.cpp
     App/Src/modbus_tcp_task.c
     App/Src/movement_operations.cpp
     App/Src/sequencer.cpp

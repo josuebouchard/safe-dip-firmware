@@ -1,15 +1,13 @@
 #include "entrypoint.hpp"
 
-#include "effector_driver.hpp"
 #include "effector_operations.hpp"
 #include "ethernet_if.h"
+#include "hardware.hpp"
 #include "modbus_tcp_task.h"
 #include "movement_operations.hpp"
 #include "operation.hpp"
 #include "sequencer.hpp"
-#include "stepper_driver.hpp"
 #include "stepper_motion_planner.hpp"
-#include "stm32_output_compare_channel.hpp"
 
 #include "main.h"
 #include "stm32f446xx.h"
@@ -27,31 +25,8 @@
 constexpr std::uint8_t ECHO_SOCKET = 0;
 constexpr std::uint16_t ECHO_PORT = 502;
 
-extern TIM_HandleTypeDef htim2;
-
 static modbus_tcp_task_t modbus_task;
 static modbus_context_t modbus_ctx{};
-
-static STM32OutputCompareChannel OC_timer_channel_x{
-    STM32OutputCompareChannel::Config{
-        .timer = &htim2,
-        .timer_channel = TIM_CHANNEL_1,
-        .polarity = TIM_OCPOLARITY_LOW,
-    },
-};
-static StepperDriver stepper_driver_x{
-    StepperDriver::Config{
-        .timer_channel = OC_timer_channel_x,
-        .direction =
-            StepperDriver::DirectionPin{
-                .port = DIR_x_GPIO_Port,
-                .pin = DIR_x_Pin,
-                // Sinking output: the driver sees current when the pin is low.
-                .electrical_state_clockwise = GPIO_PIN_RESET,
-            },
-        .timer_ticks_per_second = 1000000,
-    },
-};
 
 // Named rather than a temporary: StepperMotionPlanner stores the profile by
 // reference, so a temporary would not bind and would dangle if it did.
@@ -63,29 +38,7 @@ static StepperMotionPlanner::SpeedProfile speed_profile_x{
 
 static StepperMotionPlanner stepper_movement_x{
     speed_profile_x,
-    stepper_driver_x,
-};
-
-static STM32OutputCompareChannel OC_timer_channel_y{
-    STM32OutputCompareChannel::Config{
-        .timer = &htim2,
-        .timer_channel = TIM_CHANNEL_2,
-        .polarity = TIM_OCPOLARITY_LOW,
-    },
-};
-
-static StepperDriver stepper_driver_y{
-    StepperDriver::Config{
-        .timer_channel = OC_timer_channel_y,
-        .direction =
-            StepperDriver::DirectionPin{
-                .port = DIR_y_GPIO_Port,
-                .pin = DIR_y_Pin,
-                // Sinking output: the driver sees current when the pin is low.
-                .electrical_state_clockwise = GPIO_PIN_RESET,
-            },
-        .timer_ticks_per_second = 1000000,
-    },
+    hardware::stepper_driver_x,
 };
 
 static StepperMotionPlanner::SpeedProfile speed_profile_y{
@@ -96,12 +49,7 @@ static StepperMotionPlanner::SpeedProfile speed_profile_y{
 
 static StepperMotionPlanner stepper_movement_y{
     speed_profile_y,
-    stepper_driver_y,
-};
-
-static EffectorDriver effector{
-    EFFECTOR_GPIO_Port,
-    EFFECTOR_Pin,
+    hardware::stepper_driver_y,
 };
 
 static std::uint32_t dwell_time_ms = 200;
@@ -114,8 +62,8 @@ static MoveStepperOperation move_x_output{stepper_movement_x, 1000};
 static MoveStepperOperation move_y_up{stepper_movement_y, 0};
 static MoveStepperOperation move_y_down{stepper_movement_y, 500};
 
-static EffectorEngageOperation effector_engage{effector};
-static EffectorDisengageOperation effector_disengage{effector};
+static EffectorEngageOperation effector_engage{hardware::effector};
+static EffectorDisengageOperation effector_disengage{hardware::effector};
 
 static DwellOperation dwell_operation{dwell_time_ms};
 
@@ -154,7 +102,7 @@ void loop()
         sequencer.stop();
         stepper_movement_x.stop_immediately();
         stepper_movement_y.stop_immediately();
-        effector.engage();
+        hardware::effector.engage();
     }
     else // Do work
     {
@@ -177,24 +125,4 @@ void loop()
     }
 
     modbus_tcp_task_run(&modbus_task);
-}
-
-extern "C" void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
-{
-    if (htim->Instance != TIM2)
-    {
-        return;
-    }
-
-    switch (htim->Channel)
-    {
-    case HAL_TIM_ACTIVE_CHANNEL_1:
-        stepper_driver_x.on_compare_elapsed();
-        break;
-    case HAL_TIM_ACTIVE_CHANNEL_2:
-        stepper_driver_y.on_compare_elapsed();
-        break;
-    default:
-        break;
-    }
 }

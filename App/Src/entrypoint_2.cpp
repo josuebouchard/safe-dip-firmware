@@ -1,34 +1,8 @@
 #include "entrypoint.hpp"
-#include "stepper_driver.hpp"
+#include "hardware.hpp"
 #include "stepper_motion_planner.hpp"
-#include "stm32_output_compare_channel.hpp"
 
-#include "main.h"
 #include "stm32f4xx_hal.h"
-#include "stm32f4xx_hal_tim.h"
-
-extern TIM_HandleTypeDef htim2;
-
-static STM32OutputCompareChannel OC_timer_channel_x{
-    STM32OutputCompareChannel::Config{
-        .timer = &htim2,
-        .timer_channel = TIM_CHANNEL_1,
-        .polarity = TIM_OCPOLARITY_LOW,
-    },
-};
-static StepperDriver stepper_driver_x{
-    StepperDriver::Config{
-        .timer_channel = OC_timer_channel_x,
-        .direction =
-            StepperDriver::DirectionPin{
-                .port = DIR_x_GPIO_Port,
-                .pin = DIR_x_Pin,
-                // Sinking output: the driver sees current when the pin is low.
-                .electrical_state_clockwise = GPIO_PIN_RESET,
-            },
-        .timer_ticks_per_second = 1000000,
-    },
-};
 
 static StepperMotionPlanner::SpeedProfile speed_profile{
     .max_speed = 700,
@@ -38,7 +12,7 @@ static StepperMotionPlanner::SpeedProfile speed_profile{
 
 static StepperMotionPlanner stepper_movement_x{
     speed_profile,
-    stepper_driver_x,
+    hardware::stepper_driver_x,
 };
 
 void setup()
@@ -53,20 +27,3 @@ void setup()
 }
 
 void loop() { stepper_movement_x.process(HAL_GetTick()); }
-
-extern "C" void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
-{
-    if (htim->Instance != TIM2)
-    {
-        return;
-    }
-
-    switch (htim->Channel)
-    {
-    case HAL_TIM_ACTIVE_CHANNEL_1:
-        stepper_driver_x.on_compare_elapsed();
-        break;
-    default:
-        break;
-    }
-}
