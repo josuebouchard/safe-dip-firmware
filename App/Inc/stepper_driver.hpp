@@ -44,15 +44,6 @@ class StepperDriver
 
     std::int32_t speed() const noexcept { return speed_current_.load(std::memory_order_relaxed); }
 
-    bool is_stopped() const noexcept { return speed() == 0; }
-
-    bool is_running() const noexcept { return !is_stopped(); }
-
-    [[nodiscard]] Direction direction() const noexcept
-    {
-        return speed() >= 0 ? Direction::clockwise : Direction::counterclockwise;
-    }
-
     [[nodiscard]] std::int32_t pulse_count() const noexcept
     {
         return pulse_count_.load(std::memory_order_relaxed);
@@ -83,7 +74,6 @@ class StepperDriver
     std::atomic<std::int32_t> pulse_count_{0};
 
     // ISR owned
-    std::uint32_t last_tick{0};
     Direction direction_current_{Direction::clockwise};
     std::uint32_t half_period_ticks_{0U};
     bool is_step_output_active_{false};
@@ -99,9 +89,8 @@ class StepperDriver
         return state == GPIO_PIN_SET ? GPIO_PIN_RESET : GPIO_PIN_SET;
     }
 
-    [[nodiscard]] bool set_half_period_ticks(std::uint32_t half_period_ticks) noexcept;
-
-    void stop_channel_now() noexcept;
+    // Sets half-period, direction_current_ and the DIR pin from a signed speed.
+    void apply_speed(std::int32_t speed) noexcept;
 
     // Write pins
     void write_direction_pin(Direction direction) noexcept;

@@ -48,16 +48,16 @@ void STM32OutputCompareChannel::set_compare(std::uint32_t value) noexcept
     switch (config_.timer_channel)
     {
     case TIM_CHANNEL_1:
-        (config_.timer)->Instance->CCR1 = value;
+        config_.timer->Instance->CCR1 = value;
         return;
     case TIM_CHANNEL_2:
-        (config_.timer)->Instance->CCR2 = value;
+        config_.timer->Instance->CCR2 = value;
         return;
     case TIM_CHANNEL_3:
-        (config_.timer)->Instance->CCR3 = value;
+        config_.timer->Instance->CCR3 = value;
         return;
     case TIM_CHANNEL_4:
-        (config_.timer)->Instance->CCR4 = value;
+        config_.timer->Instance->CCR4 = value;
         return;
     default:
         return; // @todo: panic

@@ -20,7 +20,7 @@ class StepperMotionPlanner
     };
 
     explicit StepperMotionPlanner(SpeedProfile& speed_profile, StepperDriver &pulse_generator)
-        : stepper_driver_(pulse_generator), last_ms_(0), speed_profile_(speed_profile) {};
+        : stepper_driver_(pulse_generator), last_ms_(0), speed_profile_(speed_profile) {}
 
     // Which setpoint process() drives towards. Position mode chases a step
     // target and brakes on arrival; velocity mode holds a speed and never

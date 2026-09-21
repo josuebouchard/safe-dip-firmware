@@ -1,7 +1,5 @@
 #include "stepper_driver.hpp"
 #include <algorithm>
-#include <atomic>
-#include <cmath>
 #include <cstdint>
 #include <cstdlib>
 
@@ -26,26 +24,8 @@ void StepperDriver::on_compare_elapsed() noexcept
             return; // Interrupt should be cancelled from main
         }
 
-        // Convert speed to direction and velocity
-        const auto velocity_requested = std::abs(speed_requested);
-        const auto direction_requested =
-            speed_requested >= 0 ? Direction::clockwise : Direction::counterclockwise;
-
-        // Calculate half_period_ticks
-        if (!set_half_period_ticks(config_.timer_ticks_per_second / (2U * velocity_requested)))
-        {
-            // Unreachable: set_speed() clamps before storing speed_requested_,
-            // so the half-period is always >= 1 tick. Returning here would
-            // leave the compare unscheduled and kill the pulse train.
-            return;
-        }
-
-        // Store new speed and direction
-        direction_current_ = direction_requested;
+        apply_speed(speed_requested);
         speed_current_.store(speed_requested, std::memory_order_relaxed);
-
-        // Write GPIO DIR
-        write_direction_pin(direction_current_);
     }
 
     // Set next compare value
@@ -56,49 +36,33 @@ void StepperDriver::on_compare_elapsed() noexcept
 void StepperDriver::set_speed(std::int32_t steps_per_second) noexcept
 {
     // Clamp to what the timer can actually resolve. Without this, an
-    // over-ceiling request makes half_period_ticks truncate to 0: while
-    // already armed the guarded block below is skipped, so the bad value
-    // reaches the ISR, whose own set_half_period_ticks() then fails and
-    // returns without rescheduling the compare - silently killing a
-    // running pulse train.
+    // over-ceiling request makes the half-period truncate to 0 and the ISR
+    // stops rescheduling the compare - silently killing a running pulse train.
     const std::int32_t speed_limit = max_steps_per_second();
     steps_per_second = std::clamp(steps_per_second, -speed_limit, speed_limit);
 
-    // Comming back from stopped. Gated on is_armed_ rather than is_stopped()
-    // (which only reflects the ISR's last confirmed speed): if set_speed()
-    // is called repeatedly before the ISR ever gets a chance to run - e.g.
-    // from a tight loop - is_stopped() would stay true and every call would
-    // re-arm/reconfigure the channel from scratch, so it would never survive
-    // long enough to actually fire.
-    if (!is_armed_ && steps_per_second != 0)
+    if (steps_per_second == 0)
+    {
+        // The channel is disarmed, so no further ISR will run to publish the stop.
+        stop_immediately();
+        return;
+    }
+
+    // Coming back from stopped. Gated on is_armed_ rather than speed()
+    // (the ISR's last confirmed speed): repeated calls
+    // from a tight loop before the ISR ever runs would otherwise re-arm the
+    // channel from scratch every time, so it would never survive long enough
+    // to fire.
+    if (!is_armed_)
     {
         // Seed the period/direction/edge state before arming the interrupt,
         // since on_compare_elapsed() only recomputes them on inactive edges
         // and the first call is always an active edge.
-        const auto velocity_requested = static_cast<std::uint32_t>(std::abs(steps_per_second));
-        if (!set_half_period_ticks(config_.timer_ticks_per_second / (2U * velocity_requested)))
-        {
-            return; // Unreachable: the clamp above keeps the half-period >= 1 tick.
-        }
-
-        direction_current_ =
-            steps_per_second >= 0 ? Direction::clockwise : Direction::counterclockwise;
-        write_direction_pin(direction_current_);
+        apply_speed(steps_per_second);
         is_step_output_active_ = false;
 
         config_.timer_channel.start_interrupt(half_period_ticks_);
         is_armed_ = true;
-    }
-    else if (steps_per_second == 0)
-    {
-        config_.timer_channel.stop_interrupt();
-        is_armed_ = false;
-
-        // Publish the stop here: the ISR normally clears speed_current_ on
-        // its next inactive edge, but we just disarmed the channel so no
-        // further ISR will run - leaving speed()/is_stopped() reporting the
-        // last moving speed forever.
-        speed_current_.store(0, std::memory_order_relaxed);
     }
 
     speed_requested_.store(steps_per_second, std::memory_order_release);
@@ -112,15 +76,14 @@ void StepperDriver::stop_immediately() noexcept
     is_armed_ = false;
 }
 
-bool StepperDriver::set_half_period_ticks(std::uint32_t half_period_ticks) noexcept
+// speed must be non-zero and clamped by set_speed().
+void StepperDriver::apply_speed(std::int32_t speed) noexcept
 {
-    if (half_period_ticks == 0)
-    {
-        return false;
-    }
-
-    half_period_ticks_ = half_period_ticks;
-    return true;
+    // @todo: assert(speed != 0 && std::abs(speed) <= max_steps_per_second())
+    half_period_ticks_ = config_.timer_ticks_per_second / (2U * std::abs(speed));
+    direction_current_ = speed >= 0 ? Direction::clockwise : Direction::counterclockwise;
+    // @todo: assert(half_period_ticks_ != 0)
+    write_direction_pin(direction_current_);
 }
 
 void StepperDriver::write_direction_pin(Direction direction) noexcept
