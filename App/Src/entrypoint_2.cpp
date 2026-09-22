@@ -7,7 +7,6 @@
 static StepperMotionPlanner::SpeedProfile speed_profile{
     700, // max_speed
     200, // acceleration
-    200, // deceleration
     50,  // landing_speed
 };
 

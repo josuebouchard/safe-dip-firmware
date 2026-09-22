@@ -10,12 +10,11 @@ class StepperMotionPlanner
   public:
     struct SpeedProfile
     {
-        SpeedProfile(float max_speed, float acceleration, float deceleration,
+        SpeedProfile(float max_speed, float acceleration,
                      float landing_speed) noexcept;
 
         float max_speed;
         float acceleration;
-        float deceleration;
         float landing_speed;
     };
 
@@ -30,7 +29,7 @@ class StepperMotionPlanner
     void move_to_steps(std::int32_t target_steps) noexcept;
     void move_at_speed(float steps_per_second) noexcept;
 
-    // Ramps down at the deceleration rate.
+    // Ramps down at the acceleration rate.
     void stop() noexcept;
     // Cuts the pulse train instantly, no ramp.
     void stop_immediately() noexcept;

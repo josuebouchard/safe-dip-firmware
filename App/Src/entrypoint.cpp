@@ -33,7 +33,6 @@ static modbus_context_t modbus_ctx{};
 static StepperMotionPlanner::SpeedProfile speed_profile_x{
     1000, // max_speed
     200,  // acceleration
-    200,  // deceleration
     50,   // landing_speed
 };
 
@@ -45,7 +44,6 @@ static StepperMotionPlanner stepper_movement_x{
 static StepperMotionPlanner::SpeedProfile speed_profile_y{
     1000, // max_speed
     200,  // acceleration
-    200,  // deceleration
     50,   // landing_speed
 };
 

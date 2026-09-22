@@ -9,9 +9,8 @@ template <typename T> static constexpr std::int8_t sign(T value) noexcept
     return (value > 0) - (value < 0);
 }
 
-StepperMotionPlanner::SpeedProfile::SpeedProfile(float max_speed, float acceleration,
-                                                 float deceleration, float landing_speed) noexcept
-    : max_speed(max_speed), acceleration(acceleration), deceleration(deceleration),
+StepperMotionPlanner::SpeedProfile::SpeedProfile(float max_speed, float acceleration, float landing_speed) noexcept
+    : max_speed(max_speed), acceleration(acceleration),
       // A zero landing speed would stall short of the target.
       landing_speed(std::min(std::max(landing_speed, 1.0f), max_speed))
 {
@@ -55,7 +54,7 @@ bool StepperMotionPlanner::should_decelerate(const PositionMode &position) const
     // Distance to slow down to the landing speed, not to a standstill.
     const float braking_distance =
         std::max(0.0f, speed_magnitude * speed_magnitude - landing_speed * landing_speed) /
-        (2.0f * speed_profile_.deceleration);
+        (2.0f * speed_profile_.acceleration);
 
     return std::abs(static_cast<float>(distance)) <= braking_distance;
 }
@@ -85,14 +84,7 @@ float StepperMotionPlanner::ramp_speed_toward(float speed_desired,
 {
     const float speed_error = speed_desired - speed_current_signed_;
 
-    // Accelerate only when the magnitude grows without crossing zero;
-    // slowing down and reversing both use the deceleration rate.
-    const bool is_same_direction = (speed_current_signed_ >= 0.0f) == (speed_desired >= 0.0f);
-    const bool is_speeding_up =
-        is_same_direction && std::abs(speed_desired) > std::abs(speed_current_signed_);
-
-    const float rate = is_speeding_up ? speed_profile_.acceleration : speed_profile_.deceleration;
-    const float speed_step = rate * delta_time_s;
+    const float speed_step = speed_profile_.acceleration * delta_time_s;
 
     // Snap to the setpoint instead of oscillating around it.
     if (std::abs(speed_error) <= speed_step)

@@ -23,7 +23,6 @@ static_assert(STEPS_PER_PRESS / CRUISE_SPEED + CRUISE_SPEED / ACCELERATION == 5.
 static StepperMotionPlanner::SpeedProfile speed_profile{
     CRUISE_SPEED,  // max_speed
     ACCELERATION,  // acceleration
-    ACCELERATION,  // deceleration
     LANDING_SPEED, // landing_speed
 };
 
