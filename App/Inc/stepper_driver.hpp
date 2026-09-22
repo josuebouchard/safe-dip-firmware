@@ -42,8 +42,6 @@ class StepperDriver
 
     void stop_immediately() noexcept;
 
-    std::int32_t speed() const noexcept { return speed_current_.load(std::memory_order_relaxed); }
-
     [[nodiscard]] std::int32_t pulse_count() const noexcept
     {
         return pulse_count_.load(std::memory_order_relaxed);
@@ -70,7 +68,6 @@ class StepperDriver
 
     // Shared
     std::atomic<std::int32_t> speed_requested_{0};
-    std::atomic<std::int32_t> speed_current_{0};
     std::atomic<std::int32_t> pulse_count_{0};
 
     // ISR owned

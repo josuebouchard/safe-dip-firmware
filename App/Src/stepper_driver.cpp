@@ -20,12 +20,10 @@ void StepperDriver::on_compare_elapsed() noexcept
 
         if (speed_requested == 0) // Graceful stop
         {
-            speed_current_ = 0;
             return; // Interrupt should be cancelled from main
         }
 
         apply_speed(speed_requested);
-        speed_current_.store(speed_requested, std::memory_order_relaxed);
     }
 
     // Set next compare value
@@ -48,11 +46,10 @@ void StepperDriver::set_speed(std::int32_t steps_per_second) noexcept
         return;
     }
 
-    // Coming back from stopped. Gated on is_armed_ rather than speed()
-    // (the ISR's last confirmed speed): repeated calls
-    // from a tight loop before the ISR ever runs would otherwise re-arm the
-    // channel from scratch every time, so it would never survive long enough
-    // to fire.
+    // Coming back from stopped. Gated on is_armed_ rather than on any
+    // ISR-published speed: repeated calls from a tight loop before the ISR ever
+    // runs would otherwise re-arm the channel from scratch every time, so it
+    // would never survive long enough to fire.
     if (!is_armed_)
     {
         // Seed the period/direction/edge state before arming the interrupt,
@@ -72,7 +69,6 @@ void StepperDriver::stop_immediately() noexcept
 {
     config_.timer_channel.stop_interrupt();
     speed_requested_.store(0, std::memory_order_release);
-    speed_current_.store(0, std::memory_order_relaxed);
     is_armed_ = false;
 }
 
