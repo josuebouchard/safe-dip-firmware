@@ -10,7 +10,6 @@
 #include "stepper_motion_planner.hpp"
 
 #include "main.h"
-#include "stm32f446xx.h"
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_gpio.h"
 #include "timer_operations.hpp"
