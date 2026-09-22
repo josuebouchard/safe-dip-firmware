@@ -24,7 +24,8 @@ std::int32_t StepperMotionPlanner::position_current_signed() const noexcept
 
 bool StepperMotionPlanner::is_at_target() const noexcept
 {
-    return is_position_mode() && position_current_signed() == position_target_signed_;
+    const auto *position = std::get_if<PositionMode>(&mode_);
+    return position && distance_to_target(*position) == 0;
 }
 
 std::int8_t StepperMotionPlanner::speed_versor() const noexcept
@@ -32,21 +33,21 @@ std::int8_t StepperMotionPlanner::speed_versor() const noexcept
     return sign(speed_current_signed_);
 }
 
-std::int64_t StepperMotionPlanner::distance_to_target() const noexcept
+std::int64_t StepperMotionPlanner::distance_to_target(const PositionMode &position) const noexcept
 {
-    return static_cast<std::int64_t>(position_target_signed_) -
+    return static_cast<std::int64_t>(position.position_target_signed) -
            static_cast<std::int64_t>(position_current_signed());
 }
 
-std::int8_t StepperMotionPlanner::target_versor() const noexcept
+std::int8_t StepperMotionPlanner::target_versor(const PositionMode &position) const noexcept
 {
-    return sign(distance_to_target());
+    return sign(distance_to_target(position));
 }
 
 // Only meaningful once already heading toward the target - process() gates on it.
-bool StepperMotionPlanner::should_decelerate() const noexcept
+bool StepperMotionPlanner::should_decelerate(const PositionMode &position) const noexcept
 {
-    const std::int64_t distance = distance_to_target();
+    const std::int64_t distance = distance_to_target(position);
 
     const float speed_magnitude = std::abs(speed_current_signed_);
     const float landing_speed = speed_profile_.landing_speed;
@@ -59,17 +60,12 @@ bool StepperMotionPlanner::should_decelerate() const noexcept
     return std::abs(static_cast<float>(distance)) <= braking_distance;
 }
 
-float StepperMotionPlanner::speed_desired_signed() const noexcept
+// Max speed towards the target, landing speed once braking starts.
+// Heading the wrong way brakes to zero first.
+float StepperMotionPlanner::speed_desired_signed(const PositionMode &position) const noexcept
 {
-    if (!is_position_mode())
-    {
-        return speed_target_signed_;
-    }
-
-    // Position mode: max speed towards the target, landing speed once
-    // braking starts. Heading the wrong way brakes to zero first.
     const std::int8_t current_direction = speed_versor();
-    const std::int8_t target_direction = target_versor();
+    const std::int8_t target_direction = target_versor(position);
 
     // @todo: assert(target_direction != 0)
 
@@ -80,7 +76,7 @@ float StepperMotionPlanner::speed_desired_signed() const noexcept
     }
 
     const float speed =
-        phase_ == Phase::position_landing ? speed_profile_.landing_speed : speed_profile_.max_speed;
+        position.is_landing ? speed_profile_.landing_speed : speed_profile_.max_speed;
     return static_cast<float>(target_direction) * speed;
 }
 
@@ -115,13 +111,15 @@ void StepperMotionPlanner::process(std::uint32_t now_ms) noexcept
     const float delta_time_s = static_cast<float>(now_ms - last_ms_) / 1000.0f;
     last_ms_ = now_ms;
 
-    // Stop dead on the target step. Above the tick gate because is_at_target()
-    // tests exact equality - checking only once per tick could let a fast move
+    auto *position = std::get_if<PositionMode>(&mode_);
+
+    // Stop dead on the target step. Above the tick gate because this tests
+    // exact equality - checking only once per tick could let a fast move
     // step past the target value without ever matching it.
-    if (is_at_target())
+    if (position && distance_to_target(*position) == 0)
     {
         // Landing latch, half 1 of 2: arrival clears it.
-        phase_ = Phase::position;
+        position->is_landing = false;
 
         if (speed_current_signed_ != 0.0f)
         {
@@ -139,12 +137,15 @@ void StepperMotionPlanner::process(std::uint32_t now_ms) noexcept
     // Landing latch, half 2 of 2: braking sets it. Below the tick gate because
     // should_decelerate() cannot change within a millisecond, and the superloop
     // calls process() far more often than that.
-    if (is_position_mode() && speed_versor() == target_versor() && should_decelerate())
+    if (position && speed_versor() == target_versor(*position) && should_decelerate(*position))
     {
-        phase_ = Phase::position_landing;
+        position->is_landing = true;
     }
 
-    const float speed_desired = speed_desired_signed();
+    // Not std::visit: it pulls ~7 KB of vfprintf into flash.
+    const auto *velocity = std::get_if<VelocityMode>(&mode_);
+    const float speed_desired =
+        velocity ? velocity->speed_target_signed : speed_desired_signed(*position);
 
     // Idle - standing still with nothing commanded.
     if (speed_current_signed_ == 0.0f && speed_desired == 0.0f)
@@ -162,24 +163,26 @@ void StepperMotionPlanner::process(std::uint32_t now_ms) noexcept
 
 void StepperMotionPlanner::move_to_steps(std::int32_t target_steps) noexcept
 {
-    phase_ = Phase::position;
-    position_target_signed_ = target_steps;
+    mode_ = PositionMode{
+        .position_target_signed = target_steps,
+        .is_landing = false,
+    };
 }
 
 void StepperMotionPlanner::move_at_speed(float steps_per_second) noexcept
 {
-    phase_ = Phase::velocity;
-    speed_target_signed_ =
-        std::clamp(steps_per_second, -speed_profile_.max_speed, speed_profile_.max_speed);
+    mode_ = VelocityMode{
+        .speed_target_signed =
+            std::clamp(steps_per_second, -speed_profile_.max_speed, speed_profile_.max_speed),
+    };
 }
 
 void StepperMotionPlanner::stop() noexcept
 {
-    // Set the target to 0, but let the current speed decelerate
-    speed_target_signed_ = 0.0f;
-
-    // Switch to velocity so that it performs a graceful stop
-    phase_ = Phase::velocity;
+    // A zero velocity target ramps down gracefully from any mode.
+    mode_ = VelocityMode{
+        .speed_target_signed = 0.0f,
+    };
 }
 
 void StepperMotionPlanner::stop_immediately() noexcept
@@ -188,13 +191,18 @@ void StepperMotionPlanner::stop_immediately() noexcept
     speed_current_signed_ = 0.0f;
 
     // Only neutralize the setpoint of the active mode
-    if (is_position_mode())
+    if (std::holds_alternative<PositionMode>(mode_))
     {
-        position_target_signed_ = position_current_signed();
+        mode_ = PositionMode{
+            .position_target_signed = position_current_signed(),
+            .is_landing = false,
+        };
     }
     else
     {
-        speed_target_signed_ = 0.0f;
+        mode_ = VelocityMode{
+            .speed_target_signed = 0.0f,
+        };
     }
 
     // Cut the OC timer interrupt
@@ -209,5 +217,11 @@ void StepperMotionPlanner::reset_position(std::int32_t position) noexcept
     stepper_driver_.reset_pulse_count(position);
 
     // Move the target with the origin, or the next tick drives to the old one.
-    position_target_signed_ = position;
+    if (std::holds_alternative<PositionMode>(mode_))
+    {
+        mode_ = PositionMode{
+            .position_target_signed = position,
+            .is_landing = false,
+        };
+    }
 }

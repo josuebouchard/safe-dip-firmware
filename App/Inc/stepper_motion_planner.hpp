@@ -3,6 +3,7 @@
 
 #include "stepper_driver.hpp"
 #include <cstdint>
+#include <variant>
 
 class StepperMotionPlanner
 {
@@ -48,20 +49,21 @@ class StepperMotionPlanner
     const SpeedProfile &speed_profile_;
     StepperDriver &stepper_driver_;
 
-    enum class Phase : std::uint8_t
+    // No default member initializers: they'd make these not default-constructible
+    // inside the enclosing class, which std::variant needs. Aggregate init zero-fills.
+    struct PositionMode
     {
-        velocity,         // Aims for the commanded speed
-        position,         // Aims for `max_speed` towards target
-        position_landing, // Aims for `landing_speed` towards target
+        std::int32_t position_target_signed;
+        // Aims for `landing_speed` instead of `max_speed` once braking starts.
+        bool is_landing;
     };
-    Phase phase_ = Phase::position;
 
-    // Both position phases chase a step target; they differ only in which speed they aim for.
-    bool is_position_mode() const noexcept { return phase_ != Phase::velocity; }
+    struct VelocityMode
+    {
+        float speed_target_signed; // steps / second
+    };
 
-    // Target
-    std::int32_t position_target_signed_ = 0;
-    float speed_target_signed_ = 0.0f; // steps / second
+    std::variant<PositionMode, VelocityMode> mode_;
 
     // Current
     float speed_current_signed_ = 0.0f; // steps / second
@@ -70,16 +72,15 @@ class StepperMotionPlanner
     std::uint32_t last_ms_;
 
     // Helpers
-    std::int64_t distance_to_target() const noexcept;
+    std::int64_t distance_to_target(const PositionMode &position) const noexcept;
 
     std::int8_t speed_versor() const noexcept;
-    std::int8_t target_versor() const noexcept;
+    std::int8_t target_versor(const PositionMode &position) const noexcept;
 
-    bool should_decelerate() const noexcept;
+    bool should_decelerate(const PositionMode &position) const noexcept;
 
-    // The speed process() aims for this tick, derived from whichever
-    // setpoint the active mode uses.
-    float speed_desired_signed() const noexcept;
+    // The speed process() aims for this tick in position mode.
+    float speed_desired_signed(const PositionMode &position) const noexcept;
 
     // Single place where speed changes over time - both modes go through it.
     float ramp_speed_toward(float speed_desired, float delta_time_s) const noexcept;
