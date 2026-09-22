@@ -15,21 +15,13 @@ class StepperMotionPlanner
         float max_speed;
         float acceleration;
         float deceleration;
-        // Braking settles at this speed, then the axis stops dead on the target step.
         float landing_speed;
     };
 
-    explicit StepperMotionPlanner(SpeedProfile& speed_profile, StepperDriver &pulse_generator)
-        : stepper_driver_(pulse_generator), last_ms_(0), speed_profile_(speed_profile) {}
-
-    // Which setpoint process() drives towards. Position mode chases a step
-    // target and brakes on arrival; velocity mode holds a speed and never
-    // reads the position at all.
-    enum class ControlMode : std::uint8_t
+    explicit StepperMotionPlanner(const SpeedProfile &speed_profile, StepperDriver &pulse_generator)
+        : speed_profile_(speed_profile), stepper_driver_(pulse_generator), last_ms_(0)
     {
-        position,
-        velocity,
-    };
+    }
 
     void initialize(std::uint32_t now_ms) { last_ms_ = now_ms; }
 
@@ -47,21 +39,25 @@ class StepperMotionPlanner
 
     void process(std::uint32_t now_ms) noexcept;
 
-    const SpeedProfile &speed_profile() const noexcept { return speed_profile_; }
-    ControlMode control_mode() const noexcept { return mode_; }
     std::int32_t position_current_signed() const noexcept;
 
-    // Position mode only - there is no position target in velocity mode.
+    // False in velocity mode - there is no position target to be at.
     bool is_at_target() const noexcept;
-    bool is_at_target_speed() const noexcept;
 
   private:
+    const SpeedProfile &speed_profile_;
     StepperDriver &stepper_driver_;
 
-    ControlMode mode_ = ControlMode::position;
+    enum class Phase : std::uint8_t
+    {
+        velocity,         // Aims for the commanded speed
+        position,         // Aims for `max_speed` towards target
+        position_landing, // Aims for `landing_speed` towards target
+    };
+    Phase phase_ = Phase::position;
 
-    // Latched once braking starts, so the ramp never re-accelerates on approach.
-    bool is_landing_ = false;
+    // Both position phases chase a step target; they differ only in which speed they aim for.
+    bool is_position_mode() const noexcept { return phase_ != Phase::velocity; }
 
     // Target
     std::int32_t position_target_signed_ = 0;
@@ -73,9 +69,9 @@ class StepperMotionPlanner
     // Last
     std::uint32_t last_ms_;
 
-    SpeedProfile& speed_profile_;
-
     // Helpers
+    std::int64_t distance_to_target() const noexcept;
+
     std::int8_t speed_versor() const noexcept;
     std::int8_t target_versor() const noexcept;
 
