@@ -23,13 +23,15 @@ void Sequencer::stop() noexcept
     if (!is_system_running_)
         return;
 
-    // Stop
     is_system_running_ = false;
-
-    // Reset
     is_current_operation_started_ = false;
-    current_operation().cancel();
+}
+
+void Sequencer::restart() noexcept
+{
+    is_current_operation_started_ = false;
     reset_operation_index();
+    is_system_running_ = true;
 }
 
 bool Sequencer::is_running() const noexcept { return is_system_running_; }

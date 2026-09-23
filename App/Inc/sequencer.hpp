@@ -16,6 +16,7 @@ class Sequencer
     void sequencer_step() noexcept;
     void start() noexcept;
     void stop() noexcept;
+    void restart() noexcept;
 
     bool is_running() const noexcept;
 
