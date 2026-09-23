@@ -38,14 +38,11 @@ bool Sequencer::is_running() const noexcept { return is_system_running_; }
 
 void Sequencer::sequencer_step() noexcept
 {
-    if (is_system_running_)
+    if (!is_system_running_)
     {
-        run_current_operation();
+        return;
     }
-}
 
-void Sequencer::run_current_operation() noexcept
-{
     if (!is_current_operation_started_) // operation hasn't started
     {
         is_current_operation_started_ = true;

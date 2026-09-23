@@ -30,8 +30,6 @@ class Sequencer
     void reset_operation_index() noexcept;
     void advance_operation() noexcept;
     Operation &current_operation() const noexcept;
-
-    void run_current_operation() noexcept;
 };
 
 #endif // SEQUENCER_HPP
