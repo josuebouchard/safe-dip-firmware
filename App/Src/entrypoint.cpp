@@ -113,9 +113,9 @@ void setup()
 
 void loop()
 {
-    // @todo: maybe convert to external interrupt
-    // Active low: the button pulls the pin to ground against its internal pull-up.
-    bool is_e_stop_pressed = (HAL_GPIO_ReadPin(E_STOP_GPIO_Port, E_STOP_Pin) != GPIO_PIN_SET);
+    bool is_e_stop_pressed = (HAL_GPIO_ReadPin(E_STOP_GPIO_Port, E_STOP_Pin) == GPIO_PIN_SET);
+    bool is_start_button_pressed = (HAL_GPIO_ReadPin(START_GPIO_Port, START_Pin) == GPIO_PIN_SET);
+
     if (is_e_stop_pressed)
     {
         sequencer.stop();
@@ -123,17 +123,14 @@ void loop()
         stepper_movement_y.stop_immediately();
         hardware::effector.engage();
     }
-    else // Do work
+    else
     {
         const uint32_t now = HAL_GetTick();
 
-        // Start button process
-        bool is_start_button_pressed =
-            (HAL_GPIO_ReadPin(START_GPIO_Port, START_Pin) != GPIO_PIN_SET);
         if (!sequencer.is_running() && is_start_button_pressed)
         {
-            // Start sequencer
-            sequencer.start();
+            // Reset and restart the sequencer
+            sequencer.restart();
         }
 
         // Sequencer step
