@@ -113,8 +113,8 @@ void setup()
 
 void loop()
 {
-    bool is_e_stop_pressed = (HAL_GPIO_ReadPin(E_STOP_GPIO_Port, E_STOP_Pin) == GPIO_PIN_SET);
-    bool is_start_button_pressed = (HAL_GPIO_ReadPin(START_GPIO_Port, START_Pin) == GPIO_PIN_SET);
+    const bool is_e_stop_pressed = (HAL_GPIO_ReadPin(E_STOP_GPIO_Port, E_STOP_Pin) == GPIO_PIN_SET);
+    const bool is_start_button_pressed = (HAL_GPIO_ReadPin(START_GPIO_Port, START_Pin) == GPIO_PIN_SET);
 
     if (is_e_stop_pressed)
     {
@@ -127,7 +127,7 @@ void loop()
     {
         const uint32_t now = HAL_GetTick();
 
-        if (!sequencer.is_running() && is_start_button_pressed)
+        if (is_start_button_pressed && !sequencer.is_running())
         {
             // Reset and restart the sequencer
             sequencer.restart();
