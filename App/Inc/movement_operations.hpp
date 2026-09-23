@@ -15,7 +15,6 @@ class MoveStepperOperation : public Operation
 
     void start() noexcept override;
     PollResult poll() noexcept override;
-    void cancel() noexcept override;
 
     void set_position(std::int32_t position) noexcept { position_ = position; }
     std::int32_t position() const noexcept { return position_; }

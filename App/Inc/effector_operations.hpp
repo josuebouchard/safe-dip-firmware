@@ -14,7 +14,6 @@ class EffectorOperation : public Operation
 
     void start() noexcept override;
     PollResult poll() noexcept override { return PollResult::finished; }
-    void cancel() noexcept override { effector_.engage(); };
 
   protected:
     EffectorDriver &effector_;

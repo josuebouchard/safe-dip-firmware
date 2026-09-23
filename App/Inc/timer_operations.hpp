@@ -11,7 +11,6 @@ class DwellOperation : public Operation
 
     void start() noexcept override;
     PollResult poll() noexcept override;
-    void cancel() noexcept override {};
 
   private:
     std::uint32_t &dwell_time_ms_;
