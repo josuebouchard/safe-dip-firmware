@@ -30,9 +30,9 @@ static modbus_context_t modbus_ctx{};
 // Named rather than a temporary: StepperMotionPlanner stores the profile by
 // reference, so a temporary would not bind and would dangle if it did.
 static StepperMotionPlanner::SpeedProfile speed_profile_x{
-    1000, // max_speed
-    200,  // acceleration
-    50,   // landing_speed
+    4000, // max_speed
+    4000, // acceleration
+    100,  // landing_speed
 };
 
 static StepperMotionPlanner stepper_movement_x{
@@ -41,9 +41,9 @@ static StepperMotionPlanner stepper_movement_x{
 };
 
 static StepperMotionPlanner::SpeedProfile speed_profile_y{
-    1000, // max_speed
-    200,  // acceleration
-    50,   // landing_speed
+    4000, // max_speed
+    4000, // acceleration
+    100,  // landing_speed
 };
 
 static StepperMotionPlanner stepper_movement_y{
@@ -61,14 +61,34 @@ static MoveStepperOperation move_x_output{stepper_movement_x, 1000};
 static MoveStepperOperation move_y_up{stepper_movement_y, 0};
 static MoveStepperOperation move_y_down{stepper_movement_y, 500};
 
-static EffectorEngageOperation effector_engage{hardware::effector};
-static EffectorDisengageOperation effector_disengage{hardware::effector};
+static EffectorOperation effector_engage{hardware::effector, true};
+static EffectorOperation effector_disengage{hardware::effector, false};
 
-static DwellOperation dwell_operation{dwell_time_ms};
+static DwellOperation dwell{dwell_time_ms};
 
-static std::array<Operation *, 2> operations = {
+static std::array<Operation *, 13> operations = {
+    // Home
+    &move_y_up,
     &move_x_input,
+
+    // Pick
+    &move_y_down,
+    &effector_engage,
+    &move_y_up,
+
+    // Dip
+    &move_x_dip,
+    &move_y_down,
+    &dwell,
+    &move_y_up,
+
+    // Deposit
     &move_x_output,
+    &move_y_down,
+
+    // Release
+    &effector_disengage,
+    &move_y_up,
 };
 
 static Sequencer sequencer{std::span<Operation *>(operations)};
@@ -108,7 +128,8 @@ void loop()
         const uint32_t now = HAL_GetTick();
 
         // Start button process
-        bool is_start_button_pressed = (HAL_GPIO_ReadPin(START_GPIO_Port, START_Pin) != GPIO_PIN_SET);
+        bool is_start_button_pressed =
+            (HAL_GPIO_ReadPin(START_GPIO_Port, START_Pin) != GPIO_PIN_SET);
         if (!sequencer.is_running() && is_start_button_pressed)
         {
             // Start sequencer
