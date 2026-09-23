@@ -7,35 +7,18 @@
 class EffectorOperation : public Operation
 {
   public:
-    EffectorOperation(EffectorDriver &effector) noexcept : effector_{effector} {}
+    EffectorOperation(EffectorDriver &effector, bool should_engage) noexcept
+        : effector_{effector}, should_engage_(should_engage)
+    {
+    }
 
+    void start() noexcept override;
     PollResult poll() noexcept override { return PollResult::finished; }
     void cancel() noexcept override { effector_.engage(); };
 
   protected:
     EffectorDriver &effector_;
-};
-
-class EffectorEngageOperation : public EffectorOperation
-{
-  public:
-    explicit EffectorEngageOperation(EffectorDriver &effector) noexcept
-        : EffectorOperation{effector}
-    {
-    }
-
-    void start() noexcept override;
-};
-
-class EffectorDisengageOperation : public EffectorOperation
-{
-  public:
-    explicit EffectorDisengageOperation(EffectorDriver &effector) noexcept
-        : EffectorOperation{effector}
-    {
-    }
-
-    void start() noexcept override;
+    const bool should_engage_;
 };
 
 #endif // EFFECTOR_OPERATIONS_HPP
