@@ -62,7 +62,7 @@ static MoveStepperOperation move_y_down{stepper_movement_y, 500};
 static EffectorOperation effector_engage{hardware::effector, true};
 static EffectorOperation effector_disengage{hardware::effector, false};
 
-static DwellOperation dwell{200};
+static DwellOperation dwell{2000};
 
 static std::array<Operation *, 13> operations = {
     // Home
