@@ -51,8 +51,6 @@ static StepperMotionPlanner stepper_movement_y{
     hardware::stepper_driver_y,
 };
 
-static std::uint32_t dwell_time_ms = 200;
-
 // === Operations ===
 static MoveStepperOperation move_x_input{stepper_movement_x, 0};
 static MoveStepperOperation move_x_dip{stepper_movement_x, 500};
@@ -64,7 +62,7 @@ static MoveStepperOperation move_y_down{stepper_movement_y, 500};
 static EffectorOperation effector_engage{hardware::effector, true};
 static EffectorOperation effector_disengage{hardware::effector, false};
 
-static DwellOperation dwell{dwell_time_ms};
+static DwellOperation dwell{200};
 
 static std::array<Operation *, 13> operations = {
     // Home

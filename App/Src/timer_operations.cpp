@@ -1,11 +1,15 @@
 #include "timer_operations.hpp"
 #include "stm32f4xx_hal.h"
 
-void DwellOperation::start() noexcept { start_time_ = HAL_GetTick(); }
+void DwellOperation::start() noexcept
+{
+    start_time_ = HAL_GetTick();
+    active_dwell_time_ms_ = dwell_time_ms_;
+}
 
 DwellOperation::PollResult DwellOperation::poll() noexcept
 {
     const uint32_t elapsed = HAL_GetTick() - start_time_;
 
-    return elapsed >= dwell_time_ms_ ? PollResult::finished : PollResult::running;
+    return elapsed >= active_dwell_time_ms_ ? PollResult::finished : PollResult::running;
 }
