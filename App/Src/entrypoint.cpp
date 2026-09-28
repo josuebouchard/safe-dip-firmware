@@ -25,7 +25,6 @@ constexpr std::uint8_t ECHO_SOCKET = 0;
 constexpr std::uint16_t ECHO_PORT = 502;
 
 static modbus_tcp_task_t modbus_task;
-static modbus_context_t modbus_ctx{};
 
 // Named rather than a temporary: StepperMotionPlanner stores the profile by
 // reference, so a temporary would not bind and would dangle if it did.
@@ -90,6 +89,237 @@ static std::array<Operation *, 13> operations = {
 };
 
 static Sequencer sequencer{std::span<Operation *>(operations)};
+
+// === Modbus map ===
+// Layout documented in docs/modbus-map.md - keep both in sync.
+
+// Travel limits for the configurable positions, in steps.
+// @todo: set from the measured axis travel
+constexpr std::int32_t X_MAX_STEPS = 1000;
+constexpr std::int32_t Y_MAX_STEPS = 500;
+
+constexpr std::uint32_t DWELL_MAX_MS = 60000;
+
+enum DiscreteInput : std::uint16_t
+{
+    DI_E_STOP_PRESSED,
+    DI_START_PRESSED,
+    DI_SEQUENCER_RUNNING,
+    DI_X_AT_TARGET,
+    DI_Y_AT_TARGET,
+    DI_COUNT,
+};
+
+enum InputRegister : std::uint16_t
+{
+    IR_OPERATION_INDEX,
+    IR_X_POSITION_HIGH,
+    IR_X_POSITION_LOW,
+    IR_Y_POSITION_HIGH,
+    IR_Y_POSITION_LOW,
+    IR_COUNT,
+};
+
+enum HoldingRegister : std::uint16_t
+{
+    HR_X_INPUT_POSITION,
+    HR_X_DIP_POSITION,
+    HR_X_OUTPUT_POSITION,
+    HR_Y_UP_POSITION,
+    HR_Y_DOWN_POSITION,
+    HR_DWELL_TIME_MS,
+    HR_COUNT,
+};
+
+static bool is_in_range(std::uint16_t start, std::uint16_t quantity, std::uint16_t count) noexcept
+{
+    return start < count && quantity <= count - start;
+}
+
+static bool is_pin_set(GPIO_TypeDef *port, std::uint16_t pin) noexcept
+{
+    return HAL_GPIO_ReadPin(port, pin) == GPIO_PIN_SET;
+}
+
+static std::uint16_t high_word(std::int32_t value) noexcept
+{
+    return static_cast<std::uint16_t>(static_cast<std::uint32_t>(value) >> 16);
+}
+
+static std::uint16_t low_word(std::int32_t value) noexcept
+{
+    return static_cast<std::uint16_t>(static_cast<std::uint32_t>(value) & 0xFFFFU);
+}
+
+static bool read_discrete_input(std::uint16_t address) noexcept
+{
+    switch (address)
+    {
+    case DI_E_STOP_PRESSED:
+        return is_pin_set(E_STOP_GPIO_Port, E_STOP_Pin);
+    case DI_START_PRESSED:
+        return is_pin_set(START_GPIO_Port, START_Pin);
+    case DI_SEQUENCER_RUNNING:
+        return sequencer.is_running();
+    case DI_X_AT_TARGET:
+        return stepper_movement_x.is_at_target();
+    case DI_Y_AT_TARGET:
+        return stepper_movement_y.is_at_target();
+    default:
+        return false; // Unreachable - callers check the range first
+    }
+}
+
+static std::uint16_t read_input_register(std::uint16_t address) noexcept
+{
+    switch (address)
+    {
+    case IR_OPERATION_INDEX:
+        return static_cast<std::uint16_t>(sequencer.operation_index());
+    case IR_X_POSITION_HIGH:
+        return high_word(stepper_movement_x.position_current_signed());
+    case IR_X_POSITION_LOW:
+        return low_word(stepper_movement_x.position_current_signed());
+    case IR_Y_POSITION_HIGH:
+        return high_word(stepper_movement_y.position_current_signed());
+    case IR_Y_POSITION_LOW:
+        return low_word(stepper_movement_y.position_current_signed());
+    default:
+        return 0; // Unreachable - callers check the range first
+    }
+}
+
+static std::uint16_t read_holding_register(std::uint16_t address) noexcept
+{
+    switch (address)
+    {
+    case HR_X_INPUT_POSITION:
+        return static_cast<std::uint16_t>(move_x_input.position());
+    case HR_X_DIP_POSITION:
+        return static_cast<std::uint16_t>(move_x_dip.position());
+    case HR_X_OUTPUT_POSITION:
+        return static_cast<std::uint16_t>(move_x_output.position());
+    case HR_Y_UP_POSITION:
+        return static_cast<std::uint16_t>(move_y_up.position());
+    case HR_Y_DOWN_POSITION:
+        return static_cast<std::uint16_t>(move_y_down.position());
+    case HR_DWELL_TIME_MS:
+        return static_cast<std::uint16_t>(dwell.dwell_time());
+    default:
+        return 0; // Unreachable - callers check the range first
+    }
+}
+
+static bool is_valid_holding_value(std::uint16_t address, std::uint16_t value) noexcept
+{
+    switch (address)
+    {
+    case HR_X_INPUT_POSITION:
+    case HR_X_DIP_POSITION:
+    case HR_X_OUTPUT_POSITION:
+        return value <= X_MAX_STEPS;
+    case HR_Y_UP_POSITION:
+    case HR_Y_DOWN_POSITION:
+        return value <= Y_MAX_STEPS;
+    case HR_DWELL_TIME_MS:
+        return value <= DWELL_MAX_MS;
+    default:
+        return false;
+    }
+}
+
+// Every value takes effect the next time its operation starts.
+static void write_holding_register(std::uint16_t address, std::uint16_t value) noexcept
+{
+    switch (address)
+    {
+    case HR_X_INPUT_POSITION:
+        move_x_input.set_position(value);
+        break;
+    case HR_X_DIP_POSITION:
+        move_x_dip.set_position(value);
+        break;
+    case HR_X_OUTPUT_POSITION:
+        move_x_output.set_position(value);
+        break;
+    case HR_Y_UP_POSITION:
+        move_y_up.set_position(value);
+        break;
+    case HR_Y_DOWN_POSITION:
+        move_y_down.set_position(value);
+        break;
+    case HR_DWELL_TIME_MS:
+        dwell.set_dwell_time(value);
+        break;
+    default:
+        break; // Unreachable - callers validate first
+    }
+}
+
+static modbus_query_state_t modbus_read_discrete_inputs(std::uint16_t start, bool *dest,
+                                                        std::uint16_t quantity)
+{
+    if (!is_in_range(start, quantity, DI_COUNT))
+        return MODBUS_QUERY_ST_BAD_ADDRESS;
+
+    for (std::uint16_t i = 0; i < quantity; i++)
+        dest[i] = read_discrete_input(start + i);
+
+    return MODBUS_QUERY_ST_OK;
+}
+
+static modbus_query_state_t modbus_read_input_registers(std::uint16_t start, std::uint16_t *dest,
+                                                        std::uint16_t quantity)
+{
+    if (!is_in_range(start, quantity, IR_COUNT))
+        return MODBUS_QUERY_ST_BAD_ADDRESS;
+
+    for (std::uint16_t i = 0; i < quantity; i++)
+        dest[i] = read_input_register(start + i);
+
+    return MODBUS_QUERY_ST_OK;
+}
+
+static modbus_query_state_t modbus_read_holding_registers(std::uint16_t start, std::uint16_t *dest,
+                                                          std::uint16_t quantity)
+{
+    if (!is_in_range(start, quantity, HR_COUNT))
+        return MODBUS_QUERY_ST_BAD_ADDRESS;
+
+    for (std::uint16_t i = 0; i < quantity; i++)
+        dest[i] = read_holding_register(start + i);
+
+    return MODBUS_QUERY_ST_OK;
+}
+
+static modbus_query_state_t modbus_write_holding_registers(std::uint16_t start,
+                                                           const std::uint16_t *src,
+                                                           std::uint16_t quantity)
+{
+    if (!is_in_range(start, quantity, HR_COUNT))
+        return MODBUS_QUERY_ST_BAD_ADDRESS;
+
+    // Validate everything first, so a rejected write changes nothing.
+    // The library has no "illegal value" query state, so this reports a server failure.
+    for (std::uint16_t i = 0; i < quantity; i++)
+        if (!is_valid_holding_value(start + i, src[i]))
+            return MODBUS_QUERY_ST_FAILURE;
+
+    for (std::uint16_t i = 0; i < quantity; i++)
+        write_holding_register(start + i, src[i]);
+
+    return MODBUS_QUERY_ST_OK;
+}
+
+// Coils are left unmapped (illegal function): no remote commands yet.
+static modbus_context_t modbus_ctx{
+    .read_discrete_inputs = modbus_read_discrete_inputs,
+    .read_coils = nullptr,
+    .write_coils = nullptr,
+    .read_input_registers = modbus_read_input_registers,
+    .read_holding_registers = modbus_read_holding_registers,
+    .write_holding_registers = modbus_write_holding_registers,
+};
 
 void setup()
 {

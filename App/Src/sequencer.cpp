@@ -36,6 +36,8 @@ void Sequencer::restart() noexcept
 
 bool Sequencer::is_running() const noexcept { return is_system_running_; }
 
+std::size_t Sequencer::operation_index() const noexcept { return operation_index_; }
+
 void Sequencer::sequencer_step() noexcept
 {
     if (!is_system_running_)

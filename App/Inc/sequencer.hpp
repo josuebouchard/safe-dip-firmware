@@ -19,6 +19,7 @@ class Sequencer
     void restart() noexcept;
 
     bool is_running() const noexcept;
+    std::size_t operation_index() const noexcept;
 
   private:
     bool is_system_running_ = false;
