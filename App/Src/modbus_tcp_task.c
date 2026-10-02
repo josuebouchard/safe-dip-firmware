@@ -1,6 +1,6 @@
 #include "modbus_tcp_task.h"
-#include "socket.h"       /* socket(), listen(), recv(), send(), disconnect() */
-#include "ethernet_if.h"  /* wiznet_close(), getSn_SR, getSn_RX_RSR, etc.    */
+#include "ethernet_if.h" /* wiznet_close(), getSn_SR, getSn_RX_RSR, etc.    */
+#include "socket.h"      /* socket(), listen(), recv(), send(), disconnect() */
 #include <stdio.h>
 
 /* ------------------------------------------------------------------ */
@@ -38,19 +38,17 @@ static modbus_task_status_t send_pending(modbus_tcp_task_t *task)
 /* ------------------------------------------------------------------ */
 /*  Init                                                               */
 /* ------------------------------------------------------------------ */
-void modbus_tcp_task_init(modbus_tcp_task_t *task,
-                          uint8_t             socket_id,
-                          uint16_t            port,
-                          modbus_context_t   *ctx)
+void modbus_tcp_task_init(modbus_tcp_task_t *task, uint8_t socket_id, uint16_t port,
+                          modbus_context_t *ctx)
 {
-    task->socket_id        = socket_id;
-    task->port             = port;
-    task->context          = ctx;
-    task->last_socket_state = 0xFF;   /* force first-run print */
+    task->socket_id = socket_id;
+    task->port = port;
+    task->context = ctx;
+    task->last_socket_state = 0xFF; /* force first-run print */
     task->pending_write_size = 0;
 
     /* Initialize and reset the Modbus FSM */
-    task->fsm = (modbus_tcp_fsm_t){ .context = ctx };
+    task->fsm = (modbus_tcp_fsm_t){.context = ctx};
     modbus_tcp_fsm_reset(&task->fsm);
 }
 
@@ -66,10 +64,9 @@ modbus_task_status_t modbus_tcp_task_run(modbus_tcp_task_t *task)
     /* --- debug trace on state change --- */
     if (current_state != task->last_socket_state)
     {
-        uint8_t eth_up    = getPHYCFGR() & PHYCFGR_LNK_ON;
-        uint8_t sn_ir     = getSn_IR(sock);
-        printf("Eth:%s | S:0x%02X->0x%02X | IR:%02X\r\n",
-               eth_up ? "Y" : "N",
+        uint8_t eth_up = getPHYCFGR() & PHYCFGR_LNK_ON;
+        uint8_t sn_ir = getSn_IR(sock);
+        printf("Eth:%s | S:0x%02X->0x%02X | IR:%02X\r\n", eth_up ? "Y" : "N",
                task->last_socket_state, current_state, sn_ir);
         task->last_socket_state = current_state;
     }
@@ -111,11 +108,11 @@ modbus_task_status_t modbus_tcp_task_run(modbus_tcp_task_t *task)
         if (task->pending_write_size > 0)
             return send_pending(task);
 
-        uint16_t rx_avail    = getSn_RX_RSR(sock);
-        uint8_t  read_size   = modbus_tcp_fsm_read_length(&task->fsm);
+        uint16_t rx_avail = getSn_RX_RSR(sock);
+        uint8_t read_size = modbus_tcp_fsm_read_length(&task->fsm);
 
         if (rx_avail < read_size)
-            return MODBUS_TASK_IDLE;   /* not enough bytes yet */
+            return MODBUS_TASK_IDLE; /* not enough bytes yet */
 
         /* --- recv --- */
         int32_t got = recv(sock, task->req_buf, read_size);
@@ -127,11 +124,9 @@ modbus_task_status_t modbus_tcp_task_run(modbus_tcp_task_t *task)
         }
 
         /* --- dispatch through the Modbus FSM --- */
-        modbus_tcp_dispatch_result_t dispatch =
-            modbus_tcp_fsm_dispatch(&task->fsm,
-                                    task->req_buf,
-                                    task->res_buf,
-                                    sizeof(task->res_buf));   /* fixed: was 1024 on a 255-byte buffer */
+        modbus_tcp_dispatch_result_t dispatch = modbus_tcp_fsm_dispatch(
+            &task->fsm, task->req_buf, task->res_buf,
+            sizeof(task->res_buf)); /* fixed: was 1024 on a 255-byte buffer */
 
         if (dispatch.status != MODBUS_TCP_DISPATCH_ST_OK)
         {
@@ -150,7 +145,7 @@ modbus_task_status_t modbus_tcp_task_run(modbus_tcp_task_t *task)
     case SOCK_CLOSE_WAIT:
         /* Peer closed. Graceful close only - a wiznet_close() here would cut
            the FIN we just queued, now that disconnect() no longer waits. */
-        abort_connection(task);   /* clean slate for next client */
+        abort_connection(task); /* clean slate for next client */
         return MODBUS_TASK_IDLE;
 
     default:
