@@ -37,6 +37,7 @@ typedef struct
     /* runtime state */
     uint8_t last_socket_state;
     modbus_tcp_fsm_t fsm;
+    uint16_t pending_write_size; /* response in res_buf the W5500 hasn't taken yet */
 
     /* buffers (owned by the task so they persist across calls) */
     uint8_t req_buf[MODBUS_TASK_REQ_BUF_SIZE];

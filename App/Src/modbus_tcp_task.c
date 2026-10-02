@@ -4,6 +4,38 @@
 #include <stdio.h>
 
 /* ------------------------------------------------------------------ */
+/*  Helpers                                                            */
+/* ------------------------------------------------------------------ */
+
+/* Non-blocking: issues DISCON and returns; the socket reaches SOCK_CLOSED
+   on its own (FIN handshake or W5500 timeout) and run() reopens it. */
+static void abort_connection(modbus_tcp_task_t *task)
+{
+    disconnect(task->socket_id);
+    modbus_tcp_fsm_reset(&task->fsm);
+    task->pending_write_size = 0;
+}
+
+/* Hands the pending response to the W5500. SOCK_BUSY means the previous
+   send isn't ACKed yet or the TX buffer is full - keep it and retry next pass. */
+static modbus_task_status_t send_pending(modbus_tcp_task_t *task)
+{
+    int32_t sent = send(task->socket_id, task->res_buf, task->pending_write_size);
+
+    if (sent == SOCK_BUSY)
+        return MODBUS_TASK_BUSY;
+
+    if (sent != task->pending_write_size)
+    {
+        abort_connection(task);
+        return MODBUS_TASK_ERROR;
+    }
+
+    task->pending_write_size = 0;
+    return MODBUS_TASK_BUSY;
+}
+
+/* ------------------------------------------------------------------ */
 /*  Init                                                               */
 /* ------------------------------------------------------------------ */
 void modbus_tcp_task_init(modbus_tcp_task_t *task,
@@ -15,6 +47,7 @@ void modbus_tcp_task_init(modbus_tcp_task_t *task,
     task->port             = port;
     task->context          = ctx;
     task->last_socket_state = 0xFF;   /* force first-run print */
+    task->pending_write_size = 0;
 
     /* Initialize and reset the Modbus FSM */
     task->fsm = (modbus_tcp_fsm_t){ .context = ctx };
@@ -47,7 +80,9 @@ modbus_task_status_t modbus_tcp_task_run(modbus_tcp_task_t *task)
 
     case SOCK_CLOSED:
     {
-        if (socket(sock, Sn_MR_TCP, task->port, 0x00) != sock)
+        /* Non-blocking: send()/disconnect() return SOCK_BUSY instead of
+           spinning on W5500 registers and stalling the superloop. */
+        if (socket(sock, Sn_MR_TCP, task->port, SF_IO_NONBLOCK) != sock)
         {
             printf("task: socket() failed\r\n");
             return MODBUS_TASK_ERROR;
@@ -72,6 +107,10 @@ modbus_task_status_t modbus_tcp_task_run(modbus_tcp_task_t *task)
 
     case SOCK_ESTABLISHED:
     {
+        /* Finish the previous response before reading the next request */
+        if (task->pending_write_size > 0)
+            return send_pending(task);
+
         uint16_t rx_avail    = getSn_RX_RSR(sock);
         uint8_t  read_size   = modbus_tcp_fsm_read_length(&task->fsm);
 
@@ -83,8 +122,7 @@ modbus_task_status_t modbus_tcp_task_run(modbus_tcp_task_t *task)
         if (got != read_size)
         {
             /* W5500 hardware fault — abort connection */
-            disconnect(sock);
-            modbus_tcp_fsm_reset(&task->fsm);
+            abort_connection(task);
             return MODBUS_TASK_ERROR;
         }
 
@@ -102,24 +140,17 @@ modbus_task_status_t modbus_tcp_task_run(modbus_tcp_task_t *task)
         }
 
         /* --- send response --- */
-        if (dispatch.write_size > 0)
-        {
-            int32_t sent = send(sock, task->res_buf, dispatch.write_size);
-            if (sent != dispatch.write_size)
-            {
-                disconnect(sock);
-                modbus_tcp_fsm_reset(&task->fsm);
-                return MODBUS_TASK_ERROR;
-            }
-        }
+        task->pending_write_size = dispatch.write_size;
+        if (task->pending_write_size > 0)
+            return send_pending(task);
 
         return MODBUS_TASK_BUSY;
     }
 
     case SOCK_CLOSE_WAIT:
-        disconnect(sock);
-        wiznet_close(sock);
-        modbus_tcp_fsm_reset(&task->fsm);   /* clean slate for next client */
+        /* Peer closed. Graceful close only - a wiznet_close() here would cut
+           the FIN we just queued, now that disconnect() no longer waits. */
+        abort_connection(task);   /* clean slate for next client */
         return MODBUS_TASK_IDLE;
 
     default:
