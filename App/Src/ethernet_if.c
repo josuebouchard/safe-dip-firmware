@@ -32,14 +32,6 @@ static void spi_write_byte(uint8_t byte_to_write) {
     spi_write_burst(&byte_to_write, 1);
 }
 
-static void my_critical_enter(void) {
-    __disable_irq();
-}
-
-static void my_critical_exit(void) {
-    __enable_irq();
-}
-
 static void spi_cs_select(void) {
     HAL_GPIO_WritePin(SPI_CS_GPIO_Port, SPI_CS_Pin, GPIO_PIN_RESET);
 }
@@ -74,10 +66,9 @@ void ethernet_W5500_init() {
     reg_wizchip_spi_cbfunc(spi_read_byte, spi_write_byte);
     reg_wizchip_spiburst_cbfunc(spi_read_burst, spi_write_burst);
 
-    // Define critical section
-    reg_wizchip_cris_cbfunc(my_critical_enter, my_critical_exit);
-
-    
+    // @note: critical section is not defined, since no interrupt touches SPI.
+    // If that wasn't the case, the critical section might need to be reintroduced.
+    // It's not necessary to disable all IRQs, just the ones touching SPI.
 
     // === Initialization ===
 
