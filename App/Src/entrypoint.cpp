@@ -91,7 +91,6 @@ static std::array<Operation *, 13> operations = {
 static Sequencer sequencer{std::span<Operation *>(operations)};
 
 // === Modbus map ===
-// Layout documented in docs/modbus-map.md - keep both in sync.
 
 // Travel limits for the configurable positions, in steps.
 // @todo: set from the measured axis travel
