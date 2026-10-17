@@ -2,7 +2,7 @@
 #include "stm32_output_compare_channel.hpp"
 
 #include "main.h"
-#include "stm32f4xx_hal.h"
+#include "stm32f4xx_hal_gpio.h"
 #include "stm32f4xx_hal_tim.h"
 
 #include <cstdint>
@@ -55,7 +55,7 @@ StepperDriver stepper_driver_y{
             StepperDriver::DirectionPin{
                 .port = DIR_y_GPIO_Port,
                 .pin = DIR_y_Pin,
-                .electrical_state_clockwise = GPIO_PIN_RESET,
+                .electrical_state_clockwise = GPIO_PIN_SET,
             },
         .timer_ticks_per_second = TIM2_TICKS_PER_SECOND,
     },

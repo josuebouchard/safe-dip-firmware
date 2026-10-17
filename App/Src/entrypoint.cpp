@@ -29,7 +29,7 @@ static modbus_tcp_task_t modbus_task;
 // Named rather than a temporary: StepperMotionPlanner stores the profile by
 // reference, so a temporary would not bind and would dangle if it did.
 static StepperMotionPlanner::SpeedProfile speed_profile_x{
-    4000, // max_speed
+    8000, // max_speed
     4000, // acceleration
     100,  // landing_speed
 };
@@ -40,9 +40,9 @@ static StepperMotionPlanner stepper_movement_x{
 };
 
 static StepperMotionPlanner::SpeedProfile speed_profile_y{
-    4000, // max_speed
-    4000, // acceleration
-    100,  // landing_speed
+    10000, // max_speed
+    8000,  // acceleration
+    100,   // landing_speed
 };
 
 static StepperMotionPlanner stepper_movement_y{
@@ -52,11 +52,11 @@ static StepperMotionPlanner stepper_movement_y{
 
 // === Operations ===
 static MoveStepperOperation move_x_input{stepper_movement_x, 0};
-static MoveStepperOperation move_x_dip{stepper_movement_x, 500};
-static MoveStepperOperation move_x_output{stepper_movement_x, 1000};
+static MoveStepperOperation move_x_dip{stepper_movement_x, 8000};
+static MoveStepperOperation move_x_output{stepper_movement_x, 16000};
 
 static MoveStepperOperation move_y_up{stepper_movement_y, 0};
-static MoveStepperOperation move_y_down{stepper_movement_y, 500};
+static MoveStepperOperation move_y_down{stepper_movement_y, 40000};
 
 static EffectorOperation effector_engage{hardware::effector, true};
 static EffectorOperation effector_disengage{hardware::effector, false};
@@ -340,8 +340,8 @@ void setup()
 
 void loop()
 {
-    const bool is_e_stop_pressed = (HAL_GPIO_ReadPin(E_STOP_GPIO_Port, E_STOP_Pin) == GPIO_PIN_SET);
-    const bool is_start_button_pressed = (HAL_GPIO_ReadPin(START_GPIO_Port, START_Pin) == GPIO_PIN_SET);
+    const bool is_e_stop_pressed = false;
+    const bool is_start_button_pressed = (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET);
 
     if (is_e_stop_pressed)
     {
