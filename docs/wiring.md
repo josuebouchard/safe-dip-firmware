@@ -15,7 +15,7 @@ The driver objects that use these pins are created once in
 | Y stepper driver | Direction | `DIR_y` | A4 | CN8 | PC1 | GPIO output, **open-drain**, idle released |
 | Emergency stop button | Contact | `E_STOP` | D4 | CN9 | PB5 | GPIO input, internal pull-up, active low |
 | Start button | Contact | `START` | D5 | CN9 | PB4 | GPIO input, internal pull-up, active low |
-| Effector | Enable | `EFFECTOR` | D6 | CN9 | PB10 | GPIO output, push-pull, idle low |
+| Effector relay | Input | `EFFECTOR` | D6 | CN9 | PB10 | GPIO output, **open-drain**, released = engaged |
 | W5500 Ethernet | Reset | `W5500_RST` | D9 | CN5 | PC7 | GPIO output, push-pull, idle high |
 | W5500 Ethernet | Chip select | `SPI_CS` | D10 | CN5 | PB6 | GPIO output, push-pull, idle high |
 | W5500 Ethernet | MOSI | — | D11 | CN5 | PA7 | SPI1_MOSI |
@@ -62,6 +62,72 @@ whose anode sits on 5 V, so the MCU pin pulls the cathode down to light it.
   directly** — no STM32 pin tolerates that. Use series resistors sized for the rail or a buffer.
 - If an axis turns the wrong way, flip `electrical_state_clockwise` for that axis in
   `App/Src/hardware.cpp`; the fix then applies to every entrypoint.
+
+## Effector relay (active low, 12 V on NC)
+
+The effector is a plain 12 V electromagnet: it holds while powered and lets go at 0 V. Its safe state
+is engaged, so the 12 V supply runs through the relay's **normally-closed** contact. The magnet is
+powered whenever the relay coil is off, and the coil is only on while the MCU actively pulls `IN`
+low.
+The relay input is active low and the MCU **sinks** 4 mA (measured) to drive it, the same way it drives
+the stepper optos.
+
+**Control side (5 V):**
+
+| Relay module | Connects to | Notes |
+|---|---|---|
+| VCC | Nucleo 5V pin | Same supply as the MCU, so both lose power together |
+| IN | D6 (PB10) | Open-drain, no pull |
+| GND | Nucleo GND | |
+
+**Load side (12 V):**
+
+| Terminal | Connects to | Notes |
+|---|---|---|
+| NC | +12 V | Closed while the coil is off |
+| COM | Effector + | |
+| NO | — | Unused |
+| Effector − | 12 V supply GND | |
+
+| PB10 | Written by | Relay coil | Contact | Effector |
+|---|---|---|---|---|
+| Released (high-Z) | `GPIO_PIN_SET`, or MCU in reset / unpowered | off | NC closed | 12 V → **engaged** |
+| Driven low | `GPIO_PIN_RESET` | on | NC open | 0 V → disengaged |
+
+- `EffectorDriver::engage()` writes `GPIO_PIN_SET`, which on an open-drain pin means released;
+  `disengage()` writes `GPIO_PIN_RESET`, which drives the pin low.
+- **Fail-safe:** the magnet engages whenever the coil drops out, whatever the reason: the MCU is
+  held in reset, loses power, or never configured the pin; the relay module loses its 5 V; the
+  `IN` wire breaks.
+- **Boot:** after reset every GPIO except the debug pins is a floating input, so PB10 is high-Z
+  until `MX_GPIO_Init` runs. `MX_GPIO_Init` writes `GPIO_PIN_SET` to the output register *before*
+  switching the pin to open-drain output, so there is no low glitch. `setup()` then calls
+  `engage()`.
+
+**What is not covered:**
+
+- **Loss of the 12 V supply** drops the load, whatever the relay does. So does a broken wire to the
+  magnet. Only a permanent-magnet (power-off holding) type or a backup supply covers this.
+- **A welded relay contact** (NC stuck closed) keeps the magnet on, so `disengage()` has no effect.
+  This can only be detected with feedback from the effector.
+- **Flyback diode (required):** the electromagnet is a large inductor. Put a diode across it,
+  cathode to `effector +`. Without it, opening the contact makes the coil's stored energy arc across
+  the NC contact and spike the 12 V line. A plain diode slows the release; a diode in series with a
+  zener releases faster. The module's own diode protects the relay coil, not the magnet.
+
+**Electrical checks (STM32F446RE):**
+
+- **Effector pin must be FT.** The module pulls `IN` up to its own 5 V through the opto LED and resistor, so
+  the released pin sits close to 5 V. PB10 is FT (DS10693, Table 10). The internal pull-up must stay
+  off, because a pull-up to 3.3 V would fight the 5 V. A push-pull output would clamp the line at
+  3.3 V and leave the opto partly lit, which is why the pin must be open-drain.
+- FT pins are only rated for $V_{DD}$ + 4 V (max 5.5 V) on the input, which drops to 4 V when
+  $V_{DD}$ = 0. Power the module from the Nucleo's **5V pin** so that it loses power together with
+  the MCU. Do not power it from a separate 5 V supply that can stay up while the board is off.
+- Sink current: **4 mA measured on the bench**, well inside the $V_{OL}$ ≤ 0.4 V at 8 mA
+  rating.
+- The module is **active low**: `IN` is pulled up to VCC internally, and pulling it low turns the
+  relay on. That pull-up is why a released pin turns the relay off.
 
 ## 5 V tolerance
 

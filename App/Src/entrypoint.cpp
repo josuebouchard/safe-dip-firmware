@@ -336,6 +336,9 @@ void setup()
     // Initialize movement planners
     stepper_movement_x.initialize(now);
     stepper_movement_y.initialize(now);
+
+    // Initialize safe defaults
+    hardware::effector.engage();
 }
 
 void loop()
