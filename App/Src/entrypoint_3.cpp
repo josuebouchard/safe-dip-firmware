@@ -24,6 +24,7 @@ static StepperMotionPlanner::SpeedProfile speed_profile{
     CRUISE_SPEED,  // max_speed
     ACCELERATION,  // acceleration
     LANDING_SPEED, // landing_speed
+    LANDING_SPEED, // homing_speed
 };
 
 static StepperMotionPlanner stepper_movement_x{

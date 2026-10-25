@@ -10,12 +10,13 @@ class StepperMotionPlanner
   public:
     struct SpeedProfile
     {
-        SpeedProfile(float max_speed, float acceleration,
-                     float landing_speed) noexcept;
+        SpeedProfile(float max_speed, float acceleration, float landing_speed,
+                     float homing_speed) noexcept;
 
         float max_speed;
         float acceleration;
         float landing_speed;
+        float homing_speed;
     };
 
     explicit StepperMotionPlanner(const SpeedProfile &speed_profile, StepperDriver &pulse_generator)
@@ -27,7 +28,9 @@ class StepperMotionPlanner
 
     // Movement interface
     void move_to_steps(std::int32_t target_steps) noexcept;
+    void move_steps(std::int32_t delta_steps) noexcept;
     void move_at_speed(float steps_per_second) noexcept;
+    void move_at_speed_in_direction(float direction) noexcept;
 
     // Ramps down at the acceleration rate.
     void stop() noexcept;
@@ -43,6 +46,8 @@ class StepperMotionPlanner
 
     // False in velocity mode - there is no position target to be at.
     bool is_at_target() const noexcept;
+
+    float current_speed_signed() const noexcept;
 
   private:
     const SpeedProfile &speed_profile_;

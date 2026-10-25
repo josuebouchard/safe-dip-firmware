@@ -9,10 +9,13 @@ template <typename T> static constexpr std::int8_t sign(T value) noexcept
     return (value > 0) - (value < 0);
 }
 
-StepperMotionPlanner::SpeedProfile::SpeedProfile(float max_speed, float acceleration, float landing_speed) noexcept
+StepperMotionPlanner::SpeedProfile::SpeedProfile(float max_speed, float acceleration,
+                                                 float landing_speed, float homing_speed) noexcept
     : max_speed(max_speed), acceleration(acceleration),
       // A zero landing speed would stall short of the target.
-      landing_speed(std::min(std::max(landing_speed, 1.0f), max_speed))
+      landing_speed(std::min(std::max(landing_speed, 1.0f), max_speed)),
+      // Same bounds: a zero homing speed would never reach the switch.
+      homing_speed(std::min(std::max(homing_speed, 1.0f), max_speed))
 {
 }
 
@@ -26,6 +29,8 @@ bool StepperMotionPlanner::is_at_target() const noexcept
     const auto *position = std::get_if<PositionMode>(&mode_);
     return position && distance_to_target(*position) == 0;
 }
+
+float StepperMotionPlanner::current_speed_signed() const noexcept { return speed_current_signed_; }
 
 std::int8_t StepperMotionPlanner::speed_versor() const noexcept
 {
@@ -161,12 +166,21 @@ void StepperMotionPlanner::move_to_steps(std::int32_t target_steps) noexcept
     };
 }
 
+void StepperMotionPlanner::move_steps(std::int32_t delta_steps) noexcept {
+    move_to_steps(position_current_signed() + delta_steps);
+}
+
 void StepperMotionPlanner::move_at_speed(float steps_per_second) noexcept
 {
     mode_ = VelocityMode{
         .speed_target_signed =
             std::clamp(steps_per_second, -speed_profile_.max_speed, speed_profile_.max_speed),
     };
+}
+
+void StepperMotionPlanner::move_at_speed_in_direction(float direction) noexcept
+{
+    move_at_speed(std::copysignf(speed_profile_.homing_speed, direction));
 }
 
 void StepperMotionPlanner::stop() noexcept

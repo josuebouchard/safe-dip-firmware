@@ -32,6 +32,7 @@ static StepperMotionPlanner::SpeedProfile speed_profile_x{
     8000, // max_speed
     4000, // acceleration
     100,  // landing_speed
+    2000, // homing_speed
 };
 
 static StepperMotionPlanner stepper_movement_x{
@@ -43,6 +44,7 @@ static StepperMotionPlanner::SpeedProfile speed_profile_y{
     10000, // max_speed
     8000,  // acceleration
     100,   // landing_speed
+    2000,  // homing_speed
 };
 
 static StepperMotionPlanner stepper_movement_y{
