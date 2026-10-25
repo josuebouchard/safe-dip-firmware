@@ -46,8 +46,7 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 )
 
 # Add sources to executable
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user sources here
+set(APP_SOURCES
     App/Src/effector_driver.cpp
     App/Src/effector_operations.cpp
     App/Src/entrypoint.cpp
@@ -61,6 +60,30 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     App/Src/stm32_output_compare_channel.cpp
     App/Src/timer_operations.cpp
 )
+
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+    # Add user sources here
+    ${APP_SOURCES}
+)
+
+# Extra warnings for our own code only. The CubeMX/HAL sources share this target
+# and would drown the output, so the options are set per source file.
+set(APP_WARNINGS
+    -Wextra
+    -Wconversion            # implicit narrowing: int -> uint8_t, float -> int, ...
+    -Wsign-conversion       # signed <-> unsigned, e.g. -1 passed as std::uint8_t
+    -Wdouble-promotion      # float silently promoted to double (no double FPU on the M4)
+    -Wshadow                # a local hiding another name
+    -Wundef                 # #if on an undefined macro
+    -Wcast-align
+    -Wformat=2
+    -Wimplicit-fallthrough
+    $<$<COMPILE_LANGUAGE:CXX>:-Wold-style-cast>
+    $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor>
+    $<$<COMPILE_LANGUAGE:CXX>:-Woverloaded-virtual>
+    $<$<COMPILE_LANGUAGE:CXX>:-Wextra-semi>
+)
+set_source_files_properties(${APP_SOURCES} PROPERTIES COMPILE_OPTIONS "${APP_WARNINGS}")
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
@@ -89,3 +112,12 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     wiznet_w5500
     modbus
 )
+
+# Treat vendor headers as system headers for our code, so the warnings above skip
+# macros we cannot change (GPIOB, GPIO_PIN_5 and TIM2 expand to C casts, getSn_SR()
+# to int arithmetic). Only consumers are affected; the libraries build as before.
+foreach(vendor_target stm32cubemx wiznet_w5500)
+    get_target_property(vendor_includes ${vendor_target} INTERFACE_INCLUDE_DIRECTORIES)
+    set_property(TARGET ${vendor_target} APPEND PROPERTY
+        INTERFACE_SYSTEM_INCLUDE_DIRECTORIES ${vendor_includes})
+endforeach()
