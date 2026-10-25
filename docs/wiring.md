@@ -15,6 +15,8 @@ The driver objects that use these pins are created once in
 | Y stepper driver | Direction | `DIR_y` | A4 | CN8 | PC1 | GPIO output, **open-drain**, idle released |
 | Emergency stop button | Contact | `E_STOP` | D4 | CN9 | PB5 | GPIO input, internal pull-up, active low |
 | Start button | Contact | `START` | D5 | CN9 | PB4 | GPIO input, internal pull-up, active low |
+| X home switch | Contact | `X_HOME` | D7 | CN9 | PA8 | GPIO input, internal pull-up, NC contact (high = home) |
+| Y home switch | Contact | `Y_HOME` | D8 | CN5 | PA9 | GPIO input, internal pull-up, NC contact (high = home) |
 | Effector relay | Input | `EFFECTOR` | D6 | CN9 | PB10 | GPIO output, **open-drain**, released = engaged |
 | W5500 Ethernet | Reset | `W5500_RST` | D9 | CN5 | PC7 | GPIO output, push-pull, idle high |
 | W5500 Ethernet | Chip select | `SPI_CS` | D10 | CN5 | PB6 | GPIO output, push-pull, idle high |
@@ -24,7 +26,7 @@ The driver objects that use these pins are created once in
 | ST-LINK virtual COM port | TX / RX | `USART_TX` / `USART_RX` | — | — | PA2 / PA3 | USART2, 115200 8N1 |
 | On-board user button (B1) | Contact | `B1` | — | — | PC13 | blue button, polled (no EXTI handler) |
 
-Free on the headers: D2, D3 (SWO), D7, D8, D14, D15, A2, A5.
+Free on the headers: D2, D3 (SWO), D14, D15, A2, A5. A2 (PA4) is not 5 V tolerant and has no timer channel.
 
 ## Stepper drivers (common anode, 5 V)
 
@@ -136,6 +138,39 @@ Verified against the STM32F446 datasheet (DS10693), Table 10 "pin and ball descr
 - **FT (5 V tolerant):** PA0, PA1, PB0, PC1, PB4, PB5, PB10, PA8, PA9, PA10, PC0.
 - **TTa (NOT 5 V tolerant):** PA4 (A2) and PA5 (D13) — both are DAC outputs. Never feed either a
   5 V signal. This is why `DIR_x` sits on A3 rather than A2.
+
+## Home switches (NC to GND, 3.3 V pull-up)
+
+There is one home switch per axis, at the home end of travel. `X_HOME` (PA8) and `Y_HOME` (PA9)
+are configured in the `.ioc` as GPIO inputs with the internal pull-up on; `main.h` defines
+`X_HOME_Pin` / `Y_HOME_Pin`. Each switch is wired between its pin and GND with the **normally-closed** contact. While the axis
+is clear, the closed contact ties the pin to GND; hitting the switch opens it and the pull-up
+pulls the pin high. A broken wire or an unplugged connector also reads high, so it stops the axis
+instead of letting it crash.
+
+| Switch terminal | Connects to | Notes |
+|---|---|---|
+| C (common) | Nucleo GND | |
+| NC | `X_HOME` / `Y_HOME` pin | Closed while the axis is clear |
+| NO | — | Unused |
+
+| Pin reads | Switch | Meaning |
+|---|---|---|
+| Low | Closed | Axis clear |
+| High | Open | **Home reached**, or wire broken |
+
+- **Pull-up to 3.3 V, never 5 V.** A 5 V pull-up would exceed the FT rating ($V_{DD}$ + 4 V) while
+  the MCU is unpowered and gives little extra margin. The cable only carries GND and the signal,
+  so a short to the frame cannot damage anything.
+- **Noise:** add an external 2.2 kΩ pull-up to 3.3 V at the board (the internal ~40 kΩ pull-up is
+  too weak near the stepper cables) and 100 nF from the pin to GND (≈ 0.2 ms filter). Use twisted
+  pair (signal + GND) and route it away from the stepper wiring. Impedance matters more than
+  voltage: a stiff 3.3 V pull-up is quieter than a weak 5 V one.
+- **Software:** accept a state change only after it has been stable for several samples (for
+  example 3 reads in a row at 1 kHz).
+- Both pins are FT, and both also carry TIM1 channels (CH1, CH2) if one is ever needed for capture.
+- **No switch at the far end:** travel away from home is limited only in software. Home the axis
+  first, then reject any move past the known travel length.
 
 ## Buttons
 
