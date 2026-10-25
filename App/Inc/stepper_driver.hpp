@@ -33,7 +33,7 @@ class StepperDriver
         std::uint32_t timer_ticks_per_second;
     };
 
-    explicit StepperDriver(const Config &config) noexcept : config_{config} {};
+    explicit StepperDriver(const Config &config) noexcept : config_{config} {}
 
     // Function to be called in ISR
     void on_compare_elapsed() noexcept;

@@ -11,7 +11,7 @@
 class Sequencer
 {
   public:
-    explicit Sequencer(const std::span<Operation *> operations) : operations_(operations) {};
+    explicit Sequencer(const std::span<Operation *> operations) : operations_(operations) {}
 
     void sequencer_step() noexcept;
     void start() noexcept;
