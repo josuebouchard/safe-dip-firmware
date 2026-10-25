@@ -76,6 +76,10 @@ void Error_Handler(void);
 #define EFFECTOR_GPIO_Port GPIOB
 #define W5500_RST_Pin GPIO_PIN_7
 #define W5500_RST_GPIO_Port GPIOC
+#define X_HOME_Pin GPIO_PIN_8
+#define X_HOME_GPIO_Port GPIOA
+#define Y_HOME_Pin GPIO_PIN_9
+#define Y_HOME_GPIO_Port GPIOA
 #define TMS_Pin GPIO_PIN_13
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14
