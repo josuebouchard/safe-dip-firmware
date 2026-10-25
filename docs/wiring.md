@@ -26,7 +26,14 @@ The driver objects that use these pins are created once in
 | ST-LINK virtual COM port | TX / RX | `USART_TX` / `USART_RX` | — | — | PA2 / PA3 | USART2, 115200 8N1 |
 | On-board user button (B1) | Contact | `B1` | — | — | PC13 | blue button, polled (no EXTI handler) |
 
-Free on the headers: D2, D3 (SWO), D14, D15, A2, A5. A2 (PA4) is not 5 V tolerant and has no timer channel.
+Free on the headers: D2, D3 (SWO), A2, A5. A2 (PA4) is not 5 V tolerant and has no timer channel.
+
+### Planned (not yet in the `.ioc`)
+
+| Device | Signal | Label | Arduino | Header | MCU pin | Mode |
+|---|---|---|---|---|---|---|
+| Ultrasonic sensor | Trigger | `US_TRIG` | D14 | CN5 | PB9 | GPIO output, push-pull, idle low (or TIM4_CH4 one-pulse) |
+| Ultrasonic sensor | Echo | `US_ECHO` | D15 | CN5 | PB8 | TIM4_CH3, input capture, both edges |
 
 ## Stepper drivers (common anode, 5 V)
 
@@ -135,7 +142,8 @@ the stepper optos.
 
 Verified against the STM32F446 datasheet (DS10693), Table 10 "pin and ball descriptions":
 
-- **FT (5 V tolerant):** PA0, PA1, PB0, PC1, PB4, PB5, PB10, PA8, PA9, PA10, PC0.
+- **FT (5 V tolerant):** PA0, PA1, PB0, PC1, PB4, PB5, PB10, PA8, PA9, PA10, PC0, PB8, PB9
+  (PB8 and PB9 checked against DS10693 Rev 11).
 - **TTa (NOT 5 V tolerant):** PA4 (A2) and PA5 (D13) — both are DAC outputs. Never feed either a
   5 V signal. This is why `DIR_x` sits on A3 rather than A2.
 
@@ -171,6 +179,27 @@ instead of letting it crash.
 - Both pins are FT, and both also carry TIM1 channels (CH1, CH2) if one is ever needed for capture.
 - **No switch at the far end:** travel away from home is limited only in software. Home the axis
   first, then reject any move past the known travel length.
+
+## Ultrasonic sensor (HC-SR04 type, 5 V)
+
+TIM4 is free (only TIM2 is used, by the steppers), so `US_ECHO` is measured by TIM4_CH3 input
+capture on both edges. The hardware latches `CNT` into `CCR3` on each edge, so the pulse width
+is exact even if the interrupt runs late.
+
+| Sensor pin | Connects to | Notes |
+|---|---|---|
+| VCC | Nucleo 5V pin | |
+| Trig | D14 (PB9) | 10 µs high pulse starts a measurement; a 3.3 V high usually triggers 5 V modules |
+| Echo | D15 (PB8) | 5 V output; PB8 is FT, internal pull-up off |
+| GND | Nucleo GND | |
+
+- **Timing:** TIM4 runs from the 84 MHz APB1 timer clock. With prescaler 83 it ticks at 1 µs. The
+  echo pulse is at most ~38 ms (no echo), which fits the 16-bit counter (65.5 ms).
+- **Measurement:** save `CCR3` on the rising edge, then `width = (uint16_t)(CCR3 − t_start)` on the
+  falling edge; the unsigned subtraction handles a counter wrap. Distance ≈ `width / 58` cm.
+- `US_TRIG` can be a plain GPIO pulse or TIM4_CH4 in one-pulse mode, which needs no CPU timing.
+- PB8 and PB9 are the I2C1 pins. If I2C is ever needed, move `US_ECHO` to D2 (PA10, TIM1_CH3) and
+  `US_TRIG` to A5 (PC0).
 
 ## Buttons
 
