@@ -76,7 +76,8 @@ void StepperDriver::stop_immediately() noexcept
 void StepperDriver::apply_speed(std::int32_t speed) noexcept
 {
     // @todo: assert(speed != 0 && std::abs(speed) <= max_steps_per_second())
-    half_period_ticks_ = config_.timer_ticks_per_second / (2U * std::abs(speed));
+    half_period_ticks_ =
+        config_.timer_ticks_per_second / (2U * static_cast<std::uint32_t>(std::abs(speed)));
     direction_current_ = speed >= 0 ? Direction::clockwise : Direction::counterclockwise;
     // @todo: assert(half_period_ticks_ != 0)
     write_direction_pin(direction_current_);
