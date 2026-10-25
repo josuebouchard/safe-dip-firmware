@@ -24,4 +24,24 @@ class MoveStepperOperation : public Operation
     std::int32_t position_;
 };
 
+class HomeStepperOperation : public Operation
+{
+  public:
+    explicit HomeStepperOperation(StepperMotionPlanner &stepper, bool &is_switch_pressed,
+                                  std::int16_t back_off_steps)
+        : stepper_{stepper}, back_off_steps_{back_off_steps}, is_switch_pressed_{is_switch_pressed},
+          is_backing_off_{false}
+    {
+    }
+
+    void start() noexcept override;
+    PollResult poll() noexcept override;
+
+  private:
+    StepperMotionPlanner &stepper_;
+    std::int16_t back_off_steps_;
+    bool &is_switch_pressed_;
+    bool is_backing_off_;
+};
+
 #endif // MOVEMENT_OPERATIONS_HPP

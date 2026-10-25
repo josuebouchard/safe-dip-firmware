@@ -52,7 +52,13 @@ static StepperMotionPlanner stepper_movement_y{
     hardware::stepper_driver_y,
 };
 
+static bool is_limit_switch_x_pressed = false;
+static bool is_limit_switch_y_pressed = false;
+
 // === Operations ===
+static HomeStepperOperation home_x{stepper_movement_x, is_limit_switch_x_pressed, 20};
+static HomeStepperOperation home_y{stepper_movement_y, is_limit_switch_y_pressed, 20};
+
 static MoveStepperOperation move_x_input{stepper_movement_x, 0};
 static MoveStepperOperation move_x_dip{stepper_movement_x, 8000};
 static MoveStepperOperation move_x_output{stepper_movement_x, 16000};
@@ -67,6 +73,8 @@ static DwellOperation dwell{2000};
 
 static std::array<Operation *, 13> operations = {
     // Home
+    // &home_y,
+    // &home_x,
     &move_y_up,
     &move_x_input,
 
@@ -345,8 +353,25 @@ void setup()
 
 void loop()
 {
+
+    // const bool is_e_stop_pressed = (HAL_GPIO_ReadPin(E_STOP_GPIO_Port, E_STOP_Pin) ==
+    // GPIO_PIN_RESET);
     const bool is_e_stop_pressed = false;
     const bool is_start_button_pressed = (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET);
+    // is_limit_switch_x_pressed = (HAL_GPIO_ReadPin(X_HOME_GPIO_Port, X_HOME_Pin) == GPIO_PIN_SET);
+    is_limit_switch_x_pressed = false;
+    // is_limit_switch_y_pressed = (HAL_GPIO_ReadPin(Y_HOME_GPIO_Port, Y_HOME_Pin) == GPIO_PIN_SET);
+    is_limit_switch_y_pressed = false;
+
+    if (is_limit_switch_x_pressed && stepper_movement_x.current_speed_signed() < 0)
+    {
+        stepper_movement_x.stop_immediately();
+    }
+
+    if (is_limit_switch_y_pressed && stepper_movement_y.current_speed_signed() < 0)
+    {
+        stepper_movement_y.stop_immediately();
+    }
 
     if (is_e_stop_pressed)
     {
