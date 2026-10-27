@@ -89,9 +89,6 @@ modbus_task_status_t modbus_tcp_task_run(modbus_tcp_task_t *task)
 
     case SOCK_INIT:
     {
-        /* Keepalive every 10 s (5 s units), so a vanished peer frees the socket */
-        setSn_KPALVTR(sock, 2);
-
         int8_t rc = listen(sock);
         if (rc != SOCK_OK)
         {
