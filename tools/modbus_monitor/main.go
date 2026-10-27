@@ -23,7 +23,7 @@ var indexHTML []byte
 
 // Table sizes, from the enums in App/Src/entrypoint.cpp
 const (
-	diCount = 5
+	diCount = 7
 	irCount = 5
 	hrCount = 6
 )
@@ -34,6 +34,7 @@ type State struct {
 	Running   bool     `json:"running"`
 	XAtTarget bool     `json:"x_at_target"`
 	YAtTarget bool     `json:"y_at_target"`
+	Effector  bool     `json:"effector"`
 	OpIndex   uint16   `json:"op_index"`
 	X         int32    `json:"x"`
 	Y         int32    `json:"y"`
@@ -62,6 +63,7 @@ func poll(c *Client, target string) (*State, error) {
 		Running:   di[2],
 		XAtTarget: di[3],
 		YAtTarget: di[4],
+		Effector:  di[5],
 		OpIndex:   ir[0],
 		X:         signed32(ir[1], ir[2]),
 		Y:         signed32(ir[3], ir[4]),
