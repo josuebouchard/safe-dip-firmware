@@ -15,7 +15,8 @@ writing past the end of a table returns exception `0x02` (illegal data address).
 | 2 | Sequencer running | Cleared by any fault, set by a start press |
 | 3 | X at target | X axis is in position mode and on its target step |
 | 4 | Y at target | Y axis is in position mode and on its target step |
-| 5 | Fault active | 1 while any fault is latched, see [Faults](#faults) |
+| 5 | Effector engaged | Commanded state of `EFFECTOR`, not feedback from the magnet |
+| 6 | Fault active | 1 while any fault is latched, see [Faults](#faults) |
 
 ## Input registers (FC 04, read-only)
 

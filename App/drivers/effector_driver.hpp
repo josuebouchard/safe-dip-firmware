@@ -11,6 +11,7 @@ class EffectorDriver
 
     void engage() noexcept;
     void disengage() noexcept;
+    bool is_engaged() const noexcept;
 
   private:
     GPIO_TypeDef *port_;

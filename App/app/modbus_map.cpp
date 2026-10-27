@@ -18,6 +18,7 @@ enum DiscreteInput : std::uint16_t
     DI_SEQUENCER_RUNNING,
     DI_X_AT_TARGET,
     DI_Y_AT_TARGET,
+    DI_EFFECTOR_ENGAGED,
     DI_FAULT_ACTIVE,
     DI_COUNT,
 };
@@ -82,6 +83,8 @@ static bool read_discrete_input(const Machine &machine, std::uint16_t address) n
         return machine.controller_x.is_at_target();
     case DI_Y_AT_TARGET:
         return machine.controller_y.is_at_target();
+    case DI_EFFECTOR_ENGAGED:
+        return hardware::effector.is_engaged();
     case DI_FAULT_ACTIVE:
         return machine.faults.any();
     default:
