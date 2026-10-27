@@ -348,7 +348,7 @@ void setup()
     stepper_movement_y.initialize(now);
 
     // Initialize safe defaults
-    hardware::effector.engage();
+    hardware::effector.disengage();
 }
 
 void loop()
