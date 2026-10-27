@@ -335,7 +335,10 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOC, DIR_y_Pin|W5500_RST_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, DIR_x_Pin|EFFECTOR_Pin|SPI_CS_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, DIR_x_Pin|SPI_CS_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(EFFECTOR_GPIO_Port, EFFECTOR_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
