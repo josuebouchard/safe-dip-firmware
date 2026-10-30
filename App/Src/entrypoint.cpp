@@ -354,9 +354,8 @@ void setup()
 void loop()
 {
 
-    // const bool is_e_stop_pressed = (HAL_GPIO_ReadPin(E_STOP_GPIO_Port, E_STOP_Pin) ==
-    // GPIO_PIN_RESET);
-    const bool is_e_stop_pressed = false;
+    const bool is_e_stop_pressed =
+        (HAL_GPIO_ReadPin(E_STOP_GPIO_Port, E_STOP_Pin) == GPIO_PIN_RESET);
     const bool is_start_button_pressed = (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET);
     // is_limit_switch_x_pressed = (HAL_GPIO_ReadPin(X_HOME_GPIO_Port, X_HOME_Pin) == GPIO_PIN_SET);
     is_limit_switch_x_pressed = false;
