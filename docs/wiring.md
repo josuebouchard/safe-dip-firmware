@@ -13,7 +13,7 @@ The driver objects that use these pins are created once in
 | X stepper driver | Direction | `DIR_x` | A3 | CN8 | PB0 | GPIO output, **open-drain**, idle released |
 | Y stepper driver | Step | `PULSE_y` | A1 | CN8 | PA1 | TIM2_CH2, output compare toggle, **open-drain** |
 | Y stepper driver | Direction | `DIR_y` | A4 | CN8 | PC1 | GPIO output, **open-drain**, idle released |
-| Emergency stop button | Contact | `E_STOP` | D4 | CN9 | PB5 | GPIO input, internal pull-up, active low |
+| Emergency stop button | Contact | `E_STOP` | D4 | CN9 | PB5 | GPIO input, internal pull-down, NC contact to 3.3 V (low = pressed) |
 | Start button | Contact | `START` | D5 | CN9 | PB4 | GPIO input, internal pull-up, active low |
 | X home switch | Contact | `X_HOME` | D7 | CN9 | PA8 | GPIO input, internal pull-up, NC contact (high = home) |
 | Y home switch | Contact | `Y_HOME` | D8 | CN5 | PA9 | GPIO input, internal pull-up, NC contact (high = home) |
@@ -203,10 +203,14 @@ is exact even if the interrupt runs late.
 
 ## Buttons
 
-`E_STOP` and `START` are active low: wire each switch between its pin and GND. The internal
-pull-up holds the pin high when the switch is open. For a real emergency stop, use a
-normally-closed contact so that a broken wire reads as pressed, and invert the test in
-`App/Src/entrypoint.cpp`.
+`START` is active low: wire the switch between its pin and GND. The internal pull-up holds the
+pin high when the switch is open.
+
+`E_STOP` is low when pressed, and the internal pull-down holds it low when nothing drives it. Wire
+the **normally-closed** contact between 3.3 V and the pin: while the button is released the closed
+contact holds the pin high, and pressing the button or breaking the wire lets the pull-down read
+low, which `App/Src/entrypoint.cpp` treats as pressed. Use 3.3 V, never 5 V (PB5 is FT, but the
+rating drops to 4 V when the MCU is unpowered).
 
 ## Notes
 
