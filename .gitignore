@@ -8,6 +8,9 @@ mx.scratch/
 # VSCode
 .vscode/*
 
+# Zed
+.zed/
+
 # Compiled output
 *.elf
 *.bin
