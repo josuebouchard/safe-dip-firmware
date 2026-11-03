@@ -22,7 +22,7 @@ class Sequencer
     std::size_t operation_index() const noexcept;
 
   private:
-    bool is_system_running_ = false;
+    bool is_sequencer_running_ = false;
 
     const std::span<Operation *> operations_;
     std::size_t operation_index_ = 0;

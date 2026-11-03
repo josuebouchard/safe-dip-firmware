@@ -14,16 +14,16 @@ Operation &Sequencer::current_operation() const noexcept
 
 void Sequencer::start() noexcept
 {
-    if (!is_system_running_)
-        is_system_running_ = true;
+    if (!is_sequencer_running_)
+        is_sequencer_running_ = true;
 }
 
 void Sequencer::stop() noexcept
 {
-    if (!is_system_running_)
+    if (!is_sequencer_running_)
         return;
 
-    is_system_running_ = false;
+    is_sequencer_running_ = false;
     is_current_operation_started_ = false;
 }
 
@@ -31,16 +31,16 @@ void Sequencer::restart() noexcept
 {
     is_current_operation_started_ = false;
     reset_operation_index();
-    is_system_running_ = true;
+    is_sequencer_running_ = true;
 }
 
-bool Sequencer::is_running() const noexcept { return is_system_running_; }
+bool Sequencer::is_running() const noexcept { return is_sequencer_running_; }
 
 std::size_t Sequencer::operation_index() const noexcept { return operation_index_; }
 
 void Sequencer::sequencer_step() noexcept
 {
-    if (!is_system_running_)
+    if (!is_sequencer_running_)
     {
         return;
     }
