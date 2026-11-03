@@ -160,6 +160,7 @@ void StepperMotionPlanner::process(std::uint32_t now_ms) noexcept
 
 void StepperMotionPlanner::move_to_steps(std::int32_t target_steps) noexcept
 {
+    was_interrupted_ = false;
     mode_ = PositionMode{
         .position_target_signed = target_steps,
         .is_landing = false,
@@ -173,6 +174,7 @@ void StepperMotionPlanner::move_steps(std::int32_t delta_steps) noexcept
 
 void StepperMotionPlanner::move_at_speed(float steps_per_second) noexcept
 {
+    was_interrupted_ = false;
     mode_ = VelocityMode{
         .speed_target_signed =
             std::clamp(steps_per_second, -speed_profile_.max_speed, speed_profile_.max_speed),
@@ -197,8 +199,20 @@ void StepperMotionPlanner::stop_immediately() noexcept
     // No deceleration
     speed_current_signed_ = 0.0f;
 
+    // If current mode is position, get a pointer to it
+    const auto *position = std::get_if<PositionMode>(&mode_);
+
+    // process() also calls this on normal arrival, so only a stop with distance
+    // remaining counts as an interruption.
+    // This call moves the target to the current position, so
+    // a repeat call sees zero distance and must not clear the flag.
+    if (position && distance_to_target(*position) != 0)
+    {
+        was_interrupted_ = true;
+    }
+
     // Only neutralize the setpoint of the active mode
-    if (std::holds_alternative<PositionMode>(mode_))
+    if (position)
     {
         mode_ = PositionMode{
             .position_target_signed = position_current_signed(),

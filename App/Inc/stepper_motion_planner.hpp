@@ -47,6 +47,10 @@ class StepperMotionPlanner
     // False in velocity mode - there is no position target to be at.
     bool is_at_target() const noexcept;
 
+    // True when stop_immediately() cut a position move short of its target.
+    // Stays set until the next move command.
+    bool was_interrupted() const noexcept { return was_interrupted_; }
+
     float current_speed_signed() const noexcept;
 
   private:
@@ -71,6 +75,7 @@ class StepperMotionPlanner
 
     // Current
     float speed_current_signed_ = 0.0f; // steps / second
+    bool was_interrupted_ = false;
 
     // Last
     std::uint32_t last_ms_;

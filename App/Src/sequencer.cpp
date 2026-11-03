@@ -63,6 +63,10 @@ void Sequencer::sequencer_step() noexcept
             is_current_operation_started_ = false;
             advance_operation();
             break;
+
+        case Operation::PollResult::aborted:
+            stop();
+            break;
         }
     }
 }

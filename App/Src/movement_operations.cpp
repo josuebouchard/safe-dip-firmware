@@ -4,6 +4,12 @@ void MoveStepperOperation::start() noexcept { stepper_.move_to_steps(position_);
 
 Operation::PollResult MoveStepperOperation::poll() noexcept
 {
+    // Checked first: an interrupted move has its target moved to where it stopped.
+    if (stepper_.was_interrupted())
+    {
+        return PollResult::aborted;
+    }
+
     return stepper_.is_at_target() ? PollResult::finished : PollResult::running;
 }
 

@@ -8,6 +8,7 @@ class Operation
     {
         running,
         finished,
+        aborted, // Could not complete - the sequence must not continue past it
     };
 
     virtual void start() noexcept = 0;

@@ -13,7 +13,7 @@ writing past the end of a table returns exception `0x02` (illegal data address).
 |---|---|---|
 | 0 | E-stop pressed | Live read of `E_STOP` |
 | 1 | Start pressed | Live read of `START` |
-| 2 | Sequencer running | Cleared by the e-stop, set by a start press |
+| 2 | Sequencer running | Cleared by the e-stop or an interrupted move, set by a start press |
 | 3 | X at target | X axis is in position mode and on its target step |
 | 4 | Y at target | Y axis is in position mode and on its target step |
 
