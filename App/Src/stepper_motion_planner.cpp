@@ -166,7 +166,8 @@ void StepperMotionPlanner::move_to_steps(std::int32_t target_steps) noexcept
     };
 }
 
-void StepperMotionPlanner::move_steps(std::int32_t delta_steps) noexcept {
+void StepperMotionPlanner::move_steps(std::int32_t delta_steps) noexcept
+{
     move_to_steps(position_current_signed() + delta_steps);
 }
 
