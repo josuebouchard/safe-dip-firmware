@@ -57,8 +57,8 @@ set(APP_SOURCES
     App/Src/movement_operations.cpp
     App/Src/sequence.cpp
     App/Src/sequencer.cpp
+    App/Src/stepper_controller.cpp
     App/Src/stepper_driver.cpp
-    App/Src/stepper_motion_planner.cpp
     App/Src/stm32_output_compare_channel.cpp
     App/Src/timer_operations.cpp
 )

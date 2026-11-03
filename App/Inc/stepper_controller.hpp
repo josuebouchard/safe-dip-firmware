@@ -1,11 +1,11 @@
-#ifndef STEPPER_MOTION_PLANNER_HPP
-#define STEPPER_MOTION_PLANNER_HPP
+#ifndef STEPPER_CONTROLLER_HPP
+#define STEPPER_CONTROLLER_HPP
 
 #include "stepper_driver.hpp"
 #include <cstdint>
 #include <variant>
 
-class StepperMotionPlanner
+class StepperController
 {
   public:
     struct SpeedProfile
@@ -19,7 +19,7 @@ class StepperMotionPlanner
         float homing_speed;
     };
 
-    explicit StepperMotionPlanner(const SpeedProfile &speed_profile, StepperDriver &pulse_generator)
+    explicit StepperController(const SpeedProfile &speed_profile, StepperDriver &pulse_generator)
         : speed_profile_(speed_profile), stepper_driver_(pulse_generator), last_ms_(0)
     {
     }
@@ -95,4 +95,4 @@ class StepperMotionPlanner
     float ramp_speed_toward(float speed_desired, float delta_time_s) const noexcept;
 };
 
-#endif // STEPPER_MOTION_PLANNER_HPP
+#endif // STEPPER_CONTROLLER_HPP

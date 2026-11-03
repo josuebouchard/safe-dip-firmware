@@ -1,17 +1,17 @@
 #include "entrypoint.hpp"
 #include "hardware.hpp"
-#include "stepper_motion_planner.hpp"
+#include "stepper_controller.hpp"
 
 #include "stm32f4xx_hal.h"
 
-static StepperMotionPlanner::SpeedProfile speed_profile{
+static StepperController::SpeedProfile speed_profile{
     700, // max_speed
     200, // acceleration
     50,  // landing_speed
     50,  // homing_speed
 };
 
-static StepperMotionPlanner stepper_movement_x{
+static StepperController stepper_movement_x{
     speed_profile,
     hardware::stepper_driver_x,
 };

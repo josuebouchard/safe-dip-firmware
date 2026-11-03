@@ -14,15 +14,15 @@
 // they are constructed when Machine calls this, not before its members.
 Sequencer &make_sequence(Machine &machine)
 {
-    static HomeStepperOperation home_x{machine.planner_x, machine.inputs.limit_x_pressed, 20};
-    static HomeStepperOperation home_y{machine.planner_y, machine.inputs.limit_y_pressed, 20};
+    static HomeStepperOperation home_x{machine.controller_x, machine.inputs.limit_x_pressed, 20};
+    static HomeStepperOperation home_y{machine.controller_y, machine.inputs.limit_y_pressed, 20};
 
-    static MoveStepperOperation move_x_input{machine.planner_x, machine.recipe.x_input};
-    static MoveStepperOperation move_x_dip{machine.planner_x, machine.recipe.x_dip};
-    static MoveStepperOperation move_x_output{machine.planner_x, machine.recipe.x_output};
+    static MoveStepperOperation move_x_input{machine.controller_x, machine.recipe.x_input};
+    static MoveStepperOperation move_x_dip{machine.controller_x, machine.recipe.x_dip};
+    static MoveStepperOperation move_x_output{machine.controller_x, machine.recipe.x_output};
 
-    static MoveStepperOperation move_y_up{machine.planner_y, machine.recipe.y_up};
-    static MoveStepperOperation move_y_down{machine.planner_y, machine.recipe.y_down};
+    static MoveStepperOperation move_y_up{machine.controller_y, machine.recipe.y_up};
+    static MoveStepperOperation move_y_down{machine.controller_y, machine.recipe.y_down};
 
     static EffectorOperation effector_engage{hardware::effector, true};
     static EffectorOperation effector_disengage{hardware::effector, false};

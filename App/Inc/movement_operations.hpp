@@ -2,31 +2,31 @@
 #define MOVEMENT_OPERATIONS_HPP
 
 #include "operation.hpp"
-#include "stepper_motion_planner.hpp"
+#include "stepper_controller.hpp"
 #include <cstdint>
 
 class MoveStepperOperation : public Operation
 {
   public:
-    MoveStepperOperation(StepperMotionPlanner &stepper, const std::int32_t &position)
+    MoveStepperOperation(StepperController &stepper, const std::int32_t &position)
         : stepper_(stepper), position_(position)
     {
     }
     // Stored by reference, so a temporary would dangle.
-    MoveStepperOperation(StepperMotionPlanner &stepper, const std::int32_t &&position) = delete;
+    MoveStepperOperation(StepperController &stepper, const std::int32_t &&position) = delete;
 
     void start() noexcept override;
     PollResult poll() noexcept override;
 
   private:
-    StepperMotionPlanner &stepper_;
+    StepperController &stepper_;
     const std::int32_t &position_;
 };
 
 class HomeStepperOperation : public Operation
 {
   public:
-    explicit HomeStepperOperation(StepperMotionPlanner &stepper, bool &is_switch_pressed,
+    explicit HomeStepperOperation(StepperController &stepper, bool &is_switch_pressed,
                                   std::int16_t back_off_steps)
         : stepper_{stepper}, back_off_steps_{back_off_steps}, is_switch_pressed_{is_switch_pressed},
           is_backing_off_{false}
@@ -37,7 +37,7 @@ class HomeStepperOperation : public Operation
     PollResult poll() noexcept override;
 
   private:
-    StepperMotionPlanner &stepper_;
+    StepperController &stepper_;
     std::int16_t back_off_steps_;
     bool &is_switch_pressed_;
     bool is_backing_off_;

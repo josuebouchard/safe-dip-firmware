@@ -50,9 +50,9 @@ void setup()
 
     modbus_tcp_task_init(&modbus_task, ECHO_SOCKET, ECHO_PORT, &modbus_ctx);
 
-    // Initialize movement planners
-    machine.planner_x.initialize(now);
-    machine.planner_y.initialize(now);
+    // Initialize stepper controllers
+    machine.controller_x.initialize(now);
+    machine.controller_y.initialize(now);
 
     // Initialize safe defaults
     hardware::effector.disengage();
@@ -63,21 +63,21 @@ void loop()
     machine.inputs = read_inputs();
     const Inputs &inputs = machine.inputs;
 
-    if (inputs.limit_x_pressed && machine.planner_x.current_speed_signed() < 0)
+    if (inputs.limit_x_pressed && machine.controller_x.current_speed_signed() < 0)
     {
-        machine.planner_x.stop_immediately();
+        machine.controller_x.stop_immediately();
     }
 
-    if (inputs.limit_y_pressed && machine.planner_y.current_speed_signed() < 0)
+    if (inputs.limit_y_pressed && machine.controller_y.current_speed_signed() < 0)
     {
-        machine.planner_y.stop_immediately();
+        machine.controller_y.stop_immediately();
     }
 
     if (inputs.e_stop_pressed)
     {
         machine.sequencer.stop();
-        machine.planner_x.stop_immediately();
-        machine.planner_y.stop_immediately();
+        machine.controller_x.stop_immediately();
+        machine.controller_y.stop_immediately();
         hardware::effector.engage();
     }
     else
@@ -94,8 +94,8 @@ void loop()
         machine.sequencer.sequencer_step();
 
         // Process the different modules
-        machine.planner_x.process(now);
-        machine.planner_y.process(now);
+        machine.controller_x.process(now);
+        machine.controller_y.process(now);
     }
 
     modbus_tcp_task_run(&modbus_task);

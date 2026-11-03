@@ -75,9 +75,9 @@ static bool read_discrete_input(const Machine &machine, std::uint16_t address) n
     case DI_SEQUENCER_RUNNING:
         return machine.sequencer.is_running();
     case DI_X_AT_TARGET:
-        return machine.planner_x.is_at_target();
+        return machine.controller_x.is_at_target();
     case DI_Y_AT_TARGET:
-        return machine.planner_y.is_at_target();
+        return machine.controller_y.is_at_target();
     default:
         return false; // Unreachable - callers check the range first
     }
@@ -90,13 +90,13 @@ static std::uint16_t read_input_register(const Machine &machine, std::uint16_t a
     case IR_OPERATION_INDEX:
         return static_cast<std::uint16_t>(machine.sequencer.operation_index());
     case IR_X_POSITION_HIGH:
-        return high_word(machine.planner_x.position_current_signed());
+        return high_word(machine.controller_x.position_current_signed());
     case IR_X_POSITION_LOW:
-        return low_word(machine.planner_x.position_current_signed());
+        return low_word(machine.controller_x.position_current_signed());
     case IR_Y_POSITION_HIGH:
-        return high_word(machine.planner_y.position_current_signed());
+        return high_word(machine.controller_y.position_current_signed());
     case IR_Y_POSITION_LOW:
-        return low_word(machine.planner_y.position_current_signed());
+        return low_word(machine.controller_y.position_current_signed());
     default:
         return 0; // Unreachable - callers check the range first
     }

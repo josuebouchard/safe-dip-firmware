@@ -1,6 +1,6 @@
 #include "entrypoint.hpp"
 #include "hardware.hpp"
-#include "stepper_motion_planner.hpp"
+#include "stepper_controller.hpp"
 
 #include "main.h"
 #include "stm32f4xx_hal.h"
@@ -20,14 +20,14 @@ constexpr float LANDING_SPEED = 100.0f;  // steps/s
 static_assert(CRUISE_SPEED * CRUISE_SPEED / ACCELERATION <= STEPS_PER_PRESS);
 static_assert(STEPS_PER_PRESS / CRUISE_SPEED + CRUISE_SPEED / ACCELERATION == 5.0f);
 
-static StepperMotionPlanner::SpeedProfile speed_profile{
+static StepperController::SpeedProfile speed_profile{
     CRUISE_SPEED,  // max_speed
     ACCELERATION,  // acceleration
     LANDING_SPEED, // landing_speed
     LANDING_SPEED, // homing_speed
 };
 
-static StepperMotionPlanner stepper_movement_x{
+static StepperController stepper_movement_x{
     speed_profile,
     hardware::stepper_driver_x,
 };
