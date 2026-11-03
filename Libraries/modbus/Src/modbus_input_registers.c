@@ -52,7 +52,7 @@ modbus_dispatch_result_t dispatch_read_input_registers(modbus_context_t *context
 
     uint16_t register_values[quantity_of_registers];
     modbus_query_state_t query_state = context->read_input_registers(
-        starting_address, register_values, quantity_of_registers);
+        starting_address, register_values, quantity_of_registers, context->user_context);
 
     switch (query_state)
     {

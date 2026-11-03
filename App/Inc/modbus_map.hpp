@@ -4,8 +4,8 @@
 #include "machine.hpp"
 #include "modbus_types.h"
 
-// Binds the register map to `machine` and returns the context for the Modbus task.
-// The library's callbacks take no user pointer, so the binding is file-scope.
-modbus_context_t *modbus_map_init(Machine &machine) noexcept;
+// Returns a context that serves the register map from `machine`. The Modbus task
+// stores a pointer to it, so the caller must keep it alive as long as the task.
+modbus_context_t modbus_map_make_context(Machine &machine) noexcept;
 
 #endif // MODBUS_MAP_HPP

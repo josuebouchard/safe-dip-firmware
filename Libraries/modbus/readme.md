@@ -39,7 +39,7 @@ The library does not access hardware directly. You provide function pointers tha
 static bool coils[100];
 static bool discrete_inputs[100];
  
-modbus_query_state_t my_read_coils(uint16_t start_addr, bool *dest, uint16_t quantity)
+modbus_query_state_t my_read_coils(uint16_t start_addr, bool *dest, uint16_t quantity, void *user_context)
 {
     if (start_addr + quantity > 100)
         return MODBUS_QUERY_ST_BAD_ADDRESS;
@@ -50,7 +50,7 @@ modbus_query_state_t my_read_coils(uint16_t start_addr, bool *dest, uint16_t qua
     return MODBUS_QUERY_ST_OK;
 }
  
-modbus_query_state_t my_write_coils(uint16_t start_addr, const bool *src, uint16_t quantity)
+modbus_query_state_t my_write_coils(uint16_t start_addr, const bool *src, uint16_t quantity, void *user_context)
 {
     if (start_addr + quantity > 100)
         return MODBUS_QUERY_ST_BAD_ADDRESS;
@@ -61,7 +61,7 @@ modbus_query_state_t my_write_coils(uint16_t start_addr, const bool *src, uint16
     return MODBUS_QUERY_ST_OK;
 }
  
-modbus_query_state_t my_read_discrete_inputs(uint16_t start_addr, bool *dest, uint16_t quantity)
+modbus_query_state_t my_read_discrete_inputs(uint16_t start_addr, bool *dest, uint16_t quantity, void *user_context)
 {
     if (start_addr + quantity > 100)
         return MODBUS_QUERY_ST_BAD_ADDRESS;
@@ -119,16 +119,17 @@ Returns the number of bytes written into `wire_response`, including exception re
 
 ### `modbus_context_t`
  
-All fields are function pointers. Unimplemented function codes will return an `ILLEGAL FUNCTION` exception response. Set unused fields to `NULL`.
+All fields except `user_context` are function pointers. Unimplemented function codes will return an `ILLEGAL FUNCTION` exception response. Set unused fields to `NULL`.
  
 | Field | Signature | Description |
 |-------|-----------|-------------|
-| `read_discrete_inputs` | `(uint16_t addr, bool *dest, uint16_t qty)` | FC 0x02 |
-| `read_coils` | `(uint16_t addr, bool *dest, uint16_t qty)` | FC 0x01 |
-| `write_coils` | `(uint16_t addr, const bool *src, uint16_t qty)` | FC 0x05, 0x0F |
-| `read_input_registers` | `(uint16_t addr, uint16_t *dest, uint16_t qty)` | FC 0x04 (not yet dispatched) |
-| `read_holding_registers` | `(uint16_t addr, uint16_t *dest, uint16_t qty)` | FC 0x03 (not yet dispatched) |
-| `write_holding_registers` | `(uint16_t addr, const uint16_t *src, uint16_t qty)` | FC 0x06, 0x10 (not yet dispatched) |
+| `read_discrete_inputs` | `(uint16_t addr, bool *dest, uint16_t qty, void *user_context)` | FC 0x02 |
+| `read_coils` | `(uint16_t addr, bool *dest, uint16_t qty, void *user_context)` | FC 0x01 |
+| `write_coils` | `(uint16_t addr, const bool *src, uint16_t qty, void *user_context)` | FC 0x05, 0x0F |
+| `read_input_registers` | `(uint16_t addr, uint16_t *dest, uint16_t qty, void *user_context)` | FC 0x04 (not yet dispatched) |
+| `read_holding_registers` | `(uint16_t addr, uint16_t *dest, uint16_t qty, void *user_context)` | FC 0x03 (not yet dispatched) |
+| `write_holding_registers` | `(uint16_t addr, const uint16_t *src, uint16_t qty, void *user_context)` | FC 0x06, 0x10 (not yet dispatched) |
+| `user_context` | `void *` | Passed back as the last argument of every callback. May be `NULL`. |
  
 ### `modbus_query_state_t`
  

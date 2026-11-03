@@ -53,8 +53,8 @@ modbus_dispatch_result_t dispatch_read_discrete_inputs(modbus_context_t *context
 
     // Fetching
     bool discrete_inputs_values[quantity_of_inputs];
-    modbus_query_state_t query_success =
-        context->read_discrete_inputs(starting_address, discrete_inputs_values, quantity_of_inputs);
+    modbus_query_state_t query_success = context->read_discrete_inputs(
+        starting_address, discrete_inputs_values, quantity_of_inputs, context->user_context);
 
     // Validation - discrete inputs query
     switch (query_success)

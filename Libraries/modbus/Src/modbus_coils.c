@@ -52,13 +52,12 @@ modbus_dispatch_result_t dispatch_read_coils(modbus_context_t *context, const ui
 
     // Fetching
     bool coils_values[quantity_of_coils];
-    modbus_query_state_t query_success =
-        context->read_coils(starting_address, coils_values, quantity_of_coils);
+    modbus_query_state_t query_success = context->read_coils(
+        starting_address, coils_values, quantity_of_coils, context->user_context);
 
     // Validation - discrete inputs query
     switch (query_success)
     {
-
     case MODBUS_QUERY_ST_BAD_ADDRESS:
         return generate_exception_response(function_code, MODBUS_EX_ILLEGAL_DATA_ADDRESS,
                                            wire_response, response_capacity);
@@ -141,7 +140,8 @@ modbus_dispatch_result_t dispatch_write_single_coil(modbus_context_t *context,
                                           .status = MODBUS_DISPATCH_ST_RESPONSE_TOO_SMALL};
     }
 
-    modbus_query_state_t query_success = context->write_coils(output_address, &output_value, 1);
+    modbus_query_state_t query_success =
+        context->write_coils(output_address, &output_value, 1, context->user_context);
     switch (query_success)
     {
     case MODBUS_QUERY_ST_BAD_ADDRESS:
@@ -229,7 +229,7 @@ modbus_dispatch_result_t dispatch_write_multiple_coils(modbus_context_t *context
     }
 
     modbus_query_state_t query_success =
-        context->write_coils(starting_address, outputs, quantity_of_outputs);
+        context->write_coils(starting_address, outputs, quantity_of_outputs, context->user_context);
     switch (query_success)
     {
     case MODBUS_QUERY_ST_BAD_ADDRESS:

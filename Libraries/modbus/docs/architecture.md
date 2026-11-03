@@ -19,6 +19,7 @@ typedef struct modbus_context
     modbus_write_coils_fn write_coils;
     modbus_read_coils_fn  read_discrete_inputs;
     // ...
+    void *user_context;   // Passed back to every callback
 } modbus_context_t;
 ```
 
@@ -30,7 +31,7 @@ This has three concrete benefits:
 
 **Testability.** Because there is no hardware dependency, unit tests run natively on the development machine using mock implementations of the function pointers. No hardware, no emulator, no cross-compilation required.
 
-**Flexibility.** Multiple instances of `modbus_context_t` can coexist, each pointing to different data sources. A single application could serve different Modbus address spaces on different interfaces simultaneously.
+**Flexibility.** Multiple instances of `modbus_context_t` can coexist, each pointing to different data sources through its own `user_context`. A single application could serve different Modbus address spaces on different interfaces simultaneously.
 
 ---
 

@@ -54,8 +54,8 @@ modbus_dispatch_result_t dispatch_read_holding_registers(modbus_context_t *conte
 
     // Fetch register values from the application.
     uint16_t register_values[quantity_of_registers];
-    modbus_query_state_t query_state =
-        context->read_holding_registers(starting_address, register_values, quantity_of_registers);
+    modbus_query_state_t query_state = context->read_holding_registers(
+        starting_address, register_values, quantity_of_registers, context->user_context);
 
     switch (query_state)
     {
@@ -120,8 +120,8 @@ modbus_dispatch_result_t dispatch_write_holding_registers(modbus_context_t *cont
                                           .status = MODBUS_DISPATCH_ST_RESPONSE_TOO_SMALL};
     }
 
-    modbus_query_state_t query_state =
-        context->write_holding_registers(register_address, &register_value, 1);
+    modbus_query_state_t query_state = context->write_holding_registers(
+        register_address, &register_value, 1, context->user_context);
 
     switch (query_state)
     {
@@ -211,8 +211,8 @@ modbus_dispatch_result_t dispatch_write_multiple_holding_registers(modbus_contex
         register_values[i] = modbus_read_u16_be(wire_request + 6U + (2U * i));
     }
 
-    modbus_query_state_t query_state =
-        context->write_holding_registers(starting_address, register_values, quantity_of_registers);
+    modbus_query_state_t query_state = context->write_holding_registers(
+        starting_address, register_values, quantity_of_registers, context->user_context);
 
     switch (query_state)
     {

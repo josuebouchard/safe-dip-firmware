@@ -22,6 +22,7 @@ constexpr std::uint16_t ECHO_PORT = 502;
 static modbus_tcp_task_t modbus_task;
 
 static Machine machine;
+static modbus_context_t modbus_ctx = modbus_map_make_context(machine);
 
 // The only place that knows pins and polarity.
 static Inputs read_inputs() noexcept
@@ -47,7 +48,7 @@ void setup()
     uint8_t version = getVERSIONR();
     std::printf("W5500 version register: 0x%02X (expect 0x04)\r\n", version);
 
-    modbus_tcp_task_init(&modbus_task, ECHO_SOCKET, ECHO_PORT, modbus_map_init(machine));
+    modbus_tcp_task_init(&modbus_task, ECHO_SOCKET, ECHO_PORT, &modbus_ctx);
 
     // Initialize movement planners
     machine.planner_x.initialize(now);

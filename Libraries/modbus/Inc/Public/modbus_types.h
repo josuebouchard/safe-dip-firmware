@@ -45,16 +45,16 @@ typedef enum modbus_query_state
 // Function defs
 
 typedef modbus_query_state_t (*modbus_read_coils_fn)(uint16_t start_addr, bool *dest,
-                                                     uint16_t quantity);
+                                                     uint16_t quantity, void *user_context);
 
 typedef modbus_query_state_t (*modbus_write_coils_fn)(uint16_t start_addr, const bool *src,
-                                                      uint16_t quantity);
+                                                      uint16_t quantity, void *user_context);
 
 typedef modbus_query_state_t (*modbus_read_registers_fn)(uint16_t start_addr, uint16_t *dest,
-                                                         uint16_t quantity);
+                                                         uint16_t quantity, void *user_context);
 
 typedef modbus_query_state_t (*modbus_write_registers_fn)(uint16_t start_addr, const uint16_t *src,
-                                                          uint16_t quantity);
+                                                          uint16_t quantity, void *user_context);
 
 // Dispatcher response codes
 
@@ -90,6 +90,9 @@ typedef struct modbus_context
     // Holding registers (read + write)
     modbus_read_registers_fn read_holding_registers;
     modbus_write_registers_fn write_holding_registers;
+
+    // Passed back as the last argument of every callback. May be NULL.
+    void *user_context;
 } modbus_context_t;
 
 #endif // MODBUS_TYPES_H
