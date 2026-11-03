@@ -1,7 +1,7 @@
 # Modbus map
 
 Modbus TCP server on the W5500, port 502. The unit ID is not checked; it is echoed back in the response. The map lives in
-[`App/Src/modbus_map.cpp`](../App/Src/modbus_map.cpp); keep this file in sync with it.
+[`App/app/modbus_map.cpp`](../App/app/modbus_map.cpp); keep this file in sync with it.
 
 All addresses are zero-based protocol addresses (the PDU address field). Reading or
 writing past the end of a table returns exception `0x02` (illegal data address).

@@ -3,7 +3,7 @@
 Board: NUCLEO-F446RE (STM32F446RET6, LQFP64). Pin assignments come from
 [`nucleo-project.ioc`](../nucleo-project.ioc); edit them in STM32CubeMX and regenerate.
 The driver objects that use these pins are created once in
-[`App/Src/hardware.cpp`](../App/Src/hardware.cpp) and shared by every entrypoint.
+[`App/drivers/hardware.cpp`](../App/drivers/hardware.cpp) and shared by every entrypoint.
 
 ## Pinout
 
@@ -70,7 +70,7 @@ whose anode sits on 5 V, so the MCU pin pulls the cathode down to light it.
 - If the driver inputs need more than 5 V, or the anode rail is 12/24 V, **do not wire them
   directly** — no STM32 pin tolerates that. Use series resistors sized for the rail or a buffer.
 - If an axis turns the wrong way, flip `electrical_state_clockwise` for that axis in
-  `App/Src/hardware.cpp`; the fix then applies to every entrypoint.
+  `App/drivers/hardware.cpp`; the fix then applies to every entrypoint.
 
 ## Effector relay (active low, 12 V on NC)
 
@@ -209,7 +209,7 @@ pin high when the switch is open.
 `E_STOP` is low when pressed, and the internal pull-down holds it low when nothing drives it. Wire
 the **normally-closed** contact between 3.3 V and the pin: while the button is released the closed
 contact holds the pin high, and pressing the button or breaking the wire lets the pull-down read
-low, which `App/Src/entrypoint.cpp` treats as pressed. Use 3.3 V, never 5 V (PB5 is FT, but the
+low, which `App/app/entrypoint.cpp` treats as pressed. Use 3.3 V, never 5 V (PB5 is FT, but the
 rating drops to 4 V when the MCU is unpowered).
 
 ## Notes
