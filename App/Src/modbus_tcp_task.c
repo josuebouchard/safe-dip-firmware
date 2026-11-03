@@ -1,5 +1,4 @@
 #include "modbus_tcp_task.h"
-#include "ethernet_if.h" /* wiznet_close(), getSn_SR, getSn_RX_RSR, etc.    */
 #include "socket.h"      /* socket(), listen(), recv(), send(), disconnect() */
 #include <stdio.h>
 
