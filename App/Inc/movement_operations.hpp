@@ -8,20 +8,19 @@
 class MoveStepperOperation : public Operation
 {
   public:
-    MoveStepperOperation(StepperMotionPlanner &stepper, std::int32_t position)
+    MoveStepperOperation(StepperMotionPlanner &stepper, const std::int32_t &position)
         : stepper_(stepper), position_(position)
     {
     }
+    // Stored by reference, so a temporary would dangle.
+    MoveStepperOperation(StepperMotionPlanner &stepper, const std::int32_t &&position) = delete;
 
     void start() noexcept override;
     PollResult poll() noexcept override;
 
-    void set_position(std::int32_t position) noexcept { position_ = position; }
-    std::int32_t position() const noexcept { return position_; }
-
   private:
     StepperMotionPlanner &stepper_;
-    std::int32_t position_;
+    const std::int32_t &position_;
 };
 
 class HomeStepperOperation : public Operation

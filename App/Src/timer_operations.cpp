@@ -4,7 +4,7 @@
 void DwellOperation::start() noexcept
 {
     start_time_ = HAL_GetTick();
-    active_dwell_time_ms_ = dwell_time_ms_;
+    active_dwell_time_ms_ = static_cast<std::uint32_t>(dwell_time_ms_);
 }
 
 DwellOperation::PollResult DwellOperation::poll() noexcept

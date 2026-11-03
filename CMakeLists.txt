@@ -52,8 +52,10 @@ set(APP_SOURCES
     App/Src/entrypoint.cpp
     App/Src/ethernet_if.c
     App/Src/hardware.cpp
+    App/Src/modbus_map.cpp
     App/Src/modbus_tcp_task.c
     App/Src/movement_operations.cpp
+    App/Src/sequence.cpp
     App/Src/sequencer.cpp
     App/Src/stepper_driver.cpp
     App/Src/stepper_motion_planner.cpp

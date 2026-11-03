@@ -1,8 +1,7 @@
 # Modbus map
 
 Modbus TCP server on the W5500, port 502. The unit ID is not checked; it is echoed back in the response. The map lives in
-[`App/Src/entrypoint.cpp`](../App/Src/entrypoint.cpp) under `=== Modbus map ===`;
-keep this file in sync with it.
+[`App/Src/modbus_map.cpp`](../App/Src/modbus_map.cpp); keep this file in sync with it.
 
 All addresses are zero-based protocol addresses (the PDU address field). Reading or
 writing past the end of a table returns exception `0x02` (illegal data address).
@@ -11,8 +10,8 @@ writing past the end of a table returns exception `0x02` (illegal data address).
 
 | Address | Name | Meaning |
 |---|---|---|
-| 0 | E-stop pressed | Live read of `E_STOP` |
-| 1 | Start pressed | Live read of `START` |
+| 0 | E-stop pressed | 1 while pressed (`E_STOP` low), as read at the start of the loop pass |
+| 1 | Start pressed | 1 while pressed (`B1` low), as read at the start of the loop pass |
 | 2 | Sequencer running | Cleared by the e-stop or an interrupted move, set by a start press |
 | 3 | X at target | X axis is in position mode and on its target step |
 | 4 | Y at target | Y axis is in position mode and on its target step |

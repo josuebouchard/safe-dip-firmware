@@ -7,17 +7,18 @@
 class DwellOperation : public Operation
 {
   public:
-    explicit DwellOperation(std::uint32_t dwell_time_ms) noexcept : dwell_time_ms_{dwell_time_ms} {}
+    explicit DwellOperation(const std::int32_t &dwell_time_ms) noexcept
+        : dwell_time_ms_{dwell_time_ms}
+    {
+    }
+    // Stored by reference, so a temporary would dangle.
+    explicit DwellOperation(const std::int32_t &&dwell_time_ms) = delete;
 
     void start() noexcept override;
     PollResult poll() noexcept override;
 
-    // Takes effect on the next start()
-    void set_dwell_time(std::uint32_t dwell_time_ms) noexcept { dwell_time_ms_ = dwell_time_ms; }
-    std::uint32_t dwell_time() const noexcept { return dwell_time_ms_; }
-
   private:
-    std::uint32_t dwell_time_ms_;
+    const std::int32_t &dwell_time_ms_;
     std::uint32_t active_dwell_time_ms_ = 0; // Snapshot taken in start()
     std::uint32_t start_time_ = 0;
 };
