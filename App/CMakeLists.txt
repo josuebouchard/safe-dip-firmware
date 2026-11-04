@@ -22,9 +22,9 @@ set(APP_WARNINGS
 # OBJECT, not STATIC: hardware.cpp overrides a weak HAL callback, which must not
 # depend on the object being pulled out of an archive at link time.
 function(add_app_layer name)
-    add_library(${name} OBJECT ${ARGN})
-    target_include_directories(${name} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/${name})
-    target_compile_options(${name} PRIVATE ${APP_WARNINGS})
+  add_library(${name} OBJECT ${ARGN})
+  target_include_directories(${name} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/${name})
+  target_compile_options(${name} PRIVATE ${APP_WARNINGS})
 endfunction()
 
 add_app_layer(drivers
