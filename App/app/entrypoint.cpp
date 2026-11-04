@@ -63,6 +63,8 @@ void loop()
     machine.inputs = read_inputs();
     const Inputs &inputs = machine.inputs;
 
+    const uint32_t now = HAL_GetTick();
+
     if (inputs.limit_x_pressed && machine.controller_x.current_speed_signed() < 0)
     {
         machine.controller_x.stop_immediately();
@@ -82,12 +84,13 @@ void loop()
     }
     else
     {
-        const uint32_t now = HAL_GetTick();
-
         if (inputs.start_pressed && !machine.sequencer.is_running())
         {
-            // Reset and restart the sequencer
-            machine.sequencer.restart();
+            machine.sequencer.restart(); // Reset and restart the sequencer
+
+            // Re-initialize the controllers to now
+            machine.controller_x.initialize(now);
+            machine.controller_y.initialize(now);
         }
 
         // Sequencer step
