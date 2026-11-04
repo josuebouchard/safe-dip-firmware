@@ -18,6 +18,7 @@ enum DiscreteInput : std::uint16_t
     DI_SEQUENCER_RUNNING,
     DI_X_AT_TARGET,
     DI_Y_AT_TARGET,
+    DI_FAULT_ACTIVE,
     DI_COUNT,
 };
 
@@ -28,7 +29,10 @@ enum InputRegister : std::uint16_t
     IR_X_POSITION_LOW,
     IR_Y_POSITION_HIGH,
     IR_Y_POSITION_LOW,
-    IR_COUNT,
+    IR_FAULTS_ACTIVE,
+    IR_FAULT_FIRST,
+    IR_FAULT_SOURCE_FIRST, // One register per Fault, in enum order
+    IR_COUNT = IR_FAULT_SOURCE_FIRST + static_cast<std::uint16_t>(Fault::count),
 };
 
 struct HoldingRegister
@@ -78,6 +82,8 @@ static bool read_discrete_input(const Machine &machine, std::uint16_t address) n
         return machine.controller_x.is_at_target();
     case DI_Y_AT_TARGET:
         return machine.controller_y.is_at_target();
+    case DI_FAULT_ACTIVE:
+        return machine.faults.any();
     default:
         return false; // Unreachable - callers check the range first
     }
@@ -85,6 +91,9 @@ static bool read_discrete_input(const Machine &machine, std::uint16_t address) n
 
 static std::uint16_t read_input_register(const Machine &machine, std::uint16_t address) noexcept
 {
+    if (address >= IR_FAULT_SOURCE_FIRST)
+        return machine.faults.source(address - std::size_t{IR_FAULT_SOURCE_FIRST});
+
     switch (address)
     {
     case IR_OPERATION_INDEX:
@@ -97,6 +106,10 @@ static std::uint16_t read_input_register(const Machine &machine, std::uint16_t a
         return high_word(machine.controller_y.position_current_signed());
     case IR_Y_POSITION_LOW:
         return low_word(machine.controller_y.position_current_signed());
+    case IR_FAULTS_ACTIVE:
+        return machine.faults.active();
+    case IR_FAULT_FIRST:
+        return machine.faults.first();
     default:
         return 0; // Unreachable - callers check the range first
     }
