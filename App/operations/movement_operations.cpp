@@ -18,6 +18,7 @@ void HomeStepperOperation::start() noexcept
 {
     is_backing_off_ = false;
     start_time_ = HAL_GetTick();
+    failure_ = Failure::unspecified;
     stepper_.move_at_speed_in_direction(-1);
 }
 
@@ -41,6 +42,7 @@ Operation::PollResult HomeStepperOperation::poll() noexcept
     {
         // Stopping the sequencer doesn't stop the motors, so this axis would keep moving.
         stepper_.stop_immediately();
+        failure_ = Failure::timed_out;
         return PollResult::aborted;
     }
 

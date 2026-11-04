@@ -2,6 +2,7 @@
 #define SEQUENCER_HPP
 
 #include <cstddef>
+#include <optional>
 #include <span>
 
 #include "operation.hpp"
@@ -13,7 +14,9 @@ class Sequencer
   public:
     explicit Sequencer(const std::span<Operation *> operations) : operations_(operations) {}
 
-    void sequencer_step() noexcept;
+    // Returns why the current operation aborted, if it did on this step. The value
+    // isn't stored: what to do about it belongs to the caller.
+    std::optional<Operation::Failure> sequencer_step() noexcept;
     void start() noexcept;
     void stop() noexcept;
     void restart() noexcept;

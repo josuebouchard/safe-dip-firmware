@@ -66,7 +66,8 @@ Runs steps in order, and defines the interface a step must implement.
 - **May use:** nothing.
 - **Rules:**
   - Stay generic: no knowledge of steppers, effectors or this machine.
-  - Report that a step failed, and leave what to do about it to someone above.
+  - Report that a step failed and why, and leave what to do about it to someone above.
+    Failure reasons stay generic, and nothing here stores them.
 
 ### `operations`: what kinds of step exist?
 

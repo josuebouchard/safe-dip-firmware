@@ -17,6 +17,7 @@ class MoveStepperOperation : public Operation
 
     void start() noexcept override;
     PollResult poll() noexcept override;
+    Failure failure() const noexcept override { return Failure::interrupted; }
 
   private:
     StepperController &stepper_;
@@ -35,6 +36,7 @@ class HomeStepperOperation : public Operation
 
     void start() noexcept override;
     PollResult poll() noexcept override;
+    Failure failure() const noexcept override { return failure_; }
 
   private:
     StepperController &stepper_;
@@ -43,6 +45,7 @@ class HomeStepperOperation : public Operation
     bool &is_switch_pressed_;
     bool is_backing_off_;
     std::uint32_t start_time_ = 0;
+    Failure failure_ = Failure::unspecified;
 };
 
 #endif // MOVEMENT_OPERATIONS_HPP

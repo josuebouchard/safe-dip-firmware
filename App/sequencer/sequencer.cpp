@@ -38,18 +38,18 @@ bool Sequencer::is_running() const noexcept { return is_sequencer_running_; }
 
 std::size_t Sequencer::operation_index() const noexcept { return operation_index_; }
 
-void Sequencer::sequencer_step() noexcept
+std::optional<Operation::Failure> Sequencer::sequencer_step() noexcept
 {
     if (!is_sequencer_running_)
     {
-        return;
+        return std::nullopt;
     }
 
     if (!is_current_operation_started_) // operation hasn't started
     {
         is_current_operation_started_ = true;
         current_operation().start();
-        return;
+        return std::nullopt;
     }
     else // operation has been started
     {
@@ -66,7 +66,9 @@ void Sequencer::sequencer_step() noexcept
 
         case Operation::PollResult::aborted:
             stop();
-            break;
+            return current_operation().failure();
         }
     }
+
+    return std::nullopt;
 }
