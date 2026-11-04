@@ -1,4 +1,5 @@
 #include "movement_operations.hpp"
+#include "stm32f4xx_hal.h"
 
 void MoveStepperOperation::start() noexcept { stepper_.move_to_steps(position_); }
 
@@ -16,6 +17,7 @@ Operation::PollResult MoveStepperOperation::poll() noexcept
 void HomeStepperOperation::start() noexcept
 {
     is_backing_off_ = false;
+    start_time_ = HAL_GetTick();
     stepper_.move_at_speed_in_direction(-1);
 }
 
@@ -29,18 +31,18 @@ Operation::PollResult HomeStepperOperation::poll() noexcept
             stepper_.move_to_steps(0);
             is_backing_off_ = true;
         }
-
-        return PollResult::running;
     }
-    else
+    else if (stepper_.is_at_target())
     {
-        if (!stepper_.is_at_target())
-        {
-            return PollResult::running;
-        }
-        else
-        {
-            return PollResult::finished;
-        }
+        return PollResult::finished;
     }
+
+    if (HAL_GetTick() - start_time_ >= timeout_ms_)
+    {
+        // Stopping the sequencer doesn't stop the motors, so this axis would keep moving.
+        stepper_.stop_immediately();
+        return PollResult::aborted;
+    }
+
+    return PollResult::running;
 }
