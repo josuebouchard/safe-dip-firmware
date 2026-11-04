@@ -61,6 +61,7 @@
         font-family: ui-monospace, monospace; white-space: nowrap; color: var(--text-2); }
   .op.done { color: var(--muted); }
   .op.current { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .op.failed { background: var(--bad); border-color: var(--bad); color: #fff; }
   .chart { position: relative; }
   canvas { width: 100%; height: 150px; display: block; }
   .tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--border);
@@ -70,6 +71,8 @@
   th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
   th { font-size: 12px; color: var(--text-2); font-weight: 500; }
   td.n { font-variant-numeric: tabular-nums; }
+  tr.off td { color: var(--muted); }
+  tr.first td:first-child { font-weight: 600; }
   .err { color: var(--bad); }
 </style>
 </head>
@@ -87,6 +90,15 @@
   <section class="wide">
     <h2>Discrete inputs</h2>
     <div class="lamps" id="lamps"></div>
+  </section>
+
+  <section class="wide">
+    <h2>Faults</h2>
+    <div id="faultHint" class="readout"></div>
+    <table>
+      <thead><tr><th>Bit</th><th>Fault</th><th>State</th><th>Source</th></tr></thead>
+      <tbody id="faults"></tbody>
+    </table>
   </section>
 
   <section>
@@ -125,7 +137,7 @@
 const LAMPS = [
   ["e_stop", "E-stop", "bad"], ["start", "Start", "good"], ["running", "Running", "good"],
   ["x_at_target", "X at target", "good"], ["y_at_target", "Y at target", "good"],
-  ["effector", "Effector engaged", "good"],
+  ["effector", "Effector engaged", "good"], ["fault", "Fault", "bad"],
 ];
 const STAGES = [
   ["Home", ["MOVE_Y_UP", "MOVE_X_HOME"]],
@@ -139,6 +151,19 @@ const PARAMS = [
   ["X input position", "steps", 1000], ["X dip position", "steps", 1000],
   ["X output position", "steps", 1000], ["Y up position", "steps", 500],
   ["Y down position", "steps", 500], ["Dwell time", "ms", 60000],
+];
+const NO_SOURCE = 0xFFFF;
+const opSource = (v) => `Operation ${v} · ${OPS[v] ?? "?"}`;
+const RESET_FLAGS = [
+  [1, "brownout"], [2, "reset pin"], [3, "power-on"], [4, "software"],
+  [5, "independent watchdog"], [6, "window watchdog"], [7, "low power"],
+];
+const resetSource = (v) => RESET_FLAGS.filter(([bit]) => v & (1 << bit)).map(([, name]) => name).join(", ");
+// In bit order, which is also the order of the source registers.
+const FAULTS = [
+  ["E-stop", null], ["Operation interrupted", opSource], ["Operation timed out", opSource],
+  ["Operation failed", opSource], ["Home switch stuck", opSource], ["Position drift", opSource],
+  ["Unexpected reset", resetSource],
 ];
 const HISTORY_MS = 60000;
 
@@ -158,6 +183,9 @@ let opIdx = 0;
 $("stages").innerHTML = STAGES.map(([stage, ops]) =>
   `<div class="stage"><div>${stage}</div><div class="ops">${
     ops.map((op) => `<span class="op" id="op_${opIdx++}">${op}</span>`).join("")}</div></div>`).join("");
+
+$("faults").innerHTML = FAULTS.map(([name], i) =>
+  `<tr id="f_${i}"><td class="n">${i}</td><td>${name}</td><td id="fs_${i}">—</td><td id="fv_${i}">—</td></tr>`).join("");
 
 $("params").innerHTML = PARAMS.map(([name, unit, max], i) =>
   `<tr><td class="n">${i}</td><td>${name}</td><td class="n" id="p_${i}">—</td><td class="n">0–${fmt(max)} ${unit}</td>
@@ -230,9 +258,12 @@ function render(d) {
   $("yv").textContent = fmt(d.y);
   $("opv").textContent = `${d.op_index} · ${OPS[d.op_index] ?? "?"}`;
 
+  const failedOp = FAULTS.findIndex(([, source], i) => source === opSource && d.fault_sources[i] !== NO_SOURCE);
   OPS.forEach((_, i) => {
-    $(`op_${i}`).className = "op" + (i === d.op_index ? (d.running ? " current" : "") : i < d.op_index ? " done" : "");
+    const isFailed = failedOp !== -1 && i === d.fault_sources[failedOp];
+    $(`op_${i}`).className = "op" + (isFailed ? " failed" : i === d.op_index ? (d.running ? " current" : "") : i < d.op_index ? " done" : "");
   });
+  renderFaults(d);
   d.params.forEach((v, i) => {
     $(`p_${i}`).textContent = fmt(v);
     const w = $(`w_${i}`);
@@ -242,6 +273,22 @@ function render(d) {
   drawGantry(d);
   drawChart($("cx"), "x", "--x", "X (steps)");
   drawChart($("cy"), "y", "--y", "Y (steps)");
+}
+
+function renderFaults(d) {
+  FAULTS.forEach(([, source], i) => {
+    const bit = 1 << i;
+    const isLatched = (d.faults_active & bit) !== 0;
+    const isFirst = d.fault_first === bit;
+    $(`f_${i}`).className = !isLatched ? "off" : isFirst ? "first" : "";
+    $(`fs_${i}`).textContent = !isLatched ? "clear" : isFirst ? "Latched, first" : "Latched";
+    $(`fs_${i}`).className = isLatched ? "err" : "";
+    const value = d.fault_sources[i];
+    $(`fv_${i}`).textContent = isLatched && source && value !== NO_SOURCE ? source(value) : "—";
+  });
+  $("faultHint").textContent = !d.fault ? "No faults latched."
+    : d.e_stop ? "Release the e-stop, then press start to clear."
+    : "Press start to clear, then press it again to restart the cycle.";
 }
 
 function drawGantry(d) {

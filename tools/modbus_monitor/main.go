@@ -21,11 +21,16 @@ import (
 //go:embed index.html
 var indexHTML []byte
 
-// Table sizes, from the enums in App/Src/entrypoint.cpp
+// Table layout, from the enums in App/app/modbus_map.cpp and App/app/faults.hpp
 const (
 	diCount = 7
-	irCount = 5
 	hrCount = 6
+
+	irFaultsActive = 5
+	irFaultFirst   = 6
+	irFaultSources = 7
+	faultCount     = 7
+	irCount        = irFaultSources + faultCount
 )
 
 type State struct {
@@ -34,12 +39,17 @@ type State struct {
 	Running   bool     `json:"running"`
 	XAtTarget bool     `json:"x_at_target"`
 	YAtTarget bool     `json:"y_at_target"`
+	Fault     bool     `json:"fault"`
 	Effector  bool     `json:"effector"`
 	OpIndex   uint16   `json:"op_index"`
 	X         int32    `json:"x"`
 	Y         int32    `json:"y"`
 	Params    []uint16 `json:"params"`
 	LatencyMs float64  `json:"latency_ms"`
+
+	FaultsActive uint16   `json:"faults_active"`
+	FaultFirst   uint16   `json:"fault_first"`
+	FaultSources []uint16 `json:"fault_sources"`
 }
 
 func poll(c *Client, target string) (*State, error) {
@@ -48,7 +58,8 @@ func poll(c *Client, target string) (*State, error) {
 	if err != nil {
 		return nil, err
 	}
-	// One request, so both position words come from the same moment.
+	// One request, so both position words and the fault registers each come
+	// from the same moment.
 	ir, err := c.ReadRegisters(target, fcReadInputRegisters, irCount)
 	if err != nil {
 		return nil, err
@@ -57,6 +68,13 @@ func poll(c *Client, target string) (*State, error) {
 	if err != nil {
 		return nil, err
 	}
+	state := newState(di, ir, hr)
+	state.LatencyMs = float64(time.Since(start).Microseconds()) / 1000
+	return state, nil
+}
+
+// newState maps the raw tables to their meaning.
+func newState(di []bool, ir, hr []uint16) *State {
 	return &State{
 		EStop:     di[0],
 		Start:     di[1],
@@ -64,12 +82,16 @@ func poll(c *Client, target string) (*State, error) {
 		XAtTarget: di[3],
 		YAtTarget: di[4],
 		Effector:  di[5],
+		Fault:     di[6],
 		OpIndex:   ir[0],
 		X:         signed32(ir[1], ir[2]),
 		Y:         signed32(ir[3], ir[4]),
 		Params:    hr,
-		LatencyMs: float64(time.Since(start).Microseconds()) / 1000,
-	}, nil
+
+		FaultsActive: ir[irFaultsActive],
+		FaultFirst:   ir[irFaultFirst],
+		FaultSources: ir[irFaultSources:],
+	}
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {

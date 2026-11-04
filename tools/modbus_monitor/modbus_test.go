@@ -6,6 +6,30 @@ import (
 	"testing"
 )
 
+func TestNewStateMapsFaultRegisters(t *testing.T) {
+	di := []bool{false, false, false, false, false, false, true}
+	ir := make([]uint16, irCount)
+	ir[0] = 6
+	ir[irFaultsActive] = 3
+	ir[irFaultFirst] = 2
+	for i := irFaultSources; i < irCount; i++ {
+		ir[i] = 0xFFFF
+	}
+	ir[irFaultSources+1] = 6
+
+	s := newState(di, ir, make([]uint16, hrCount))
+
+	if !s.Fault || s.Effector {
+		t.Fatalf("Fault = %v, Effector = %v", s.Fault, s.Effector)
+	}
+	if s.FaultsActive != 3 || s.FaultFirst != 2 {
+		t.Fatalf("FaultsActive = %d, FaultFirst = %d", s.FaultsActive, s.FaultFirst)
+	}
+	if len(s.FaultSources) != faultCount || s.FaultSources[1] != 6 || s.FaultSources[0] != 0xFFFF {
+		t.Fatalf("FaultSources = %v", s.FaultSources)
+	}
+}
+
 func TestDecode(t *testing.T) {
 	bits, err := decodeBits([]byte{1, 0b10101}, 5)
 	if err != nil || !slices.Equal(bits, []bool{true, false, true, false, true}) {
