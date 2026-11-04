@@ -111,7 +111,8 @@ the stepper optos.
 - **Boot:** after reset every GPIO except the debug pins is a floating input, so PB10 is high-Z
   until `MX_GPIO_Init` runs. `MX_GPIO_Init` writes `GPIO_PIN_SET` to the output register *before*
   switching the pin to open-drain output, so there is no low glitch. `setup()` then calls
-  `engage()`.
+  `disengage()`, so the magnet holds through the reset and releases during boot. If a fault is
+  latched at boot, the first `loop()` pass engages it again.
 
 **What is not covered:**
 
