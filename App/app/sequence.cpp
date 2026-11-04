@@ -13,15 +13,18 @@
 
 // @todo: set from the measured axis travel and homing speed
 constexpr std::uint32_t HOMING_TIMEOUT_MS = 10000;
+// @todo: set from how far the switch hit varies on the bench. Must exceed the back-off,
+// or an axis already resting on its switch at position 0 reads as drift.
+constexpr std::int32_t HOMING_DRIFT_TOLERANCE_STEPS = 50;
 
 // The only file that knows which operations exist. Function-local statics, so
 // they are constructed when Machine calls this, not before its members.
 Sequencer &make_sequence(Machine &machine)
 {
     static HomeStepperOperation home_x{machine.controller_x, machine.inputs.limit_x_pressed, 20,
-                                       HOMING_TIMEOUT_MS};
+                                       HOMING_TIMEOUT_MS, HOMING_DRIFT_TOLERANCE_STEPS};
     static HomeStepperOperation home_y{machine.controller_y, machine.inputs.limit_y_pressed, 20,
-                                       HOMING_TIMEOUT_MS};
+                                       HOMING_TIMEOUT_MS, HOMING_DRIFT_TOLERANCE_STEPS};
 
     static MoveStepperOperation move_x_input{machine.controller_x, machine.recipe.x_input};
     static MoveStepperOperation move_x_dip{machine.controller_x, machine.recipe.x_dip};
