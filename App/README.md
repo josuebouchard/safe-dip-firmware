@@ -96,6 +96,8 @@ its cycle, its Modbus registers and the main loop.
 - **May use:** everything above.
 - **Rules:**
   - `loop()` decides who acts in each pass, and safety checks come before the sequencer.
+  - `loop()` is the only place that raises and clears faults, and it turns an operation's
+    generic failure into a fault of this machine.
   - Read inputs once per pass, and use those values for the rest of the pass.
   - Only one file here knows which operations exist. Everything else sees the sequencer.
 

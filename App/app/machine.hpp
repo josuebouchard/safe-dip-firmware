@@ -1,6 +1,7 @@
 #ifndef MACHINE_HPP
 #define MACHINE_HPP
 
+#include "faults.hpp"
 #include "hardware.hpp"
 #include "inputs.hpp"
 #include "recipe.hpp"
@@ -14,6 +15,7 @@ struct Machine
 {
     Inputs inputs;
     Recipe recipe;
+    Faults faults;
 
     StepperController::SpeedProfile speed_profile_x{
         8000, // max_speed

@@ -1,5 +1,6 @@
 #include "entrypoint.hpp"
 
+#include "button_press.hpp"
 #include "ethernet_if.h"
 #include "hardware.hpp"
 #include "inputs.hpp"
@@ -24,6 +25,8 @@ static modbus_tcp_task_t modbus_task;
 static Machine machine;
 static modbus_context_t modbus_ctx = modbus_map_make_context(machine);
 
+static ButtonPress start_button;
+
 // The only place that knows pins and polarity.
 static Inputs read_inputs() noexcept
 {
@@ -37,9 +40,54 @@ static Inputs read_inputs() noexcept
     };
 }
 
+// Reads and clears the reset flags, which otherwise pile up across resets. A power-on
+// or the reset button is expected. The pin flag doesn't tell them apart from the rest,
+// because every reset drives the pin, and a power-on also sets the brownout flag.
+static void check_reset_cause() noexcept
+{
+    const std::uint32_t flags = RCC->CSR;
+    __HAL_RCC_CLEAR_RESET_FLAGS();
+
+    const bool is_brownout = (flags & RCC_CSR_BORRSTF) && !(flags & RCC_CSR_PORRSTF);
+    const bool is_internal =
+        flags & (RCC_CSR_SFTRSTF | RCC_CSR_IWDGRSTF | RCC_CSR_WWDGRSTF | RCC_CSR_LPWRRSTF);
+
+    if (is_brownout || is_internal)
+        machine.faults.raise(Fault::unexpected_reset, static_cast<std::uint16_t>(flags >> 24));
+}
+
+static Fault to_fault(Operation::Failure failure) noexcept
+{
+    switch (failure)
+    {
+    case Operation::Failure::interrupted:
+        return Fault::operation_interrupted;
+    case Operation::Failure::timed_out:
+        return Fault::operation_timed_out;
+    case Operation::Failure::sensor_stuck:
+        return Fault::home_switch_stuck;
+    case Operation::Failure::out_of_tolerance:
+        return Fault::position_drift;
+    case Operation::Failure::unspecified:
+        break;
+    }
+
+    return Fault::operation_failed;
+}
+
+static void enter_safe_state() noexcept
+{
+    machine.sequencer.stop();
+    machine.controller_x.stop_immediately();
+    machine.controller_y.stop_immediately();
+    hardware::effector.engage();
+}
+
 void setup()
 {
     const uint32_t now = HAL_GetTick();
+
+    check_reset_cause();
 
     // Initalize ethernet
 
@@ -64,6 +112,7 @@ void loop()
     const Inputs &inputs = machine.inputs;
 
     const uint32_t now = HAL_GetTick();
+    const bool start_press = start_button.update(inputs.start_pressed, now);
 
     if (inputs.limit_x_pressed && machine.controller_x.current_speed_signed() < 0)
     {
@@ -77,14 +126,20 @@ void loop()
 
     if (inputs.e_stop_pressed)
     {
-        machine.sequencer.stop();
-        machine.controller_x.stop_immediately();
-        machine.controller_y.stop_immediately();
-        hardware::effector.engage();
+        machine.faults.raise(Fault::e_stop);
+    }
+
+    if (machine.faults.any())
+    {
+        // Only clears: a separate press starts the machine, so one press can't do both.
+        if (start_press && !inputs.e_stop_pressed)
+        {
+            machine.faults.clear();
+        }
     }
     else
     {
-        if (inputs.start_pressed && !machine.sequencer.is_running())
+        if (start_press && !machine.sequencer.is_running())
         {
             machine.sequencer.restart(); // Reset and restart the sequencer
 
@@ -94,8 +149,20 @@ void loop()
         }
 
         // Sequencer step
-        machine.sequencer.sequencer_step();
+        const auto failure = machine.sequencer.sequencer_step();
+        if (failure)
+        {
+            machine.faults.raise(to_fault(*failure),
+                                 static_cast<std::uint16_t>(machine.sequencer.operation_index()));
+        }
+    }
 
+    if (machine.faults.any())
+    {
+        enter_safe_state();
+    }
+    else
+    {
         // Process the different modules
         machine.controller_x.process(now);
         machine.controller_y.process(now);
