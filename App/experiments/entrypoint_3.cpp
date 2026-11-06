@@ -12,9 +12,9 @@ constexpr std::int32_t STEPS_PER_REVOLUTION = 1600;
 constexpr std::int32_t TURNS_PER_PRESS = 10;
 constexpr std::int32_t STEPS_PER_PRESS = STEPS_PER_REVOLUTION * TURNS_PER_PRESS;
 
-constexpr float ACCELERATION = 4000.0f;  // steps/s^2
-constexpr float CRUISE_SPEED = 4000.0f;  // steps/s
-constexpr float LANDING_SPEED = 100.0f;  // steps/s
+constexpr float ACCELERATION = 4000.0f; // steps/s^2
+constexpr float CRUISE_SPEED = 4000.0f; // steps/s
+constexpr float LANDING_SPEED = 100.0f; // steps/s
 
 // The ramps must fit in the move, or it never reaches cruise speed.
 static_assert(CRUISE_SPEED * CRUISE_SPEED / ACCELERATION <= STEPS_PER_PRESS);

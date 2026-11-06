@@ -6,11 +6,11 @@ extern "C"
 {
 #endif
 
-    // To be called after hardware initialization
-    void setup();
+// To be called after hardware initialization
+void setup();
 
-    // To be called in while loop
-    void loop();
+// To be called in while loop
+void loop();
 
 #ifdef __cplusplus
 }

@@ -3,5 +3,6 @@ IndentWidth: 4
 UseTab: Never
 ColumnLimit: 100
 
-AllowShortIfStatementsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: Never
 BreakBeforeBraces: Allman
+IndentExternBlock: NoIndent
