@@ -1,2 +1,19 @@
 CompileFlags:
   CompilationDatabase: build/Debug
+Diagnostics:
+  Includes:
+    # ST's module headers only compile through stm32f4xx_hal.h, so clangd's
+    # "include the header that declares it" advice can't be followed for them.
+    IgnoreHeader:
+      - stm32f4xx.*\.h
+      - stm32f446xx\.h
+      - core_cm4\.h
+      - main\.h
+---
+# .h files are shared with C, so C++-only advice doesn't apply to them, even when
+# clangd parses one as C++ because a .cpp file includes it.
+If:
+  PathMatch: .*\.h
+Diagnostics:
+  ClangTidy:
+    Remove: modernize-*
