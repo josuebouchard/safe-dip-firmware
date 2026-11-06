@@ -10,12 +10,10 @@
 
 #include "main.h"
 #include "stm32f4xx_hal.h"
-#include "stm32f4xx_hal_gpio.h"
 #include "w5500.h"
 
 #include <cstdint>
 #include <cstdio>
-#include <stdbool.h>
 
 constexpr std::uint8_t ECHO_SOCKET = 0;
 constexpr std::uint16_t ECHO_PORT = 502;

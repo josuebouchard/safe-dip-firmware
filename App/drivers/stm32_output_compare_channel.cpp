@@ -1,5 +1,4 @@
 #include "stm32_output_compare_channel.hpp"
-#include "stm32f4xx_hal_tim.h"
 
 void STM32OutputCompareChannel::start_interrupt(std::uint32_t initial_offset_ticks) noexcept
 {

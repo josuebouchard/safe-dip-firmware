@@ -1,7 +1,7 @@
 #ifndef EFFECTOR_DRIVER_HPP
 #define EFFECTOR_DRIVER_HPP
 
-#include "stm32f446xx.h"
+#include "stm32f4xx_hal.h"
 #include <cstdint>
 
 class EffectorDriver

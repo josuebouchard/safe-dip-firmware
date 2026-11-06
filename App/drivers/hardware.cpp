@@ -2,8 +2,6 @@
 #include "stm32_output_compare_channel.hpp"
 
 #include "main.h"
-#include "stm32f4xx_hal_gpio.h"
-#include "stm32f4xx_hal_tim.h"
 
 #include <cstdint>
 
