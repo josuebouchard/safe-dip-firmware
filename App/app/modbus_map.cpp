@@ -4,12 +4,18 @@
 #include <cstddef>
 #include <cstdint>
 
-// Travel limits for the configurable positions, in steps.
-// @todo: set from the measured axis travel
-constexpr std::int32_t X_MAX_STEPS = 1000;
-constexpr std::int32_t Y_MAX_STEPS = 500;
-
+constexpr std::int32_t X_MAX_MM = Machine::X_TRAVEL_MM;
+constexpr std::int32_t Y_MAX_MM = Machine::Y_TRAVEL_MM;
 constexpr std::int32_t DWELL_MAX_MS = 60000;
+
+// A holding register is 16 bits, so a larger limit could never be written.
+static_assert(X_MAX_MM <= UINT16_MAX && Y_MAX_MM <= UINT16_MAX && DWELL_MAX_MS <= UINT16_MAX);
+
+// The defaults must be values Modbus could write back.
+static_assert(Recipe{}.x_input_mm <= X_MAX_MM && Recipe{}.x_dip_mm <= X_MAX_MM &&
+              Recipe{}.x_output_mm <= X_MAX_MM);
+static_assert(Recipe{}.y_up_mm <= Y_MAX_MM && Recipe{}.y_down_mm <= Y_MAX_MM);
+static_assert(Recipe{}.dwell_ms <= DWELL_MAX_MS);
 
 enum DiscreteInput : std::uint16_t
 {
@@ -44,11 +50,11 @@ struct HoldingRegister
 
 // The address is the row index, so a new register goes at the end.
 static constexpr std::array HOLDING_REGISTERS = {
-    HoldingRegister{.field = &Recipe::x_input, .max = X_MAX_STEPS},   // 0
-    HoldingRegister{.field = &Recipe::x_dip, .max = X_MAX_STEPS},     // 1
-    HoldingRegister{.field = &Recipe::x_output, .max = X_MAX_STEPS},  // 2
-    HoldingRegister{.field = &Recipe::y_up, .max = Y_MAX_STEPS},      // 3
-    HoldingRegister{.field = &Recipe::y_down, .max = Y_MAX_STEPS},    // 4
+    HoldingRegister{.field = &Recipe::x_input_mm, .max = X_MAX_MM},   // 0
+    HoldingRegister{.field = &Recipe::x_dip_mm, .max = X_MAX_MM},     // 1
+    HoldingRegister{.field = &Recipe::x_output_mm, .max = X_MAX_MM},  // 2
+    HoldingRegister{.field = &Recipe::y_up_mm, .max = Y_MAX_MM},      // 3
+    HoldingRegister{.field = &Recipe::y_down_mm, .max = Y_MAX_MM},    // 4
     HoldingRegister{.field = &Recipe::dwell_ms, .max = DWELL_MAX_MS}, // 5
 };
 

@@ -1,19 +1,23 @@
 #ifndef MOVEMENT_OPERATIONS_HPP
 #define MOVEMENT_OPERATIONS_HPP
 
+#include "axis_scale.hpp"
 #include "operation.hpp"
 #include "stepper_controller.hpp"
 #include <cstdint>
 
+// Moves to a recipe position given in mm, converted when the move starts.
 class MoveStepperOperation : public Operation
 {
   public:
-    MoveStepperOperation(StepperController &stepper, const std::int32_t &position)
-        : stepper_(stepper), position_(position)
+    MoveStepperOperation(StepperController &stepper, AxisScale scale,
+                         const std::int32_t &position_mm)
+        : stepper_(stepper), scale_(scale), position_mm_(position_mm)
     {
     }
     // Stored by reference, so a temporary would dangle.
-    MoveStepperOperation(StepperController &stepper, const std::int32_t &&position) = delete;
+    MoveStepperOperation(StepperController &stepper, AxisScale scale,
+                         const std::int32_t &&position_mm) = delete;
 
     void start() noexcept override;
     PollResult poll() noexcept override;
@@ -21,7 +25,8 @@ class MoveStepperOperation : public Operation
 
   private:
     StepperController &stepper_;
-    const std::int32_t &position_;
+    AxisScale scale_;
+    const std::int32_t &position_mm_;
 };
 
 class HomeStepperOperation : public Operation

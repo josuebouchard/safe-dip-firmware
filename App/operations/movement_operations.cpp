@@ -2,7 +2,10 @@
 #include "stm32f4xx_hal.h"
 #include <cstdlib>
 
-void MoveStepperOperation::start() noexcept { stepper_.move_to_steps(position_); }
+void MoveStepperOperation::start() noexcept
+{
+    stepper_.move_to_steps(scale_.steps_from_mm(position_mm_));
+}
 
 Operation::PollResult MoveStepperOperation::poll() noexcept
 {

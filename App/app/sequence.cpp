@@ -26,12 +26,17 @@ Sequencer &make_sequence(Machine &machine)
     static HomeStepperOperation home_y{machine.controller_y, machine.inputs.limit_y_pressed, 20,
                                        HOMING_TIMEOUT_MS, HOMING_DRIFT_TOLERANCE_STEPS};
 
-    static MoveStepperOperation move_x_input{machine.controller_x, machine.recipe.x_input};
-    static MoveStepperOperation move_x_dip{machine.controller_x, machine.recipe.x_dip};
-    static MoveStepperOperation move_x_output{machine.controller_x, machine.recipe.x_output};
+    static MoveStepperOperation move_x_input{machine.controller_x, Machine::SCALE_X,
+                                             machine.recipe.x_input_mm};
+    static MoveStepperOperation move_x_dip{machine.controller_x, Machine::SCALE_X,
+                                           machine.recipe.x_dip_mm};
+    static MoveStepperOperation move_x_output{machine.controller_x, Machine::SCALE_X,
+                                              machine.recipe.x_output_mm};
 
-    static MoveStepperOperation move_y_up{machine.controller_y, machine.recipe.y_up};
-    static MoveStepperOperation move_y_down{machine.controller_y, machine.recipe.y_down};
+    static MoveStepperOperation move_y_up{machine.controller_y, Machine::SCALE_Y,
+                                          machine.recipe.y_up_mm};
+    static MoveStepperOperation move_y_down{machine.controller_y, Machine::SCALE_Y,
+                                            machine.recipe.y_down_mm};
 
     static EffectorOperation effector_engage{hardware::effector, true};
     static EffectorOperation effector_disengage{hardware::effector, false};
