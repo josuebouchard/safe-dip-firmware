@@ -3,8 +3,8 @@
 
 #include <cstdint>
 
-// Turns a raw button level into one event per press. Call update() on every loop
-// pass, so a press made while nobody is acting on it can't fire later.
+// Turns a raw button level into one event per press.
+// Only triggers the event on debounced rising-edge.
 class ButtonPress
 {
   public:
