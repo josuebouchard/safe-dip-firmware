@@ -33,7 +33,7 @@ class HomeStepperOperation : public Operation
 {
   public:
     explicit HomeStepperOperation(StepperController &stepper, bool &is_switch_pressed,
-                                  std::int16_t back_off_steps, std::uint32_t timeout_ms,
+                                  std::int32_t back_off_steps, std::uint32_t timeout_ms,
                                   std::int32_t drift_tolerance_steps)
         : stepper_{stepper}, back_off_steps_{back_off_steps}, timeout_ms_{timeout_ms},
           drift_tolerance_steps_{drift_tolerance_steps}, is_switch_pressed_{is_switch_pressed},
@@ -47,7 +47,7 @@ class HomeStepperOperation : public Operation
 
   private:
     StepperController &stepper_;
-    std::int16_t back_off_steps_;
+    std::int32_t back_off_steps_;
     std::uint32_t timeout_ms_; // Covers the whole operation: the search and the back-off
     std::int32_t drift_tolerance_steps_;
     bool &is_switch_pressed_;
