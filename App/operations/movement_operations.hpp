@@ -17,7 +17,7 @@ class MoveStepperOperation : public Operation
 
     void start() noexcept override;
     PollResult poll() noexcept override;
-    Failure failure() const noexcept override { return Failure::interrupted; }
+    [[nodiscard]] Failure failure() const noexcept override { return Failure::interrupted; }
 
   private:
     StepperController &stepper_;

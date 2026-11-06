@@ -32,7 +32,7 @@ class Operation
     virtual PollResult poll() noexcept = 0;
 
     // Why poll() returned aborted. Only meaningful after an aborted result.
-    virtual Failure failure() const noexcept { return Failure::unspecified; }
+    [[nodiscard]] virtual Failure failure() const noexcept { return Failure::unspecified; }
 
     virtual ~Operation() = default;
 };
