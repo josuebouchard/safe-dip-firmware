@@ -5,6 +5,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 /* ------------------------------------------------------------------ */
 /*  Cooperative task return values                                      */
@@ -49,25 +53,20 @@ typedef struct
 /*  Public API                                                         */
 /* ------------------------------------------------------------------ */
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+/**
+ * @brief  Initialize the task. Call once before the super-loop.
+ * @note   Does NOT open the socket — that happens lazily on first run().
+ */
+void modbus_tcp_task_init(modbus_tcp_task_t *task, uint8_t socket_id, uint16_t port,
+                          modbus_context_t *ctx);
 
-    /**
-     * @brief  Initialize the task. Call once before the super-loop.
-     * @note   Does NOT open the socket — that happens lazily on first run().
-     */
-    void modbus_tcp_task_init(modbus_tcp_task_t *task, uint8_t socket_id, uint16_t port,
-                              modbus_context_t *ctx);
-
-    /**
-     * @brief  Advance the task by one non-blocking step.
-     * @retval MODBUS_TASK_OK / BUSY / IDLE / ERROR
-     * @note   Call every super-loop iteration. Never blocks or delays.
-     *         Not reentrant — do not call concurrently on the same instance.
-     */
-    modbus_task_status_t modbus_tcp_task_run(modbus_tcp_task_t *task);
+/**
+ * @brief  Advance the task by one non-blocking step.
+ * @retval MODBUS_TASK_OK / BUSY / IDLE / ERROR
+ * @note   Call every super-loop iteration. Never blocks or delays.
+ *         Not reentrant — do not call concurrently on the same instance.
+ */
+modbus_task_status_t modbus_tcp_task_run(modbus_tcp_task_t *task);
 
 #ifdef __cplusplus
 }

@@ -89,7 +89,7 @@ void setup()
 
     // Initalize ethernet
 
-    ethernet_W5500_init();
+    ethernet_w5500_init();
 
     uint8_t version = getVERSIONR();
     std::printf("W5500 version register: 0x%02X (expect 0x04)\r\n", version);

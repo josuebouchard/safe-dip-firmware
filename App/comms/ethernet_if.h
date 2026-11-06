@@ -6,8 +6,8 @@ extern "C"
 {
 #endif
 
-    // Initialize the W5500 ethernet module
-    void ethernet_W5500_init(void);
+// Initialize the W5500 ethernet module
+void ethernet_w5500_init(void);
 
 #ifdef __cplusplus
 }
