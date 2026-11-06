@@ -17,7 +17,9 @@ class ButtonPress
         }
 
         if (level == stable_level_ || now_ms - changed_at_ms_ < DEBOUNCE_MS)
+        {
             return false;
+        }
 
         stable_level_ = level;
         return stable_level_;

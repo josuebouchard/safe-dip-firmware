@@ -32,11 +32,15 @@ class Faults
         const auto index = static_cast<std::size_t>(fault);
         const auto bit = static_cast<std::uint16_t>(1U << index);
 
-        if (active_ & bit)
+        if ((active_ & bit) != 0)
+        {
             return; // Already latched, so keep the original source
+        }
 
         if (active_ == 0)
+        {
             first_ = bit;
+        }
 
         active_ |= bit;
         sources_[index] = source;
@@ -54,7 +58,7 @@ class Faults
 
     std::uint16_t source(std::size_t index) const noexcept
     {
-        const bool is_latched = (active_ >> index) & 1U;
+        const bool is_latched = ((active_ >> index) & 1U) != 0U;
         return is_latched ? sources_[index] : NO_SOURCE;
     }
 

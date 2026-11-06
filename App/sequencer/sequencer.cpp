@@ -15,13 +15,17 @@ Operation &Sequencer::current_operation() const noexcept
 void Sequencer::start() noexcept
 {
     if (!is_sequencer_running_)
+    {
         is_sequencer_running_ = true;
+    }
 }
 
 void Sequencer::stop() noexcept
 {
     if (!is_sequencer_running_)
+    {
         return;
+    }
 
     is_sequencer_running_ = false;
     is_current_operation_started_ = false;
@@ -51,23 +55,22 @@ std::optional<Operation::Failure> Sequencer::sequencer_step() noexcept
         current_operation().start();
         return std::nullopt;
     }
-    else // operation has been started
+
+    // operation has been started
+    switch (current_operation().poll())
     {
-        switch (current_operation().poll())
-        {
-        case Operation::PollResult::running:
-            // No-op - all work should be done in processing the modules
-            break;
+    case Operation::PollResult::running:
+        // No-op - all work should be done in processing the modules
+        break;
 
-        case Operation::PollResult::finished:
-            is_current_operation_started_ = false;
-            advance_operation();
-            break;
+    case Operation::PollResult::finished:
+        is_current_operation_started_ = false;
+        advance_operation();
+        break;
 
-        case Operation::PollResult::aborted:
-            stop();
-            return current_operation().failure();
-        }
+    case Operation::PollResult::aborted:
+        stop();
+        return current_operation().failure();
     }
 
     return std::nullopt;

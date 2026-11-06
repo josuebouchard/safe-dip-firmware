@@ -13,9 +13,9 @@ StepperController::SpeedProfile::SpeedProfile(float max_speed, float acceleratio
                                               float landing_speed, float homing_speed) noexcept
     : max_speed(max_speed), acceleration(acceleration),
       // A zero landing speed would stall short of the target.
-      landing_speed(std::min(std::max(landing_speed, 1.0f), max_speed)),
+      landing_speed(std::min(std::max(landing_speed, 1.0F), max_speed)),
       // Same bounds: a zero homing speed would never reach the switch.
-      homing_speed(std::min(std::max(homing_speed, 1.0f), max_speed))
+      homing_speed(std::min(std::max(homing_speed, 1.0F), max_speed))
 {
 }
 
@@ -27,7 +27,7 @@ std::int32_t StepperController::position_current_signed() const noexcept
 bool StepperController::is_at_target() const noexcept
 {
     const auto *position = std::get_if<PositionMode>(&mode_);
-    return position && distance_to_target(*position) == 0;
+    return (position != nullptr) && distance_to_target(*position) == 0;
 }
 
 float StepperController::current_speed_signed() const noexcept { return speed_current_signed_; }
@@ -55,8 +55,8 @@ bool StepperController::should_decelerate(const PositionMode &position) const no
 
     // Distance to slow down to the landing speed, not to a standstill.
     const float braking_distance =
-        std::max(0.0f, speed_magnitude * speed_magnitude - landing_speed * landing_speed) /
-        (2.0f * speed_profile_.acceleration);
+        std::max(0.0F, (speed_magnitude * speed_magnitude) - (landing_speed * landing_speed)) /
+        (2.0F * speed_profile_.acceleration);
 
     return std::abs(static_cast<float>(distance)) <= braking_distance;
 }
@@ -73,7 +73,7 @@ float StepperController::speed_desired_signed(const PositionMode &position) cons
     // process() gates on !is_at_target()
     if (current_direction == -target_direction)
     {
-        return 0.0f;
+        return 0.0F;
     }
 
     const float speed =
@@ -101,7 +101,7 @@ void StepperController::process(std::uint32_t now_ms) noexcept
     // @todo: assert(now_ms >= last_ms_)
 
     // Integer ms subtraction first (wraparound-safe), then convert the small delta.
-    const float delta_time_s = static_cast<float>(now_ms - last_ms_) / 1000.0f;
+    const float delta_time_s = static_cast<float>(now_ms - last_ms_) / 1000.0F;
     last_ms_ = now_ms;
 
     auto *position = std::get_if<PositionMode>(&mode_);
@@ -109,12 +109,12 @@ void StepperController::process(std::uint32_t now_ms) noexcept
     // Stop dead on the target step. Above the tick gate because this tests
     // exact equality - checking only once per tick could let a fast move
     // step past the target value without ever matching it.
-    if (position && distance_to_target(*position) == 0)
+    if ((position != nullptr) && distance_to_target(*position) == 0)
     {
         // Landing latch, half 1 of 2: arrival clears it.
         position->is_landing = false;
 
-        if (speed_current_signed_ != 0.0f)
+        if (speed_current_signed_ != 0.0F)
         {
             stop_immediately();
         }
@@ -122,7 +122,7 @@ void StepperController::process(std::uint32_t now_ms) noexcept
     }
 
     // HAL_GetTick() advances once per ms, so most calls have nothing to ramp.
-    if (delta_time_s == 0.0f)
+    if (delta_time_s == 0.0F)
     {
         return;
     }
@@ -130,7 +130,8 @@ void StepperController::process(std::uint32_t now_ms) noexcept
     // Landing latch, half 2 of 2: braking sets it. Below the tick gate because
     // should_decelerate() cannot change within a millisecond, and the superloop
     // calls process() far more often than that.
-    if (position && speed_versor() == target_versor(*position) && should_decelerate(*position))
+    if ((position != nullptr) && speed_versor() == target_versor(*position) &&
+        should_decelerate(*position))
     {
         position->is_landing = true;
     }
@@ -138,10 +139,10 @@ void StepperController::process(std::uint32_t now_ms) noexcept
     // Not std::visit: it pulls ~7 KB of vfprintf into flash.
     const auto *velocity = std::get_if<VelocityMode>(&mode_);
     const float speed_desired =
-        velocity ? velocity->speed_target_signed : speed_desired_signed(*position);
+        (velocity != nullptr) ? velocity->speed_target_signed : speed_desired_signed(*position);
 
     // Idle - standing still with nothing commanded.
-    if (speed_current_signed_ == 0.0f && speed_desired == 0.0f)
+    if (speed_current_signed_ == 0.0F && speed_desired == 0.0F)
     {
         return;
     }
@@ -186,14 +187,14 @@ void StepperController::stop() noexcept
 {
     // A zero velocity target ramps down gracefully from any mode.
     mode_ = VelocityMode{
-        .speed_target_signed = 0.0f,
+        .speed_target_signed = 0.0F,
     };
 }
 
 void StepperController::stop_immediately() noexcept
 {
     // No deceleration
-    speed_current_signed_ = 0.0f;
+    speed_current_signed_ = 0.0F;
 
     // If current mode is position, get a pointer to it
     const auto *position = std::get_if<PositionMode>(&mode_);
@@ -202,13 +203,13 @@ void StepperController::stop_immediately() noexcept
     // remaining counts as an interruption.
     // This call moves the target to the current position, so
     // a repeat call sees zero distance and must not clear the flag.
-    if (position && distance_to_target(*position) != 0)
+    if ((position != nullptr) && distance_to_target(*position) != 0)
     {
         was_interrupted_ = true;
     }
 
     // Only neutralize the setpoint of the active mode
-    if (position)
+    if (position != nullptr)
     {
         mode_ = PositionMode{
             .position_target_signed = position_current_signed(),
@@ -218,7 +219,7 @@ void StepperController::stop_immediately() noexcept
     else
     {
         mode_ = VelocityMode{
-            .speed_target_signed = 0.0f,
+            .speed_target_signed = 0.0F,
         };
     }
 

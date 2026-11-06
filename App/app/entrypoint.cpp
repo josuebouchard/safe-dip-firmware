@@ -46,12 +46,14 @@ static void check_reset_cause() noexcept
     const std::uint32_t flags = RCC->CSR;
     __HAL_RCC_CLEAR_RESET_FLAGS();
 
-    const bool is_brownout = (flags & RCC_CSR_BORRSTF) && !(flags & RCC_CSR_PORRSTF);
+    const bool is_brownout = ((flags & RCC_CSR_BORRSTF) != 0U) && ((flags & RCC_CSR_PORRSTF) == 0U);
     const bool is_internal =
-        flags & (RCC_CSR_SFTRSTF | RCC_CSR_IWDGRSTF | RCC_CSR_WWDGRSTF | RCC_CSR_LPWRRSTF);
+        (flags & (RCC_CSR_SFTRSTF | RCC_CSR_IWDGRSTF | RCC_CSR_WWDGRSTF | RCC_CSR_LPWRRSTF)) != 0U;
 
     if (is_brownout || is_internal)
+    {
         machine.faults.raise(Fault::unexpected_reset, static_cast<std::uint16_t>(flags >> 24));
+    }
 }
 
 static Fault to_fault(Operation::Failure failure) noexcept

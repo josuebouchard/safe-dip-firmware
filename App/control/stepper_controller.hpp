@@ -74,7 +74,7 @@ class StepperController
     std::variant<PositionMode, VelocityMode> mode_;
 
     // Current
-    float speed_current_signed_ = 0.0f; // steps / second
+    float speed_current_signed_ = 0.0F; // steps / second
     bool was_interrupted_ = false;
 
     // Last

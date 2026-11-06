@@ -25,14 +25,14 @@ enum DiscreteInput : std::uint16_t
 
 enum InputRegister : std::uint16_t
 {
-    IR_OPERATION_INDEX,
-    IR_X_POSITION_HIGH,
-    IR_X_POSITION_LOW,
-    IR_Y_POSITION_HIGH,
-    IR_Y_POSITION_LOW,
-    IR_FAULTS_ACTIVE,
-    IR_FAULT_FIRST,
-    IR_FAULT_SOURCE_FIRST, // One register per Fault, in enum order
+    IR_OPERATION_INDEX = 0,
+    IR_X_POSITION_HIGH = 1,
+    IR_X_POSITION_LOW = 2,
+    IR_Y_POSITION_HIGH = 3,
+    IR_Y_POSITION_LOW = 4,
+    IR_FAULTS_ACTIVE = 5,
+    IR_FAULT_FIRST = 6,
+    IR_FAULT_SOURCE_FIRST = 7, // One register per Fault, in enum order
     IR_COUNT = IR_FAULT_SOURCE_FIRST + static_cast<std::uint16_t>(Fault::count),
 };
 
@@ -44,12 +44,12 @@ struct HoldingRegister
 
 // The address is the row index, so a new register goes at the end.
 static constexpr std::array HOLDING_REGISTERS = {
-    HoldingRegister{&Recipe::x_input, X_MAX_STEPS},   // 0
-    HoldingRegister{&Recipe::x_dip, X_MAX_STEPS},     // 1
-    HoldingRegister{&Recipe::x_output, X_MAX_STEPS},  // 2
-    HoldingRegister{&Recipe::y_up, Y_MAX_STEPS},      // 3
-    HoldingRegister{&Recipe::y_down, Y_MAX_STEPS},    // 4
-    HoldingRegister{&Recipe::dwell_ms, DWELL_MAX_MS}, // 5
+    HoldingRegister{.field = &Recipe::x_input, .max = X_MAX_STEPS},   // 0
+    HoldingRegister{.field = &Recipe::x_dip, .max = X_MAX_STEPS},     // 1
+    HoldingRegister{.field = &Recipe::x_output, .max = X_MAX_STEPS},  // 2
+    HoldingRegister{.field = &Recipe::y_up, .max = Y_MAX_STEPS},      // 3
+    HoldingRegister{.field = &Recipe::y_down, .max = Y_MAX_STEPS},    // 4
+    HoldingRegister{.field = &Recipe::dwell_ms, .max = DWELL_MAX_MS}, // 5
 };
 
 constexpr std::uint16_t HR_COUNT = HOLDING_REGISTERS.size();
@@ -95,7 +95,9 @@ static bool read_discrete_input(const Machine &machine, std::uint16_t address) n
 static std::uint16_t read_input_register(const Machine &machine, std::uint16_t address) noexcept
 {
     if (address >= IR_FAULT_SOURCE_FIRST)
+    {
         return machine.faults.source(address - std::size_t{IR_FAULT_SOURCE_FIRST});
+    }
 
     switch (address)
     {
@@ -124,10 +126,14 @@ static modbus_query_state_t modbus_read_discrete_inputs(std::uint16_t start, boo
     const Machine &machine = *static_cast<const Machine *>(user_context);
 
     if (!is_in_range(start, quantity, DI_COUNT))
+    {
         return MODBUS_QUERY_ST_BAD_ADDRESS;
+    }
 
     for (std::uint16_t i = 0; i < quantity; i++)
+    {
         dest[i] = read_discrete_input(machine, start + i);
+    }
 
     return MODBUS_QUERY_ST_OK;
 }
@@ -138,10 +144,14 @@ static modbus_query_state_t modbus_read_input_registers(std::uint16_t start, std
     const Machine &machine = *static_cast<const Machine *>(user_context);
 
     if (!is_in_range(start, quantity, IR_COUNT))
+    {
         return MODBUS_QUERY_ST_BAD_ADDRESS;
+    }
 
     for (std::uint16_t i = 0; i < quantity; i++)
+    {
         dest[i] = read_input_register(machine, start + i);
+    }
 
     return MODBUS_QUERY_ST_OK;
 }
@@ -153,7 +163,9 @@ static modbus_query_state_t modbus_read_holding_registers(std::uint16_t start, s
     const Machine &machine = *static_cast<const Machine *>(user_context);
 
     if (!is_in_range(start, quantity, HR_COUNT))
+    {
         return MODBUS_QUERY_ST_BAD_ADDRESS;
+    }
 
     for (std::uint16_t i = 0; i < quantity; i++)
     {
@@ -173,13 +185,19 @@ static modbus_query_state_t modbus_write_holding_registers(std::uint16_t start,
     Machine &machine = *static_cast<Machine *>(user_context);
 
     if (!is_in_range(start, quantity, HR_COUNT))
+    {
         return MODBUS_QUERY_ST_BAD_ADDRESS;
+    }
 
     // Validate everything first, so a rejected write changes nothing.
     // The library has no "illegal value" query state, so this reports a server failure.
     for (std::uint16_t i = 0; i < quantity; i++)
+    {
         if (src[i] > HOLDING_REGISTERS[start + i].max)
+        {
             return MODBUS_QUERY_ST_FAILURE;
+        }
+    }
 
     for (std::uint16_t i = 0; i < quantity; i++)
     {

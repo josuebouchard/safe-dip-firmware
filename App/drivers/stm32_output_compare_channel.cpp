@@ -42,6 +42,7 @@ std::uint32_t STM32OutputCompareChannel::compare() const noexcept
     return __HAL_TIM_GET_COMPARE(config_.timer, config_.timer_channel);
 }
 
+// NOLINTNEXTLINE(readability-make-member-function-const)
 void STM32OutputCompareChannel::set_compare(std::uint32_t value) noexcept
 {
     switch (config_.timer_channel)

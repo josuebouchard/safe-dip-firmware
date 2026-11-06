@@ -83,6 +83,7 @@ void StepperDriver::apply_speed(std::int32_t speed) noexcept
     write_direction_pin(direction_current_);
 }
 
+// NOLINTNEXTLINE(readability-make-member-function-const)
 void StepperDriver::write_direction_pin(Direction direction) noexcept
 {
     HAL_GPIO_WritePin(config_.direction.port, config_.direction.pin,

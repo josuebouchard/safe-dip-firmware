@@ -2,7 +2,6 @@
 #define STM32_OUTPUT_COMPARE_CHANNEL_HPP
 
 #include "stm32f4xx_hal.h"
-
 #include <cstdint>
 
 class STM32OutputCompareChannel
@@ -24,8 +23,8 @@ class STM32OutputCompareChannel
     void start_interrupt(std::uint32_t initial_offset_ticks) noexcept;
     void stop_interrupt() noexcept;
 
-    std::uint32_t counter() const noexcept;
-    std::uint32_t compare() const noexcept;
+    [[nodiscard]] std::uint32_t counter() const noexcept;
+    [[nodiscard]] std::uint32_t compare() const noexcept;
 
     void set_compare(std::uint32_t value) noexcept;
 
