@@ -3,8 +3,9 @@
 
 #include "effector_driver.hpp"
 #include "operation.hpp"
+#include "tick.hpp"
 
-class EffectorOperation : public Operation
+class EffectorOperation : public Operation<Tick>
 {
   public:
     EffectorOperation(EffectorDriver &effector, bool should_engage) noexcept
@@ -12,11 +13,11 @@ class EffectorOperation : public Operation
     {
     }
 
-    void start() noexcept override
+    void start(Tick & /*ctx*/) noexcept override
     {
         should_engage_ ? effector_.engage() : effector_.disengage();
     }
-    PollResult poll() noexcept override { return PollResult::finished; }
+    PollResult poll(Tick & /*ctx*/) noexcept override { return PollResult::finished; }
 
   private:
     EffectorDriver &effector_;

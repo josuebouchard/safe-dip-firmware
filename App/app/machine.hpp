@@ -9,6 +9,7 @@
 #include "sequence.hpp"
 #include "sequencer.hpp"
 #include "stepper_controller.hpp"
+#include "tick.hpp"
 
 #include <cstdint>
 
@@ -51,7 +52,7 @@ struct Machine
     StepperController controller_x{speed_profile_x, hardware::stepper_driver_x};
     StepperController controller_y{speed_profile_y, hardware::stepper_driver_y};
 
-    Sequencer &sequencer = make_sequence(*this);
+    Sequencer<Tick> &sequencer = make_sequence(*this);
 };
 
 #endif // MACHINE_HPP

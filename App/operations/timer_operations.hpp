@@ -2,9 +2,10 @@
 #define TIMER_OPERATIONS_HPP
 
 #include "operation.hpp"
+#include "tick.hpp"
 #include <cstdint>
 
-class DwellOperation : public Operation
+class DwellOperation : public Operation<Tick>
 {
   public:
     explicit DwellOperation(const std::int32_t &dwell_time_ms) noexcept
@@ -14,8 +15,8 @@ class DwellOperation : public Operation
     // Stored by reference, so a temporary would dangle.
     explicit DwellOperation(const std::int32_t &&dwell_time_ms) = delete;
 
-    void start() noexcept override;
-    PollResult poll() noexcept override;
+    void start(Tick &ctx) noexcept override;
+    PollResult poll(Tick &ctx) noexcept override;
 
   private:
     const std::int32_t &dwell_time_ms_;

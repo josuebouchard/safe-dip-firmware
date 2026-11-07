@@ -35,7 +35,7 @@ static std::uint32_t homing_timeout_ms(const AxisScale &scale, std::int32_t trav
 
 // The only file that knows which operations exist. Function-local statics, so
 // they are constructed when Machine calls this, not before its members.
-Sequencer &make_sequence(Machine &machine)
+Sequencer<Tick> &make_sequence(Machine &machine)
 {
     static HomeStepperOperation home_x{
         machine.controller_x,
@@ -43,7 +43,7 @@ Sequencer &make_sequence(Machine &machine)
         Machine::SCALE_X.steps_from_mm(HOMING_BACK_OFF_MM),
         homing_timeout_ms(Machine::SCALE_X, Machine::X_TRAVEL_MM, machine.speed_profile_x),
         Machine::SCALE_X.steps_from_mm(HOMING_DRIFT_TOLERANCE_MM),
-        Operation::Failure::x_homing_failed,
+        Failure::x_homing_failed,
     };
     static HomeStepperOperation home_y{
         machine.controller_y,
@@ -51,7 +51,7 @@ Sequencer &make_sequence(Machine &machine)
         Machine::SCALE_Y.steps_from_mm(HOMING_BACK_OFF_MM),
         homing_timeout_ms(Machine::SCALE_Y, Machine::Y_TRAVEL_MM, machine.speed_profile_y),
         Machine::SCALE_Y.steps_from_mm(HOMING_DRIFT_TOLERANCE_MM),
-        Operation::Failure::y_homing_failed,
+        Failure::y_homing_failed,
     };
 
     static MoveStepperOperation move_x_input{machine.controller_x, Machine::SCALE_X,
@@ -71,7 +71,7 @@ Sequencer &make_sequence(Machine &machine)
 
     static DwellOperation dwell{machine.recipe.dwell_ms};
 
-    static std::array<Operation *, 13> operations = {
+    static std::array<Operation<Tick> *, 13> operations = {
         // Home
         // &home_y,
         &move_y_up,
@@ -98,7 +98,7 @@ Sequencer &make_sequence(Machine &machine)
         &move_y_up,
     };
 
-    static Sequencer sequencer{std::span<Operation *>(operations)};
+    static Sequencer<Tick> sequencer{std::span<Operation<Tick> *>(operations)};
 
     return sequencer;
 }

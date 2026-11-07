@@ -1,13 +1,12 @@
 #include "movement_operations.hpp"
-#include "stm32f4xx_hal.h"
 #include <cstdlib>
 
-void MoveStepperOperation::start() noexcept
+void MoveStepperOperation::start(Tick & /*ctx*/) noexcept
 {
     stepper_.move_to_steps(scale_.steps_from_mm(position_mm_));
 }
 
-Operation::PollResult MoveStepperOperation::poll() noexcept
+PollResult MoveStepperOperation::poll(Tick & /*ctx*/) noexcept
 {
     // Checked first: an interrupted move has its target moved to where it stopped.
     if (stepper_.was_interrupted())
@@ -18,15 +17,15 @@ Operation::PollResult MoveStepperOperation::poll() noexcept
     return stepper_.is_at_target() ? PollResult::finished : PollResult::running;
 }
 
-void HomeStepperOperation::start() noexcept
+void HomeStepperOperation::start(Tick &ctx) noexcept
 {
     is_backing_off_ = false;
-    start_time_ = HAL_GetTick();
+    start_time_ = ctx.now_ms;
     failure_ = Failure::unspecified;
     stepper_.move_at_speed_in_direction(-1);
 }
 
-Operation::PollResult HomeStepperOperation::poll() noexcept
+PollResult HomeStepperOperation::poll(Tick &ctx) noexcept
 {
     if (!is_backing_off_)
     {
@@ -65,7 +64,7 @@ Operation::PollResult HomeStepperOperation::poll() noexcept
         return PollResult::finished;
     }
 
-    if (HAL_GetTick() - start_time_ >= timeout_ms_)
+    if (ctx.now_ms - start_time_ >= timeout_ms_)
     {
         // Stopping the sequencer doesn't stop the motors, so this axis would keep moving.
         stepper_.stop_immediately();

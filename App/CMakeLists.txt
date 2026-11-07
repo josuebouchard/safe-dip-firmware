@@ -51,15 +51,15 @@ target_link_libraries(control PUBLIC drivers)
 add_app_header_layer(machine)
 target_link_libraries(machine INTERFACE control)
 
-add_app_layer(sequencer
-    sequencer/sequencer.cpp
-)
+# Generic over its context, so it's compiled where that context is known: see
+# app/sequencer_instance.cpp.
+add_app_header_layer(sequencer)
 
 add_app_layer(operations
     operations/movement_operations.cpp
     operations/timer_operations.cpp
 )
-target_link_libraries(operations PUBLIC sequencer machine control drivers stm32cubemx)
+target_link_libraries(operations PUBLIC sequencer machine control drivers)
 
 add_app_layer(comms
     comms/ethernet_if.c
@@ -71,5 +71,6 @@ add_app_layer(app
     app/entrypoint.cpp
     app/modbus_map.cpp
     app/sequence.cpp
+    app/sequencer_instance.cpp
 )
 target_link_libraries(app PUBLIC operations sequencer machine control drivers comms stm32cubemx)

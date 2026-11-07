@@ -4,10 +4,11 @@
 #include "axis_scale.hpp"
 #include "operation.hpp"
 #include "stepper_controller.hpp"
+#include "tick.hpp"
 #include <cstdint>
 
 // Moves to a recipe position given in mm, converted when the move starts.
-class MoveStepperOperation : public Operation
+class MoveStepperOperation : public Operation<Tick>
 {
   public:
     MoveStepperOperation(StepperController &stepper, AxisScale scale,
@@ -19,8 +20,8 @@ class MoveStepperOperation : public Operation
     MoveStepperOperation(StepperController &stepper, AxisScale scale,
                          const std::int32_t &&position_mm) = delete;
 
-    void start() noexcept override;
-    PollResult poll() noexcept override;
+    void start(Tick &ctx) noexcept override;
+    PollResult poll(Tick &ctx) noexcept override;
     [[nodiscard]] Failure failure() const noexcept override { return Failure::interrupted; }
 
   private:
@@ -29,7 +30,7 @@ class MoveStepperOperation : public Operation
     const std::int32_t &position_mm_;
 };
 
-class HomeStepperOperation : public Operation
+class HomeStepperOperation : public Operation<Tick>
 {
   public:
     explicit HomeStepperOperation(StepperController &stepper, bool &is_switch_pressed,
@@ -41,8 +42,8 @@ class HomeStepperOperation : public Operation
     {
     }
 
-    void start() noexcept override;
-    PollResult poll() noexcept override;
+    void start(Tick &ctx) noexcept override;
+    PollResult poll(Tick &ctx) noexcept override;
     [[nodiscard]] Failure failure() const noexcept override { return failure_; }
 
   private:

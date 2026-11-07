@@ -37,19 +37,19 @@ static Inputs read_inputs() noexcept
     };
 }
 
-static Fault to_fault(Operation::Failure failure) noexcept
+static Fault to_fault(Failure failure) noexcept
 {
     switch (failure)
     {
-    case Operation::Failure::interrupted:
+    case Failure::interrupted:
         return Fault::operation_interrupted;
-    case Operation::Failure::timed_out:
+    case Failure::timed_out:
         return Fault::operation_timed_out;
-    case Operation::Failure::x_homing_failed:
+    case Failure::x_homing_failed:
         return Fault::x_homing_failed;
-    case Operation::Failure::y_homing_failed:
+    case Failure::y_homing_failed:
         return Fault::y_homing_failed;
-    case Operation::Failure::unspecified:
+    case Failure::unspecified:
         break;
     }
 
@@ -132,7 +132,8 @@ void loop()
     }
     else
     {
-        const auto failure = machine.sequencer.sequencer_step();
+        Tick tick{.now_ms = now, .inputs = machine.inputs, .faults = machine.faults};
+        const auto failure = machine.sequencer.step(tick);
         if (failure.has_value())
         {
             machine.faults.raise(to_fault(*failure));
