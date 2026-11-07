@@ -12,10 +12,13 @@ class EffectorOperation : public Operation
     {
     }
 
-    void start() noexcept override;
+    void start() noexcept override
+    {
+        should_engage_ ? effector_.engage() : effector_.disengage();
+    }
     PollResult poll() noexcept override { return PollResult::finished; }
 
-  protected:
+  private:
     EffectorDriver &effector_;
     const bool should_engage_;
 };

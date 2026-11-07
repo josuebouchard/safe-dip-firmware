@@ -45,7 +45,6 @@ add_app_layer(sequencer
 )
 
 add_app_layer(operations
-    operations/effector_operations.cpp
     operations/movement_operations.cpp
     operations/timer_operations.cpp
 )
