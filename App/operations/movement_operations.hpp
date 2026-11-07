@@ -7,7 +7,8 @@
 #include <cstdint>
 
 // Moves to a recipe position given in mm, converted through the axis's scale when
-// the move starts.
+// the move starts. Raises the axis's limit_hit if its switch is hit on the way, or
+// operation_interrupted if something else cut the move short.
 class MoveStepperOperation : public Operation<Tick>
 {
   public:

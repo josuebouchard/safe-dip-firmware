@@ -10,7 +10,20 @@ PollResult MoveStepperOperation::poll(Tick &ctx) noexcept
 {
     StepperController &controller = axis_.controller;
 
-    // Checked first: an interrupted move has its target moved to where it stopped.
+    // The switch is at the negative end, and a move never expects to reach it. Either
+    // loop()'s backstop already cut the move this pass, which reads as interrupted, or
+    // the axis is still heading into the switch. Checked before the generic
+    // interruption below, which would otherwise hide the reason.
+    if (ctx.inputs.*axis_.limit_pressed &&
+        (controller.was_interrupted() || controller.current_speed_signed() < 0.0F))
+    {
+        controller.stop_immediately();
+        ctx.faults.raise(axis_.limit_hit);
+        return PollResult::aborted;
+    }
+
+    // Checked before the target: an interrupted move has its target moved to where it
+    // stopped, so it would read as arrived.
     if (controller.was_interrupted())
     {
         ctx.faults.raise(Fault::operation_interrupted);
