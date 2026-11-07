@@ -28,9 +28,7 @@ const (
 
 	irFaultsActive = 5
 	irFaultFirst   = 6
-	irFaultSources = 7
-	faultCount     = 7
-	irCount        = irFaultSources + faultCount
+	irCount        = 7
 )
 
 type State struct {
@@ -47,9 +45,8 @@ type State struct {
 	Params    []uint16 `json:"params"`
 	LatencyMs float64  `json:"latency_ms"`
 
-	FaultsActive uint16   `json:"faults_active"`
-	FaultFirst   uint16   `json:"fault_first"`
-	FaultSources []uint16 `json:"fault_sources"`
+	FaultsActive uint16 `json:"faults_active"`
+	FaultFirst   uint16 `json:"fault_first"`
 }
 
 func poll(c *Client, target string) (*State, error) {
@@ -90,7 +87,6 @@ func newState(di []bool, ir, hr []uint16) *State {
 
 		FaultsActive: ir[irFaultsActive],
 		FaultFirst:   ir[irFaultFirst],
-		FaultSources: ir[irFaultSources:],
 	}
 }
 

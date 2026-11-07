@@ -96,7 +96,7 @@
     <h2>Faults</h2>
     <div id="faultHint" class="readout"></div>
     <table>
-      <thead><tr><th>Bit</th><th>Fault</th><th>State</th><th>Source</th></tr></thead>
+      <thead><tr><th>Bit</th><th>Fault</th><th>State</th></tr></thead>
       <tbody id="faults"></tbody>
     </table>
   </section>
@@ -154,19 +154,13 @@ const PARAMS = [
   ["X output position", "mm", 400], ["Y up position", "mm", 200],
   ["Y down position", "mm", 200], ["Dwell time", "ms", 60000],
 ];
-const NO_SOURCE = 0xFFFF;
-const opSource = (v) => `Operation ${v} · ${OPS[v] ?? "?"}`;
-const RESET_FLAGS = [
-  [1, "brownout"], [2, "reset pin"], [3, "power-on"], [4, "software"],
-  [5, "independent watchdog"], [6, "window watchdog"], [7, "low power"],
-];
-const resetSource = (v) => RESET_FLAGS.filter(([bit]) => v & (1 << bit)).map(([, name]) => name).join(", ");
-// In bit order, which is also the order of the source registers.
+// In bit order, from Fault in App/app/faults.hpp
 const FAULTS = [
-  ["E-stop", null], ["Operation interrupted", opSource], ["Operation timed out", opSource],
-  ["Operation failed", opSource], ["Home switch stuck", opSource], ["Position drift", opSource],
-  ["Unexpected reset", resetSource],
+  "E-stop", "Operation interrupted", "Operation timed out", "Operation failed",
+  "X homing failed", "Y homing failed",
 ];
+// Every fault but the e-stop and the reset happens in an operation, so the current one failed.
+const OPERATION_FAULTS = 0b000111110;
 const HISTORY_MS = 60000;
 
 const $ = (id) => document.getElementById(id);
@@ -186,8 +180,8 @@ $("stages").innerHTML = STAGES.map(([stage, ops]) =>
   `<div class="stage"><div>${stage}</div><div class="ops">${
     ops.map((op) => `<span class="op" id="op_${opIdx++}">${op}</span>`).join("")}</div></div>`).join("");
 
-$("faults").innerHTML = FAULTS.map(([name], i) =>
-  `<tr id="f_${i}"><td class="n">${i}</td><td>${name}</td><td id="fs_${i}">—</td><td id="fv_${i}">—</td></tr>`).join("");
+$("faults").innerHTML = FAULTS.map((name, i) =>
+  `<tr id="f_${i}"><td class="n">${i}</td><td>${name}</td><td id="fs_${i}">—</td></tr>`).join("");
 
 $("params").innerHTML = PARAMS.map(([name, unit, max], i) =>
   `<tr><td class="n">${i}</td><td>${name}</td><td class="n" id="p_${i}">—</td><td class="n">0–${fmt(max)} ${unit}</td>
@@ -260,9 +254,9 @@ function render(d) {
   $("yv").textContent = fmt(d.y);
   $("opv").textContent = `${d.op_index} · ${OPS[d.op_index] ?? "?"}`;
 
-  const failedOp = FAULTS.findIndex(([, source], i) => source === opSource && d.fault_sources[i] !== NO_SOURCE);
+  const hasFailedOp = (d.faults_active & OPERATION_FAULTS) !== 0;
   OPS.forEach((_, i) => {
-    const isFailed = failedOp !== -1 && i === d.fault_sources[failedOp];
+    const isFailed = hasFailedOp && i === d.op_index;
     $(`op_${i}`).className = "op" + (isFailed ? " failed" : i === d.op_index ? (d.running ? " current" : "") : i < d.op_index ? " done" : "");
   });
   renderFaults(d);
@@ -278,15 +272,13 @@ function render(d) {
 }
 
 function renderFaults(d) {
-  FAULTS.forEach(([, source], i) => {
+  FAULTS.forEach((_, i) => {
     const bit = 1 << i;
     const isLatched = (d.faults_active & bit) !== 0;
     const isFirst = d.fault_first === bit;
     $(`f_${i}`).className = !isLatched ? "off" : isFirst ? "first" : "";
     $(`fs_${i}`).textContent = !isLatched ? "clear" : isFirst ? "Latched, first" : "Latched";
     $(`fs_${i}`).className = isLatched ? "err" : "";
-    const value = d.fault_sources[i];
-    $(`fv_${i}`).textContent = isLatched && source && value !== NO_SOURCE ? source(value) : "—";
   });
   $("faultHint").textContent = !d.fault ? "No faults latched."
     : d.e_stop ? "Release the e-stop, then press start to clear."

@@ -29,7 +29,6 @@ writing past the end of a table returns exception `0x02` (illegal data address).
 | 4 | Y position, low word | steps | |
 | 5 | Faults active | bits | Every latched fault, see [Faults](#faults) |
 | 6 | First fault | bit | The fault that stopped the machine, 0 if none |
-| 7–13 | Fault sources | — | One per fault, in bit order |
 
 Read each position as one two-register request so both words come from the same
 moment.
@@ -55,45 +54,27 @@ Operation index:
 ## Faults
 
 A fault stops the sequencer and both axes, engages the effector, and stays latched
-after its cause goes away. The source is `0xFFFF` when a fault isn't latched or has no
-source. Read registers 5–13 as one request so they all come from the same moment.
+after its cause goes away. Read registers 5–6 as one request so they come from the same
+moment.
 
-| Bit | Value | Source register | Name | Raised when | Source |
-|---|---|---|---|---|---|
-| 0 | 1 | 7 | E-stop | The e-stop reads pressed, including a broken wire | None |
-| 1 | 2 | 8 | Operation interrupted | A move was stopped before reaching its target | Operation index |
-| 2 | 4 | 9 | Operation timed out | Homing didn't finish within its timeout | Operation index |
-| 3 | 8 | 10 | Operation failed | An operation aborted without giving a reason | Operation index |
-| 4 | 16 | 11 | Home switch stuck | The switch still read pressed after backing off | Operation index |
-| 5 | 32 | 12 | Position drift | The switch was hit too far from where the count expected it | Operation index |
-| 6 | 64 | 13 | Unexpected reset | The MCU restarted from a software, watchdog, low-power or brownout reset | Reset flags |
+| Bit | Value | Name | Raised when |
+|---|---|---|---|
+| 0 | 1 | E-stop | The e-stop reads pressed, including a broken wire |
+| 1 | 2 | Operation interrupted | A move was stopped before reaching its target |
+| 2 | 4 | Operation timed out | Homing didn't finish within its timeout |
+| 3 | 8 | Operation failed | An operation aborted without giving a reason |
+| 4 | 16 | X homing failed | The X switch still read pressed after backing off, or was hit too far from where the count expected it |
+| 5 | 32 | Y homing failed | The same, for the Y switch |
 
 - **Clearing:** one start press clears every latched fault, unless the e-stop is still
   pressed. Clearing doesn't start the machine: that takes a second press, which restarts
   the cycle from operation 0. There is no remote clear.
-- **Operation index:** the same numbering as input register 0, which also stays on the
-  failed operation until the next start.
+- **Failed operation:** input register 0 stays on it until the next start.
 - **Limit switch hits:** a hit while the sequencer is stopped stops the axis but raises
   no fault, because only a running operation reports one.
-- **Position drift:** homing checks against the origin set by that axis's previous home,
-  so the first home after a reset can't raise it. Its next home sets a new origin.
-- **Home switch stuck:** a switch that reads pressed far from its expected position raises
-  position drift first, then this fault on the next home.
-
-Reset flags are bits 24–31 of `RCC_CSR`, shifted down:
-
-| Bit | Value | Flag |
-|---|---|---|
-| 1 | 2 | Brownout, also set by a power-on |
-| 2 | 4 | Reset pin, set by every reset |
-| 3 | 8 | Power-on |
-| 4 | 16 | Software, including most debugger resets |
-| 5 | 32 | Independent watchdog |
-| 6 | 64 | Window watchdog |
-| 7 | 128 | Low power |
-
-A power-on or the reset button raises no fault. Flashing with a debugger usually does,
-so expect to press start once to clear it on the bench.
+- **Homing failed:** the drift check compares against the origin set by that axis's
+  previous home, so the first home after a reset can only fail on a stuck switch. A drift
+  failure makes the next home set a new origin.
 
 ## Holding registers (FC 03 read, FC 06 / FC 16 write)
 

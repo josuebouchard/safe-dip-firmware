@@ -12,10 +12,6 @@ func TestNewStateMapsFaultRegisters(t *testing.T) {
 	ir[0] = 6
 	ir[irFaultsActive] = 3
 	ir[irFaultFirst] = 2
-	for i := irFaultSources; i < irCount; i++ {
-		ir[i] = 0xFFFF
-	}
-	ir[irFaultSources+1] = 6
 
 	s := newState(di, ir, make([]uint16, hrCount))
 
@@ -24,9 +20,6 @@ func TestNewStateMapsFaultRegisters(t *testing.T) {
 	}
 	if s.FaultsActive != 3 || s.FaultFirst != 2 {
 		t.Fatalf("FaultsActive = %d, FaultFirst = %d", s.FaultsActive, s.FaultFirst)
-	}
-	if len(s.FaultSources) != faultCount || s.FaultSources[1] != 6 || s.FaultSources[0] != 0xFFFF {
-		t.Fatalf("FaultSources = %v", s.FaultSources)
 	}
 }
 
