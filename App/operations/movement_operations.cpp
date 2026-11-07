@@ -3,34 +3,41 @@
 
 void MoveStepperOperation::start(Tick & /*ctx*/) noexcept
 {
-    axis_.controller.move_to_steps(axis_.scale.steps_from_mm(position_mm_));
+    target_steps_ = axis_.scale.steps_from_mm(position_mm_);
+    axis_.controller.move_to_steps(target_steps_);
 }
 
 PollResult MoveStepperOperation::poll(Tick &ctx) noexcept
 {
     StepperController &controller = axis_.controller;
+    const std::int32_t position = controller.position_current_signed();
 
-    // The switch is at the negative end, and a move never expects to reach it. Either
-    // loop()'s backstop already cut the move this pass, which reads as interrupted, or
-    // the axis is still heading into the switch. Checked before the generic
-    // interruption below, which would otherwise hide the reason.
-    if (ctx.inputs.*axis_.limit_pressed &&
-        (controller.was_interrupted() || controller.current_speed_signed() < 0.0F))
+    if (position == target_steps_)
+    {
+        return PollResult::finished;
+    }
+
+    // The switch is at the negative end, and a move never expects to reach it. The
+    // target says which way this move is going, whether or not loop()'s backstop has
+    // already stopped the axis this pass.
+    if (ctx.inputs.*axis_.limit_pressed && target_steps_ < position)
     {
         controller.stop_immediately();
         ctx.faults.raise(axis_.limit_hit);
         return PollResult::aborted;
     }
 
-    // Checked before the target: an interrupted move has its target moved to where it
-    // stopped, so it would read as arrived.
-    if (controller.was_interrupted())
+    // The controller is no longer driving to this move's target, and the axis isn't
+    // there: something else stopped or redirected it. Not is_at_target(): that reads
+    // the step count again, and a step landing between the two reads would turn a
+    // normal arrival into a false fault.
+    if (!controller.is_moving_to(target_steps_))
     {
         ctx.faults.raise(Fault::operation_interrupted);
         return PollResult::aborted;
     }
 
-    return controller.is_at_target() ? PollResult::finished : PollResult::running;
+    return PollResult::running;
 }
 
 void HomeStepperOperation::start(Tick &ctx) noexcept

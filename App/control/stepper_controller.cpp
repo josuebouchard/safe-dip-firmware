@@ -30,6 +30,12 @@ bool StepperController::is_at_target() const noexcept
     return (position != nullptr) && distance_to_target(*position) == 0;
 }
 
+bool StepperController::is_moving_to(std::int32_t target_steps) const noexcept
+{
+    const auto *position = std::get_if<PositionMode>(&mode_);
+    return position != nullptr && position->position_target_signed == target_steps;
+}
+
 float StepperController::current_speed_signed() const noexcept { return speed_current_signed_; }
 
 std::int8_t StepperController::speed_versor() const noexcept { return sign(speed_current_signed_); }
@@ -157,7 +163,6 @@ void StepperController::process(std::uint32_t now_ms) noexcept
 
 void StepperController::move_to_steps(std::int32_t target_steps) noexcept
 {
-    was_interrupted_ = false;
     mode_ = PositionMode{
         .position_target_signed = target_steps,
         .is_landing = false,
@@ -171,7 +176,6 @@ void StepperController::move_steps(std::int32_t delta_steps) noexcept
 
 void StepperController::move_at_speed(float steps_per_second) noexcept
 {
-    was_interrupted_ = false;
     mode_ = VelocityMode{
         .speed_target_signed =
             std::clamp(steps_per_second, -speed_profile_.max_speed, speed_profile_.max_speed),
@@ -196,20 +200,11 @@ void StepperController::stop_immediately() noexcept
     // No deceleration
     speed_current_signed_ = 0.0F;
 
-    // If current mode is position, get a pointer to it
-    const auto *position = std::get_if<PositionMode>(&mode_);
-
-    // process() also calls this on normal arrival, so only a stop with distance
-    // remaining counts as an interruption.
-    // This call moves the target to the current position, so
-    // a repeat call sees zero distance and must not clear the flag.
-    if ((position != nullptr) && distance_to_target(*position) != 0)
-    {
-        was_interrupted_ = true;
-    }
-
-    // Only neutralize the setpoint of the active mode
-    if (position != nullptr)
+    // Only neutralize the setpoint of the active mode. A position target moves to
+    // where the axis stopped, so the next process() doesn't drive on to the old one.
+    // is_at_target() then reads true: a caller that needs to know whether its move got
+    // there checks is_moving_to() with its own target instead.
+    if (std::holds_alternative<PositionMode>(mode_))
     {
         mode_ = PositionMode{
             .position_target_signed = position_current_signed(),

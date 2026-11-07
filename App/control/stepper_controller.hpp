@@ -34,7 +34,9 @@ class StepperController
 
     // Ramps down at the acceleration rate.
     void stop() noexcept;
-    // Cuts the pulse train instantly, no ramp.
+    // Cuts the pulse train instantly, no ramp. A position target moves to where the
+    // axis stopped, so is_at_target() then reads true even if the move fell short.
+    // is_moving_to() with the original target reads false.
     void stop_immediately() noexcept;
 
     // Redefines the current position - call after homing, while stopped.
@@ -47,9 +49,10 @@ class StepperController
     // False in velocity mode - there is no position target to be at.
     bool is_at_target() const noexcept;
 
-    // True when stop_immediately() cut a position move short of its target.
-    // Stays set until the next move command.
-    bool was_interrupted() const noexcept { return was_interrupted_; }
+    // Whether it's still driving to `target_steps`: in position mode, with that target.
+    // A stop or any other command changes the target, so this turns false. Reads only
+    // main-loop state, never the step count the interrupt updates.
+    [[nodiscard]] bool is_moving_to(std::int32_t target_steps) const noexcept;
 
     float current_speed_signed() const noexcept;
 
@@ -75,7 +78,6 @@ class StepperController
 
     // Current
     float speed_current_signed_ = 0.0F; // steps / second
-    bool was_interrupted_ = false;
 
     // Last
     std::uint32_t last_ms_;
