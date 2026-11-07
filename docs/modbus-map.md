@@ -69,7 +69,7 @@ The bit numbers are the order of `Fault` in
 | 2 | 4 | Operation timed out | Homing | It didn't finish within its timeout |
 | 3 | 8 | X homing failed | Homing X | The X switch still read pressed after backing off, or was hit too far from where the count expected it |
 | 4 | 16 | Y homing failed | Homing Y | The same, for the Y switch |
-| 5 | 32 | X limit hit | A move on X | The X switch was hit while the move was heading into it |
+| 5 | 32 | X limit hit | A move on X | The X switch read pressed before the move reached its target, in either direction |
 | 6 | 64 | Y limit hit | A move on Y | The same, for the Y switch. It can't happen yet: the Y switch input reads 0 until it's wired |
 
 - **Clearing:** one start press clears every latched fault, unless the e-stop is still
@@ -77,9 +77,11 @@ The bit numbers are the order of `Fault` in
   the cycle from operation 0. There is no remote clear.
 - **Failed operation:** input register 0 stays on it until the next start.
 - **Limit switch hits:** the switches are at the negative end of each axis.
-  - During a move toward the switch: the axis stops, and the move raises its axis's
-    *limit hit* fault.
-  - During a move away from it, or while homing: no fault. Homing expects the switch.
+  - During a move, in either direction: the move raises its axis's *limit hit* fault.
+    Heading into the switch, it's a hit. Heading away, the axis should be clear of it
+    after homing, so a press means a stuck or miswired switch, lost steps, or an axis
+    that was never homed.
+  - While homing: no fault. Homing expects the switch.
   - While the sequencer is stopped: the axis stops if it's moving toward the switch,
     but no fault is raised, because only a running operation reports one.
 - **Homing failed:** the drift check compares against the origin set by that axis's

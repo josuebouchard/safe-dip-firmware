@@ -14,7 +14,7 @@ enum class Fault : std::uint8_t
     operation_timed_out,   // An operation ran longer than allowed
     x_homing_failed,       // Homing X: the switch stuck, or was hit far from expected
     y_homing_failed,       // Same, for Y
-    x_limit_hit,           // The X switch was hit during a move toward it
+    x_limit_hit,           // The X switch read pressed during a move
     y_limit_hit,           // Same, for Y
     count,                 // Not a fault: the number of faults above. Never raise it.
 };

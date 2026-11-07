@@ -104,7 +104,7 @@ Its order is the bit layout on Modbus.
 | Fault | Raised by | Why there |
 |---|---|---|
 | `e_stop` | `loop()` | It doesn't depend on what's running |
-| `x_limit_hit`, `y_limit_hit` | `MoveStepperOperation` | Only the operation knows a switch wasn't expected |
+| `x_limit_hit`, `y_limit_hit` | `MoveStepperOperation` | Only the operation knows a switch wasn't expected. Any press during a move counts |
 | `x_homing_failed`, `y_homing_failed` | `HomeStepperOperation` | Only homing knows where the switch should be |
 | `operation_timed_out` | `HomeStepperOperation` | Only it knows how long it should take |
 | `operation_interrupted` | `MoveStepperOperation` | A move cut short for any other reason |
@@ -114,8 +114,8 @@ Its order is the bit layout on Modbus.
 - **Clearing:** only `loop()` clears, on a start press with the e-stop released.
 - **Reacting:** only `loop()` reacts, by entering the safe state while any fault is latched.
 - **The same switch, two meanings:** the backstop in `loop()` stops an axis moving
-  into its switch, but never decides what that means. A move reports it as a limit
-  hit. Homing expects it.
+  into its switch, but never decides what that means. A move reports any press as a
+  limit hit, whichever way it's going. Homing expects it.
 
 ## Layers
 

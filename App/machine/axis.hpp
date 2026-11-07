@@ -24,7 +24,7 @@ struct Axis
     // `tick.inputs.*limit_pressed`.
     bool Inputs::*limit_pressed;
 
-    Fault limit_hit;     // The switch was hit during a move toward it
+    Fault limit_hit;     // The switch read pressed during a move
     Fault homing_failed; // The switch misread while homing: stuck, or hit far from expected
 };
 

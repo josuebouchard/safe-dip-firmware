@@ -17,10 +17,10 @@ PollResult MoveStepperOperation::poll(Tick &ctx) noexcept
         return PollResult::finished;
     }
 
-    // The switch is at the negative end, and a move never expects to reach it. The
-    // target says which way this move is going, whether or not loop()'s backstop has
-    // already stopped the axis this pass.
-    if (ctx.inputs.*axis_.limit_pressed && target_steps_ < position)
+    // A move never expects its switch pressed, whichever way it's going. Heading into
+    // it is a hit. Heading away, the axis should be clear of it after homing, so a press
+    // means a stuck or miswired switch, lost steps, or an axis that was never homed.
+    if (ctx.inputs.*axis_.limit_pressed)
     {
         controller.stop_immediately();
         ctx.faults.raise(axis_.limit_hit);

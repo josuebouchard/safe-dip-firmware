@@ -9,8 +9,8 @@
 // Moves to a recipe position given in mm, converted through the axis's scale when
 // the move starts. Judges the move against that target, not the controller's: a stop
 // moves the controller's target to wherever the axis stopped. Raises the axis's
-// limit_hit if its switch is hit on the way, or operation_interrupted if something
-// else cut the move short.
+// limit_hit if its switch reads pressed before the move gets there, whichever way
+// it's going, or operation_interrupted if something else cut the move short.
 class MoveStepperOperation : public Operation<Tick>
 {
   public:
