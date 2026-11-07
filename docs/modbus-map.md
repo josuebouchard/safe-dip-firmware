@@ -12,7 +12,7 @@ writing past the end of a table returns exception `0x02` (illegal data address).
 |---|---|---|
 | 0 | E-stop pressed | 1 while pressed (`E_STOP` low), as read at the start of the loop pass |
 | 1 | Start pressed | 1 while pressed (`B1` low), as read at the start of the loop pass |
-| 2 | Sequencer running | Cleared by any fault, set by a start press |
+| 2 | Sequencer running | Set by a start press. Cleared by any fault, on the pass it is raised |
 | 3 | X at target | X axis is in position mode and on its target step |
 | 4 | Y at target | Y axis is in position mode and on its target step |
 | 5 | Effector engaged | Commanded state of `EFFECTOR`, not feedback from the magnet |
@@ -33,12 +33,14 @@ writing past the end of a table returns exception `0x02` (illegal data address).
 Read each position as one two-register request so both words come from the same
 moment.
 
-Operation index:
+Operation index, which is the position in the array in
+[`App/app/sequence.cpp`](../App/app/sequence.cpp). The monitor's stage list copies it
+too, so all three change together:
 
 | Index | Stage | Operation |
 |---|---|---|
 | 0 | Home | `MOVE_Y_UP` |
-| 1 | Home | `MOVE_X_HOME` |
+| 1 | Home | `MOVE_X_INPUT` |
 | 2 | Pick | `MOVE_Y_DOWN` |
 | 3 | Pick | `EFFECTOR_ENGAGE` |
 | 4 | Pick | `MOVE_Y_UP` |
@@ -54,24 +56,32 @@ Operation index:
 ## Faults
 
 A fault stops the sequencer and both axes, engages the effector, and stays latched
-after its cause goes away. Read registers 5–6 as one request so they come from the same
-moment.
+after its cause goes away. All of that happens on the same loop pass the fault is
+raised. Read registers 5–6 as one request so they come from the same moment.
 
-| Bit | Value | Name | Raised when |
-|---|---|---|---|
-| 0 | 1 | E-stop | The e-stop reads pressed, including a broken wire |
-| 1 | 2 | Operation interrupted | A move was stopped before reaching its target |
-| 2 | 4 | Operation timed out | Homing didn't finish within its timeout |
-| 3 | 8 | Operation failed | An operation aborted without giving a reason |
-| 4 | 16 | X homing failed | The X switch still read pressed after backing off, or was hit too far from where the count expected it |
-| 5 | 32 | Y homing failed | The same, for the Y switch |
+The bit numbers are the order of `Fault` in
+[`App/machine/faults.hpp`](../App/machine/faults.hpp).
+
+| Bit | Value | Name | Raised by | Raised when |
+|---|---|---|---|---|
+| 0 | 1 | E-stop | `loop()` | The e-stop reads pressed, including a broken wire |
+| 1 | 2 | Operation interrupted | A move | Something other than its limit switch stopped it before its target |
+| 2 | 4 | Operation timed out | Homing | It didn't finish within its timeout |
+| 3 | 8 | X homing failed | Homing X | The X switch still read pressed after backing off, or was hit too far from where the count expected it |
+| 4 | 16 | Y homing failed | Homing Y | The same, for the Y switch |
+| 5 | 32 | X limit hit | A move on X | The X switch was hit while the move was heading into it |
+| 6 | 64 | Y limit hit | A move on Y | The same, for the Y switch. It can't happen yet: the Y switch input reads 0 until it's wired |
 
 - **Clearing:** one start press clears every latched fault, unless the e-stop is still
   pressed. Clearing doesn't start the machine: that takes a second press, which restarts
   the cycle from operation 0. There is no remote clear.
 - **Failed operation:** input register 0 stays on it until the next start.
-- **Limit switch hits:** a hit while the sequencer is stopped stops the axis but raises
-  no fault, because only a running operation reports one.
+- **Limit switch hits:** the switches are at the negative end of each axis.
+  - During a move toward the switch: the axis stops, and the move raises its axis's
+    *limit hit* fault.
+  - During a move away from it, or while homing: no fault. Homing expects the switch.
+  - While the sequencer is stopped: the axis stops if it's moving toward the switch,
+    but no fault is raised, because only a running operation reports one.
 - **Homing failed:** the drift check compares against the origin set by that axis's
   previous home, so the first home after a reset can only fail on a stuck switch. A drift
   failure makes the next home set a new origin.

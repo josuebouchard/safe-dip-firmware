@@ -21,7 +21,7 @@ import (
 //go:embed index.html
 var indexHTML []byte
 
-// Table layout, from the enums in App/app/modbus_map.cpp and App/app/faults.hpp
+// Table layout, from the enums in App/app/modbus_map.cpp and App/machine/faults.hpp
 const (
 	diCount = 7
 	hrCount = 6

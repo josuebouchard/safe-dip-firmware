@@ -140,7 +140,7 @@ const LAMPS = [
   ["effector", "Effector engaged", "good"], ["fault", "Fault", "bad"],
 ];
 const STAGES = [
-  ["Home", ["MOVE_Y_UP", "MOVE_X_HOME"]],
+  ["Home", ["MOVE_Y_UP", "MOVE_X_INPUT"]],
   ["Pick", ["MOVE_Y_DOWN", "EFFECTOR_ENGAGE", "MOVE_Y_UP"]],
   ["Dip", ["MOVE_X_DIP", "MOVE_Y_DOWN", "DWELL", "MOVE_Y_UP"]],
   ["Deposit", ["MOVE_X_OUTPUT", "MOVE_Y_DOWN"]],
@@ -154,13 +154,13 @@ const PARAMS = [
   ["X output position", "mm", 400], ["Y up position", "mm", 200],
   ["Y down position", "mm", 200], ["Dwell time", "ms", 60000],
 ];
-// In bit order, from Fault in App/app/faults.hpp
+// In bit order, from Fault in App/machine/faults.hpp
 const FAULTS = [
-  "E-stop", "Operation interrupted", "Operation timed out", "Operation failed",
-  "X homing failed", "Y homing failed",
+  "E-stop", "Operation interrupted", "Operation timed out",
+  "X homing failed", "Y homing failed", "X limit hit", "Y limit hit",
 ];
-// Every fault but the e-stop and the reset happens in an operation, so the current one failed.
-const OPERATION_FAULTS = 0b000111110;
+// Every fault but the e-stop is raised by an operation, so the current one failed.
+const OPERATION_FAULTS = 0b1111110;
 const HISTORY_MS = 60000;
 
 const $ = (id) => document.getElementById(id);

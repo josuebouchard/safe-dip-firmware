@@ -63,6 +63,10 @@ Sequencer<Tick> &make_sequence(Machine &machine)
 
     static DwellOperation dwell{machine.recipe.dwell_ms};
 
+    // The position in this array is the operation index on Modbus (input register 0).
+    // docs/modbus-map.md and the STAGES list in tools/modbus_monitor/index.html copy
+    // this order, so change them together. Enabling home_y / home_x shifts every
+    // index after them.
     static std::array<Operation<Tick> *, 13> operations = {
         // Home
         // &home_y,
