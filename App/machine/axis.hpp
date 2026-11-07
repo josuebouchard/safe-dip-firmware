@@ -11,6 +11,10 @@
 //
 // Convention: the limit switch is at the negative end of the axis. Homing searches
 // in the -1 direction, and loop()'s backstop stops any motion toward the switch.
+//
+// No default member values on purpose: every field must be given, and leaving one
+// out of the designated initializer is then a -Wmissing-field-initializers warning.
+// NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init)
 struct Axis
 {
     StepperController &controller;
