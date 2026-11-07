@@ -10,6 +10,7 @@
 #include <array>
 #include <cstdint>
 #include <span>
+#include <tuple>
 
 // How far past the switch hit the origin is set. Far enough to clear a microswitch's
 // release travel, which is usually under 1 mm. Too short reads as a stuck switch.
@@ -38,33 +39,24 @@ static std::uint32_t homing_timeout_ms(const AxisScale &scale, std::int32_t trav
 Sequencer<Tick> &make_sequence(Machine &machine)
 {
     static HomeStepperOperation home_x{
-        machine.controller_x,
-        machine.inputs.limit_x_pressed,
+        machine.axis_x,
         Machine::SCALE_X.steps_from_mm(HOMING_BACK_OFF_MM),
         homing_timeout_ms(Machine::SCALE_X, Machine::X_TRAVEL_MM, machine.speed_profile_x),
         Machine::SCALE_X.steps_from_mm(HOMING_DRIFT_TOLERANCE_MM),
-        Failure::x_homing_failed,
     };
     static HomeStepperOperation home_y{
-        machine.controller_y,
-        machine.inputs.limit_y_pressed,
+        machine.axis_y,
         Machine::SCALE_Y.steps_from_mm(HOMING_BACK_OFF_MM),
         homing_timeout_ms(Machine::SCALE_Y, Machine::Y_TRAVEL_MM, machine.speed_profile_y),
         Machine::SCALE_Y.steps_from_mm(HOMING_DRIFT_TOLERANCE_MM),
-        Failure::y_homing_failed,
     };
 
-    static MoveStepperOperation move_x_input{machine.controller_x, Machine::SCALE_X,
-                                             machine.recipe.x_input_mm};
-    static MoveStepperOperation move_x_dip{machine.controller_x, Machine::SCALE_X,
-                                           machine.recipe.x_dip_mm};
-    static MoveStepperOperation move_x_output{machine.controller_x, Machine::SCALE_X,
-                                              machine.recipe.x_output_mm};
+    static MoveStepperOperation move_x_input{machine.axis_x, machine.recipe.x_input_mm};
+    static MoveStepperOperation move_x_dip{machine.axis_x, machine.recipe.x_dip_mm};
+    static MoveStepperOperation move_x_output{machine.axis_x, machine.recipe.x_output_mm};
 
-    static MoveStepperOperation move_y_up{machine.controller_y, Machine::SCALE_Y,
-                                          machine.recipe.y_up_mm};
-    static MoveStepperOperation move_y_down{machine.controller_y, Machine::SCALE_Y,
-                                            machine.recipe.y_down_mm};
+    static MoveStepperOperation move_y_up{machine.axis_y, machine.recipe.y_up_mm};
+    static MoveStepperOperation move_y_down{machine.axis_y, machine.recipe.y_down_mm};
 
     static EffectorOperation effector_engage{hardware::effector, true};
     static EffectorOperation effector_disengage{hardware::effector, false};
@@ -97,6 +89,9 @@ Sequencer<Tick> &make_sequence(Machine &machine)
         &effector_disengage,
         &move_y_up,
     };
+
+    // advance_operation() wraps with `% size()`, so an empty cycle would divide by zero.
+    static_assert(std::tuple_size_v<decltype(operations)> > 0);
 
     static Sequencer<Tick> sequencer{std::span<Operation<Tick> *>(operations)};
 

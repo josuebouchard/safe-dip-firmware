@@ -57,18 +57,18 @@ void Sequencer<Context>::restart() noexcept
 }
 
 template <class Context>
-std::optional<Failure> Sequencer<Context>::step(Context &ctx) noexcept
+void Sequencer<Context>::step(Context &ctx) noexcept
 {
     if (!is_sequencer_running_)
     {
-        return std::nullopt;
+        return;
     }
 
     if (!is_current_operation_started_) // operation hasn't started
     {
         is_current_operation_started_ = true;
         current_operation().start(ctx);
-        return std::nullopt;
+        return;
     }
 
     // operation has been started
@@ -84,11 +84,10 @@ std::optional<Failure> Sequencer<Context>::step(Context &ctx) noexcept
         break;
 
     case PollResult::aborted:
+        // operation_index_ stays on it, so it can be read back
         stop();
-        return current_operation().failure();
+        break;
     }
-
-    return std::nullopt;
 }
 
 #endif // SEQUENCER_IMPL_HPP

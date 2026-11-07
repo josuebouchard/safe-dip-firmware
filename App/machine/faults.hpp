@@ -5,16 +5,18 @@
 #include <cstdint>
 
 // The order is the Modbus format: a fault's value is its bit number, so a new fault
-// goes right above `count`. See docs/modbus-map.md.
+// goes right above `count`. See docs/modbus-map.md, and the monitor's fault list in
+// tools/modbus_monitor/index.html.
 enum class Fault : std::uint8_t
 {
-    e_stop,
-    operation_interrupted,
-    operation_timed_out,
-    operation_failed,
-    x_homing_failed,
-    y_homing_failed,
-    count, // Not a fault: the number of faults above. Never raise it.
+    e_stop,                // loop(): the e-stop reads pressed
+    operation_interrupted, // A move was stopped short of its target by something else
+    operation_timed_out,   // An operation ran longer than allowed
+    x_homing_failed,       // Homing X: the switch stuck, or was hit far from expected
+    y_homing_failed,       // Same, for Y
+    x_limit_hit,           // The X switch was hit during a move toward it
+    y_limit_hit,           // Same, for Y
+    count,                 // Not a fault: the number of faults above. Never raise it.
 };
 
 static_assert(static_cast<std::size_t>(Fault::count) <= 16, "active_ has 16 bits");

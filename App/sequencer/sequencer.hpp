@@ -2,7 +2,6 @@
 #define SEQUENCER_HPP
 
 #include <cstddef>
-#include <optional>
 #include <span>
 
 #include "operation.hpp"
@@ -23,9 +22,9 @@ class Sequencer
     {
     }
 
-    // Starts or polls the current operation. Returns why it aborted, if it did on
-    // this step. The value isn't stored: what to do about it belongs to the caller.
-    std::optional<Failure> step(Context &ctx) noexcept;
+    // Starts or polls the current operation, and stops on it if it aborts. Why it
+    // aborted is the operation's to report, through the context.
+    void step(Context &ctx) noexcept;
     void start() noexcept;
     void stop() noexcept;
     void restart() noexcept;

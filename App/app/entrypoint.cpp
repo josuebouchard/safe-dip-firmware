@@ -7,6 +7,7 @@
 #include "machine.hpp"
 #include "modbus_map.hpp"
 #include "modbus_tcp_task.h"
+#include "tick.hpp"
 
 #include "main.h"
 #include "stm32f4xx_hal.h"
@@ -35,25 +36,6 @@ static Inputs read_inputs() noexcept
         // (HAL_GPIO_ReadPin(Y_HOME_GPIO_Port, Y_HOME_Pin) == GPIO_PIN_SET)
         .limit_y_pressed = false,
     };
-}
-
-static Fault to_fault(Failure failure) noexcept
-{
-    switch (failure)
-    {
-    case Failure::interrupted:
-        return Fault::operation_interrupted;
-    case Failure::timed_out:
-        return Fault::operation_timed_out;
-    case Failure::x_homing_failed:
-        return Fault::x_homing_failed;
-    case Failure::y_homing_failed:
-        return Fault::y_homing_failed;
-    case Failure::unspecified:
-        break;
-    }
-
-    return Fault::operation_failed;
 }
 
 static void enter_safe_state() noexcept
@@ -126,19 +108,20 @@ void loop()
         }
     }
 
+    if (!machine.faults.any())
+    {
+        // Operations raise their own faults into this, and the check below acts on
+        // them in this same pass.
+        Tick tick{.now_ms = now, .inputs = machine.inputs, .faults = machine.faults};
+        machine.sequencer.step(tick);
+    }
+
     if (machine.faults.any())
     {
         enter_safe_state();
     }
     else
     {
-        Tick tick{.now_ms = now, .inputs = machine.inputs, .faults = machine.faults};
-        const auto failure = machine.sequencer.step(tick);
-        if (failure.has_value())
-        {
-            machine.faults.raise(to_fault(*failure));
-        }
-
         machine.controller_x.process(now);
         machine.controller_y.process(now);
     }

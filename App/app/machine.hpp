@@ -1,6 +1,7 @@
 #ifndef MACHINE_HPP
 #define MACHINE_HPP
 
+#include "axis.hpp"
 #include "axis_scale.hpp"
 #include "faults.hpp"
 #include "hardware.hpp"
@@ -51,6 +52,23 @@ struct Machine
 
     StepperController controller_x{speed_profile_x, hardware::stepper_driver_x};
     StepperController controller_y{speed_profile_y, hardware::stepper_driver_y};
+
+    // What operations get to drive each axis. Only the X switch is wired so far: the
+    // Y input reads false in read_inputs().
+    Axis axis_x{
+        .controller = controller_x,
+        .scale = SCALE_X,
+        .limit_pressed = &Inputs::limit_x_pressed,
+        .limit_hit = Fault::x_limit_hit,
+        .homing_failed = Fault::x_homing_failed,
+    };
+    Axis axis_y{
+        .controller = controller_y,
+        .scale = SCALE_Y,
+        .limit_pressed = &Inputs::limit_y_pressed,
+        .limit_hit = Fault::y_limit_hit,
+        .homing_failed = Fault::y_homing_failed,
+    };
 
     Sequencer<Tick> &sequencer = make_sequence(*this);
 };
