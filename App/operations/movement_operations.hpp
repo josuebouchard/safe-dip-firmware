@@ -34,22 +34,23 @@ class HomeStepperOperation : public Operation
   public:
     explicit HomeStepperOperation(StepperController &stepper, bool &is_switch_pressed,
                                   std::int32_t back_off_steps, std::uint32_t timeout_ms,
-                                  std::int32_t drift_tolerance_steps)
+                                  std::int32_t drift_tolerance_steps, Failure homing_failure)
         : stepper_{stepper}, back_off_steps_{back_off_steps}, timeout_ms_{timeout_ms},
-          drift_tolerance_steps_{drift_tolerance_steps}, is_switch_pressed_{is_switch_pressed},
-          is_backing_off_{false}
+          drift_tolerance_steps_{drift_tolerance_steps}, homing_failure_{homing_failure},
+          is_switch_pressed_{is_switch_pressed}, is_backing_off_{false}
     {
     }
 
     void start() noexcept override;
     PollResult poll() noexcept override;
-    Failure failure() const noexcept override { return failure_; }
+    [[nodiscard]] Failure failure() const noexcept override { return failure_; }
 
   private:
     StepperController &stepper_;
     std::int32_t back_off_steps_;
     std::uint32_t timeout_ms_; // Covers the whole operation: the search and the back-off
     std::int32_t drift_tolerance_steps_;
+    Failure homing_failure_; // x_ or y_homing_failed, for this axis
     bool &is_switch_pressed_;
     bool is_backing_off_;
     std::uint32_t start_time_ = 0;

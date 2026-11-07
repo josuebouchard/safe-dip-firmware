@@ -43,6 +43,7 @@ Sequencer &make_sequence(Machine &machine)
         Machine::SCALE_X.steps_from_mm(HOMING_BACK_OFF_MM),
         homing_timeout_ms(Machine::SCALE_X, Machine::X_TRAVEL_MM, machine.speed_profile_x),
         Machine::SCALE_X.steps_from_mm(HOMING_DRIFT_TOLERANCE_MM),
+        Operation::Failure::x_homing_failed,
     };
     static HomeStepperOperation home_y{
         machine.controller_y,
@@ -50,6 +51,7 @@ Sequencer &make_sequence(Machine &machine)
         Machine::SCALE_Y.steps_from_mm(HOMING_BACK_OFF_MM),
         homing_timeout_ms(Machine::SCALE_Y, Machine::Y_TRAVEL_MM, machine.speed_profile_y),
         Machine::SCALE_Y.steps_from_mm(HOMING_DRIFT_TOLERANCE_MM),
+        Operation::Failure::y_homing_failed,
     };
 
     static MoveStepperOperation move_x_input{machine.controller_x, Machine::SCALE_X,
@@ -72,8 +74,8 @@ Sequencer &make_sequence(Machine &machine)
     static std::array<Operation *, 13> operations = {
         // Home
         // &home_y,
-        // &home_x,
         &move_y_up,
+        // &home_x,
         &move_x_input,
 
         // Pick

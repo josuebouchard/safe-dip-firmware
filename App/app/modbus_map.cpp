@@ -38,8 +38,7 @@ enum InputRegister : std::uint16_t
     IR_Y_POSITION_LOW = 4,
     IR_FAULTS_ACTIVE = 5,
     IR_FAULT_FIRST = 6,
-    IR_FAULT_SOURCE_FIRST = 7, // One register per Fault, in enum order
-    IR_COUNT = IR_FAULT_SOURCE_FIRST + static_cast<std::uint16_t>(Fault::count),
+    IR_COUNT,
 };
 
 struct HoldingRegister
@@ -100,11 +99,6 @@ static bool read_discrete_input(const Machine &machine, std::uint16_t address) n
 
 static std::uint16_t read_input_register(const Machine &machine, std::uint16_t address) noexcept
 {
-    if (address >= IR_FAULT_SOURCE_FIRST)
-    {
-        return machine.faults.source(address - std::size_t{IR_FAULT_SOURCE_FIRST});
-    }
-
     switch (address)
     {
     case IR_OPERATION_INDEX:

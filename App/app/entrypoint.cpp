@@ -31,29 +31,10 @@ static Inputs read_inputs() noexcept
     return Inputs{
         .e_stop_pressed = (HAL_GPIO_ReadPin(E_STOP_GPIO_Port, E_STOP_Pin) == GPIO_PIN_RESET),
         .start_pressed = (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET),
-        // (HAL_GPIO_ReadPin(X_HOME_GPIO_Port, X_HOME_Pin) == GPIO_PIN_SET)
-        .limit_x_pressed = false,
+        .limit_x_pressed = (HAL_GPIO_ReadPin(X_HOME_GPIO_Port, X_HOME_Pin) == GPIO_PIN_SET),
         // (HAL_GPIO_ReadPin(Y_HOME_GPIO_Port, Y_HOME_Pin) == GPIO_PIN_SET)
         .limit_y_pressed = false,
     };
-}
-
-// Reads and clears the reset flags, which otherwise pile up across resets. A power-on
-// or the reset button is expected. The pin flag doesn't tell them apart from the rest,
-// because every reset drives the pin, and a power-on also sets the brownout flag.
-static void check_reset_cause() noexcept
-{
-    const std::uint32_t flags = RCC->CSR;
-    __HAL_RCC_CLEAR_RESET_FLAGS();
-
-    const bool is_brownout = ((flags & RCC_CSR_BORRSTF) != 0U) && ((flags & RCC_CSR_PORRSTF) == 0U);
-    const bool is_internal =
-        (flags & (RCC_CSR_SFTRSTF | RCC_CSR_IWDGRSTF | RCC_CSR_WWDGRSTF | RCC_CSR_LPWRRSTF)) != 0U;
-
-    if (is_brownout || is_internal)
-    {
-        machine.faults.raise(Fault::unexpected_reset, static_cast<std::uint16_t>(flags >> 24));
-    }
 }
 
 static Fault to_fault(Operation::Failure failure) noexcept
@@ -64,10 +45,10 @@ static Fault to_fault(Operation::Failure failure) noexcept
         return Fault::operation_interrupted;
     case Operation::Failure::timed_out:
         return Fault::operation_timed_out;
-    case Operation::Failure::sensor_stuck:
-        return Fault::home_switch_stuck;
-    case Operation::Failure::out_of_tolerance:
-        return Fault::position_drift;
+    case Operation::Failure::x_homing_failed:
+        return Fault::x_homing_failed;
+    case Operation::Failure::y_homing_failed:
+        return Fault::y_homing_failed;
     case Operation::Failure::unspecified:
         break;
     }
@@ -87,11 +68,7 @@ void setup()
 {
     const uint32_t now = HAL_GetTick();
 
-    check_reset_cause();
-
-    // Initalize ethernet
-
-    ethernet_w5500_init();
+    ethernet_w5500_init(); // Initalize ethernet
 
     uint8_t version = getVERSIONR();
     std::printf("W5500 version register: 0x%02X (expect 0x04)\r\n", version);
@@ -129,31 +106,23 @@ void loop()
         machine.faults.raise(Fault::e_stop);
     }
 
-    if (machine.faults.any())
+    if (start_press && !inputs.e_stop_pressed)
     {
-        // Only clears: a separate press starts the machine, so one press can't do both.
-        if (start_press && !inputs.e_stop_pressed)
+        if (!machine.sequencer.is_running())
         {
-            machine.faults.clear();
-        }
-    }
-    else
-    {
-        if (start_press && !machine.sequencer.is_running())
-        {
-            machine.sequencer.restart(); // Reset and restart the sequencer
-
-            // Re-initialize the controllers to now
+            // They weren't processed while stopped, so their last tick is stale.
             machine.controller_x.initialize(now);
             machine.controller_y.initialize(now);
         }
 
-        // Sequencer step
-        const auto failure = machine.sequencer.sequencer_step();
-        if (failure)
+        // Only clears: a separate press starts the machine, so one press can't do both.
+        if (machine.faults.any())
         {
-            machine.faults.raise(to_fault(*failure),
-                                 static_cast<std::uint16_t>(machine.sequencer.operation_index()));
+            machine.faults.clear();
+        }
+        else if (!machine.sequencer.is_running())
+        {
+            machine.sequencer.restart();
         }
     }
 
@@ -163,7 +132,12 @@ void loop()
     }
     else
     {
-        // Process the different modules
+        const auto failure = machine.sequencer.sequencer_step();
+        if (failure.has_value())
+        {
+            machine.faults.raise(to_fault(*failure));
+        }
+
         machine.controller_x.process(now);
         machine.controller_y.process(now);
     }

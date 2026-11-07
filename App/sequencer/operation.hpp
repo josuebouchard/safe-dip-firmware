@@ -24,8 +24,8 @@ class Operation
         unspecified,
         interrupted,      // Something stopped it before it completed
         timed_out,        // Ran for longer than allowed
-        sensor_stuck,     // A sensor kept reading a state it should have left
-        out_of_tolerance, // A measured value was too far from the expected one
+        x_homing_failed,  // The X switch misread: stuck, or hit far from where it should be
+        y_homing_failed,  // Same, for Y
     };
 
     virtual void start() noexcept = 0;

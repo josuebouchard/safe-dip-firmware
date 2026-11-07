@@ -41,7 +41,7 @@ Operation::PollResult HomeStepperOperation::poll() noexcept
                 // The origin is wrong, so the next run sets a new one instead of failing again.
                 has_origin_ = false;
                 stepper_.stop_immediately();
-                failure_ = Failure::out_of_tolerance;
+                failure_ = homing_failure_;
                 return PollResult::aborted;
             }
 
@@ -58,7 +58,7 @@ Operation::PollResult HomeStepperOperation::poll() noexcept
             // Moved away and it still reads pressed, so it can't be trusted, and neither
             // can the origin it just set.
             has_origin_ = false;
-            failure_ = Failure::sensor_stuck;
+            failure_ = homing_failure_;
             return PollResult::aborted;
         }
 
