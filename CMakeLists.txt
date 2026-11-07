@@ -74,6 +74,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     comms
     operations
     sequencer
+    machine
     control
     drivers
 )

@@ -27,6 +27,14 @@ function(add_app_layer name)
   target_compile_options(${name} PRIVATE ${APP_WARNINGS})
 endfunction()
 
+# A layer with only headers. It has nothing to compile on its own, so it can't be an
+# OBJECT library: its headers build inside the App layers that include them, under
+# their warnings.
+function(add_app_header_layer name)
+  add_library(${name} INTERFACE)
+  target_include_directories(${name} INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/${name})
+endfunction()
+
 add_app_layer(drivers
     drivers/effector_driver.cpp
     drivers/hardware.cpp
@@ -40,6 +48,9 @@ add_app_layer(control
 )
 target_link_libraries(control PUBLIC drivers)
 
+add_app_header_layer(machine)
+target_link_libraries(machine INTERFACE control)
+
 add_app_layer(sequencer
     sequencer/sequencer.cpp
 )
@@ -48,7 +59,7 @@ add_app_layer(operations
     operations/movement_operations.cpp
     operations/timer_operations.cpp
 )
-target_link_libraries(operations PUBLIC sequencer control drivers stm32cubemx)
+target_link_libraries(operations PUBLIC sequencer machine control drivers stm32cubemx)
 
 add_app_layer(comms
     comms/ethernet_if.c
@@ -61,4 +72,4 @@ add_app_layer(app
     app/modbus_map.cpp
     app/sequence.cpp
 )
-target_link_libraries(app PUBLIC operations sequencer control drivers comms stm32cubemx)
+target_link_libraries(app PUBLIC operations sequencer machine control drivers comms stm32cubemx)
