@@ -49,7 +49,7 @@ static wiz_NetInfo net_info = {
     .mac = {0x00, 0x08, 0xDC, 0x11, 0x22, 0x33}, // WIZnet assigned MAC block prefix
     .ip = {192, 168, 0, 2},                      // Static IP of your STM32 server
     .sn = {255, 255, 255, 0},                    // Subnet Mask
-    .gw = {192, 168, 1, 254},                    // Gateway / Router IP
+    .gw = {192, 168, 0, 254},                    // Gateway / Router IP
     .dns = {8, 8, 8, 8},                         // Google DNS (Optional for local server)
     .dhcp = NETINFO_STATIC,                      // We are defining static parameters
 };
