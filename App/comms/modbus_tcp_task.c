@@ -131,11 +131,19 @@ modbus_task_status_t modbus_tcp_task_run(modbus_tcp_task_t *task)
 
         /* --- dispatch through the Modbus FSM --- */
         modbus_tcp_dispatch_result_t dispatch = modbus_tcp_fsm_dispatch(
-            &task->fsm, task->req_buf, task->res_buf,
-            sizeof(task->res_buf)); /* fixed: was 1024 on a 255-byte buffer */
+            &task->fsm, task->req_buf, task->res_buf, sizeof(task->res_buf));
+
+        if (dispatch.status == MODBUS_TCP_DISPATCH_ST_BAD_MBAP)
+        {
+            /* The header can't be trusted, so neither can where the next one
+               starts: drop the connection instead of parsing from mid-stream. */
+            abort_connection(task);
+            return MODBUS_TASK_ERROR;
+        }
 
         if (dispatch.status != MODBUS_TCP_DISPATCH_ST_OK)
         {
+            /* The whole PDU was consumed, so the stream is still in step. */
             modbus_tcp_fsm_reset(&task->fsm);
             return MODBUS_TASK_ERROR;
         }
