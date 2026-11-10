@@ -38,6 +38,8 @@ enum InputRegister : std::uint16_t
     IR_Y_POSITION_LOW = 4,
     IR_FAULTS_ACTIVE = 5,
     IR_FAULT_FIRST = 6,
+    IR_LOOP_TIME_US = 7,
+    IR_LOOP_TIME_MAX_US = 8,
     IR_COUNT,
 };
 
@@ -115,6 +117,10 @@ static std::uint16_t read_input_register(const Machine &machine, std::uint16_t a
         return machine.faults.active();
     case IR_FAULT_FIRST:
         return machine.faults.first();
+    case IR_LOOP_TIME_US:
+        return machine.loop_time_us;
+    case IR_LOOP_TIME_MAX_US:
+        return machine.loop_time_max_us;
     default:
         return 0; // Unreachable - callers check the range first
     }

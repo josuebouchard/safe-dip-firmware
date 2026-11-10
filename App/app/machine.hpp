@@ -36,6 +36,10 @@ struct Machine
     Recipe recipe;
     Faults faults;
 
+    // Time from reading inputs to serving Modbus in one loop pass, in µs, saturated at 65535.
+    std::uint16_t loop_time_us = 0;
+    std::uint16_t loop_time_max_us = 0; // Since reset
+
     // In mm/s and mm/s^2
     StepperController::SpeedProfile speed_profile_x{
         SCALE_X.steps_per_mm() * 200.0F, // max_speed

@@ -118,6 +118,20 @@
   </section>
 
   <section class="wide">
+    <h2>Loop time (60 s)</h2>
+    <div class="readout">
+      <div>Now<span id="ln">—</span></div>
+      <div>Average<span id="la">—</span></div>
+      <div>Min<span id="lmin">—</span></div>
+      <div>Max<span id="lmax">—</span></div>
+      <div>Max since reset<span id="lrst">—</span></div>
+    </div>
+    <div class="chart"><canvas id="cl" aria-label="Loop time over time"></canvas><div class="tip"></div></div>
+    <small style="color:var(--muted)">Inputs to just before Modbus, in µs. One pass is sampled per poll, so
+      average, min and max cover the samples; spikes between polls only show in max since reset.</small>
+  </section>
+
+  <section class="wide">
     <h2>Cycle</h2>
     <div class="stages" id="stages"></div>
   </section>
@@ -243,7 +257,7 @@ $("params").onclick = async (ev) => {
 // --- render ---
 function render(d) {
   const now = performance.now();
-  history.push({ t: now, x: d.x, y: d.y });
+  history.push({ t: now, x: d.x, y: d.y, loop: d.loop_time_us });
   while (history.length && history[0].t < now - HISTORY_MS) history.shift();
 
   for (const [k, , on] of LAMPS) {
@@ -267,8 +281,20 @@ function render(d) {
   });
 
   drawGantry(d);
-  drawChart($("cx"), "x", "--x", "X (steps)");
-  drawChart($("cy"), "y", "--y", "Y (steps)");
+  drawChart($("cx"), "x", "--x", "X (steps)", "steps");
+  drawChart($("cy"), "y", "--y", "Y (steps)", "steps");
+  renderLoopTime(d);
+}
+
+function renderLoopTime(d) {
+  const vals = history.map((p) => p.loop);
+  const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+  $("ln").textContent = `${fmt(d.loop_time_us)} µs`;
+  $("la").textContent = `${fmt(Math.round(avg))} µs`;
+  $("lmin").textContent = `${fmt(Math.min(...vals))} µs`;
+  $("lmax").textContent = `${fmt(Math.max(...vals))} µs`;
+  $("lrst").textContent = `${fmt(d.loop_time_max_us)} µs`;
+  drawChart($("cl"), "loop", "--accent", "Loop time (µs)", "µs", avg);
 }
 
 function renderFaults(d) {
@@ -311,7 +337,7 @@ function drawGantry(d) {
     <text x="${L}" y="${T - 22}">0</text><text x="${R}" y="${T - 22}" text-anchor="end">${fmt(Math.round(xMax))} mm</text>`;
 }
 
-function drawChart(canvas, key, color, title) {
+function drawChart(canvas, key, color, title, unit, avg) {
   const dpr = devicePixelRatio || 1;
   const w = canvas.clientWidth, h = canvas.clientHeight;
   canvas.width = w * dpr; canvas.height = h * dpr;
@@ -336,11 +362,16 @@ function drawChart(canvas, key, color, title) {
   g.strokeStyle = css(color); g.lineWidth = 2; g.lineJoin = "round"; g.beginPath();
   history.forEach((p, i) => (i ? g.lineTo : g.moveTo).call(g, sx(p.t), sy(p[key])));
   g.stroke();
-  canvas._scale = { sx, sy, key, color, title };
+  if (avg !== undefined) {
+    g.setLineDash([4, 4]); g.strokeStyle = css("--muted"); g.lineWidth = 1;
+    g.beginPath(); g.moveTo(L, sy(avg)); g.lineTo(R, sy(avg)); g.stroke(); g.setLineDash([]);
+    g.textAlign = "right"; g.fillText(`avg ${fmt(Math.round(avg))}`, R, sy(avg) - 4); g.textAlign = "left";
+  }
+  canvas._scale = { sx, sy, key, color, title, unit, avg };
 }
 
 // Crosshair tooltip: nearest sample to the pointer
-for (const canvas of [$("cx"), $("cy")]) {
+for (const canvas of [$("cx"), $("cy"), $("cl")]) {
   const tip = canvas.nextElementSibling;
   canvas.onpointermove = (ev) => {
     const s = canvas._scale;
@@ -348,12 +379,12 @@ for (const canvas of [$("cx"), $("cy")]) {
     const x = ev.offsetX;
     const p = history.reduce((a, b) => Math.abs(s.sx(b.t) - x) < Math.abs(s.sx(a.t) - x) ? b : a);
     const ago = ((history[history.length - 1].t - p.t) / 1000).toFixed(1);
-    tip.textContent = `${fmt(p[s.key])} steps · −${ago} s`;
+    tip.textContent = `${fmt(p[s.key])} ${s.unit} · −${ago} s`;
     tip.style.display = "block";
     tip.style.left = Math.min(s.sx(p.t) + 8, canvas.clientWidth - tip.offsetWidth) + "px";
     tip.style.top = Math.max(0, s.sy(p[s.key]) - 28) + "px";
     const g = canvas.getContext("2d");
-    drawChart(canvas, s.key, s.color, s.title);
+    drawChart(canvas, s.key, s.color, s.title, s.unit, s.avg);
     g.strokeStyle = css("--muted"); g.lineWidth = 1;
     g.beginPath(); g.moveTo(s.sx(p.t), 18); g.lineTo(s.sx(p.t), canvas.clientHeight - 18); g.stroke();
     g.fillStyle = css(s.color);

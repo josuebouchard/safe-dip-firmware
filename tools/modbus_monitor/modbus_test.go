@@ -23,6 +23,18 @@ func TestNewStateMapsFaultRegisters(t *testing.T) {
 	}
 }
 
+func TestNewStateMapsLoopTime(t *testing.T) {
+	ir := make([]uint16, irCount)
+	ir[irLoopTime] = 42
+	ir[irLoopTimeMax] = 900
+
+	s := newState(make([]bool, diCount), ir, make([]uint16, hrCount))
+
+	if s.LoopTimeUs != 42 || s.LoopTimeMaxUs != 900 {
+		t.Fatalf("LoopTimeUs = %d, LoopTimeMaxUs = %d", s.LoopTimeUs, s.LoopTimeMaxUs)
+	}
+}
+
 func TestDecode(t *testing.T) {
 	bits, err := decodeBits([]byte{1, 0b10101}, 5)
 	if err != nil || !slices.Equal(bits, []bool{true, false, true, false, true}) {

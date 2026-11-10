@@ -28,7 +28,9 @@ const (
 
 	irFaultsActive = 5
 	irFaultFirst   = 6
-	irCount        = 7
+	irLoopTime     = 7
+	irLoopTimeMax  = 8
+	irCount        = 9
 )
 
 type State struct {
@@ -47,6 +49,9 @@ type State struct {
 
 	FaultsActive uint16 `json:"faults_active"`
 	FaultFirst   uint16 `json:"fault_first"`
+
+	LoopTimeUs    uint16 `json:"loop_time_us"`
+	LoopTimeMaxUs uint16 `json:"loop_time_max_us"`
 }
 
 func poll(c *Client, target string) (*State, error) {
@@ -87,6 +92,9 @@ func newState(di []bool, ir, hr []uint16) *State {
 
 		FaultsActive: ir[irFaultsActive],
 		FaultFirst:   ir[irFaultFirst],
+
+		LoopTimeUs:    ir[irLoopTime],
+		LoopTimeMaxUs: ir[irLoopTimeMax],
 	}
 }
 

@@ -13,6 +13,7 @@
 #include "stm32f4xx_hal.h"
 #include "w5500.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <cstdio>
 
@@ -46,6 +47,15 @@ static void enter_safe_state() noexcept
     hardware::effector.engage();
 }
 
+// Counts CPU cycles from `start_cycles` on the DWT counter. Unsigned subtraction stays
+// correct across its wrap, every ~51 s at 84 MHz.
+static void record_loop_time(std::uint32_t start_cycles) noexcept
+{
+    const std::uint32_t elapsed_us = (DWT->CYCCNT - start_cycles) / (SystemCoreClock / 1000000U);
+    machine.loop_time_us = static_cast<std::uint16_t>(std::min<std::uint32_t>(elapsed_us, UINT16_MAX));
+    machine.loop_time_max_us = std::max(machine.loop_time_max_us, machine.loop_time_us);
+}
+
 void setup()
 {
     const uint32_t now = HAL_GetTick();
@@ -63,10 +73,17 @@ void setup()
 
     // Initialize safe defaults
     hardware::effector.disengage();
+
+    // Start the DWT cycle counter used to time the loop
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    DWT->CYCCNT = 0;
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 }
 
 void loop()
 {
+    const std::uint32_t start_cycles = DWT->CYCCNT;
+
     machine.inputs = read_inputs();
     const Inputs &inputs = machine.inputs;
 
@@ -125,6 +142,9 @@ void loop()
         machine.controller_x.process(now);
         machine.controller_y.process(now);
     }
+
+    // Modbus is left out: it's the part we don't control.
+    record_loop_time(start_cycles);
 
     modbus_tcp_task_run(&modbus_task);
 }

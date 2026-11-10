@@ -29,9 +29,15 @@ writing past the end of a table returns exception `0x02` (illegal data address).
 | 4 | Y position, low word | steps | |
 | 5 | Faults active | bits | Every latched fault, see [Faults](#faults) |
 | 6 | First fault | bit | The fault that stopped the machine, 0 if none |
+| 7 | Loop time | µs | Last loop pass, see below |
+| 8 | Max loop time | µs | Longest loop pass since reset |
 
 Read each position as one two-register request so both words come from the same
 moment.
+
+Loop time is measured with the DWT cycle counter, from just before the inputs are
+read to just before Modbus is served, so serving Modbus isn't counted. Both registers
+saturate at 65535 µs. The max only resets with the MCU.
 
 Operation index, which is the position in the array in
 [`App/app/sequence.cpp`](../App/app/sequence.cpp). The monitor's stage list copies it
