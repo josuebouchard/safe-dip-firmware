@@ -37,6 +37,6 @@ bool modbus_unpack_bools_from_u8_array(const uint8_t *src, uint16_t bools_quanti
 
 modbus_dispatch_result_t generate_exception_response(uint8_t function_code, uint8_t exception_code,
                                                      uint8_t *wire_response,
-                                                     uint8_t response_capacity);
+                                                     size_t response_capacity);
 
 #endif // MODBUS_HELPERS_H

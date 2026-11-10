@@ -11,7 +11,7 @@ modbus_dispatch_result_t dispatch_read_holding_registers(modbus_context_t *conte
                                                          const uint8_t *wire_request,
                                                          uint8_t request_length,
                                                          uint8_t *wire_response,
-                                                         uint8_t response_capacity)
+                                                         size_t response_capacity)
 {
     uint8_t function_code = wire_request[0];
 
@@ -93,7 +93,7 @@ modbus_dispatch_result_t dispatch_write_holding_registers(modbus_context_t *cont
                                                           const uint8_t *wire_request,
                                                           uint8_t request_length,
                                                           uint8_t *wire_response,
-                                                          uint8_t response_capacity)
+                                                          size_t response_capacity)
 {
     uint8_t function_code = wire_request[0];
 
@@ -155,7 +155,7 @@ modbus_dispatch_result_t dispatch_write_multiple_holding_registers(modbus_contex
                                                                    const uint8_t *wire_request,
                                                                    uint8_t request_length,
                                                                    uint8_t *wire_response,
-                                                                   uint8_t response_capacity)
+                                                                   size_t response_capacity)
 {
     uint8_t function_code = wire_request[0];
 

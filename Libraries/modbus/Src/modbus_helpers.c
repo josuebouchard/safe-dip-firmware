@@ -1,9 +1,10 @@
 #include "modbus_helpers.h"
 #include "modbus_types.h"
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
-#define MIN(x, y) ((x) <= (y) ? x : y)
+#define MIN(x, y) ((x) <= (y) ? (x) : (y))
 
 static bool _pack_bools_to_u8(const bool *src, uint16_t quantity, uint8_t *dest)
 {
@@ -74,8 +75,8 @@ bool modbus_unpack_bools_from_u8_array(const uint8_t *src, uint16_t bools_quanti
     for (uint8_t i = 0; i < byte_count; i++)
     {
         uint8_t chunk = MIN(8, bools_quantity);
-        success = _unpack_bools_from_u8(src[i], chunk, dest + i);
-        src++;
+        success = _unpack_bools_from_u8(src[i], chunk, dest);
+        dest += chunk;
         bools_quantity -= 8; // This might underflow, but at that point it's unused
         if (!success)
             return false;
@@ -86,7 +87,7 @@ bool modbus_unpack_bools_from_u8_array(const uint8_t *src, uint16_t bools_quanti
 
 modbus_dispatch_result_t generate_exception_response(uint8_t function_code, uint8_t exception_code,
                                                      uint8_t *wire_response,
-                                                     uint8_t response_capacity)
+                                                     size_t response_capacity)
 {
     // Set MSB to 1
     uint8_t exception_function_code = function_code | mask_u8(7);

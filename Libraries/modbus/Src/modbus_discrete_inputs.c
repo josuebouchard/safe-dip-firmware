@@ -10,7 +10,7 @@ modbus_dispatch_result_t dispatch_read_discrete_inputs(modbus_context_t *context
                                                        const uint8_t *wire_request,
                                                        uint8_t request_length,
                                                        uint8_t *wire_response,
-                                                       uint8_t response_capacity)
+                                                       size_t response_capacity)
 {
     uint8_t function_code = wire_request[0];
 

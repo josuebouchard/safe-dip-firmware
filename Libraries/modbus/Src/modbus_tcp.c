@@ -17,16 +17,20 @@ bool modbus_tcp_parse_mbap(const uint8_t *wire_request, uint8_t request_length,
     out_mbap->transaction_id = modbus_read_u16_be(wire_request + 0);
     out_mbap->protocol_id = modbus_read_u16_be(wire_request + 2);
     uint16_t length = modbus_read_u16_be(wire_request + 4);
-    out_mbap->pdu_length = length - 1; // Subtract one for the unit_id
     out_mbap->unit_id = wire_request[6];
 
     // Sanity check
-    // PDU length should at least be 1 (for the unit_id)
+    // The length counts the unit_id and a PDU of at least a function code, and of at
+    // most the largest PDU the specification allows. A longer one could not be a
+    // Modbus request, and its length would not fit the 8-bit read length.
     // Protocol should be 0 for Modbus TCP
-    if (length < 1 || out_mbap->protocol_id != 0)
+    if (length < 2 || length > MODBUS_TCP_MAX_PDU_SIZE + 1 || out_mbap->protocol_id != 0)
     {
+        out_mbap->pdu_length = 0;
         return false;
     }
+
+    out_mbap->pdu_length = (uint16_t)(length - 1); // Subtract one for the unit_id
 
     return true;
 }
@@ -46,7 +50,10 @@ uint8_t modbus_tcp_fsm_read_length(modbus_tcp_fsm_t *fsm)
     case MODBUS_TCP_STATE_PARSE_MBAP:
         return MODBUS_TCP_MBAP_BYTES_SIZE;
     case MODBUS_TCP_STATE_PARSE_PDU:
-        return fsm->mbap.pdu_length;
+        // Fits: modbus_tcp_parse_mbap() rejects anything over MODBUS_TCP_MAX_PDU_SIZE.
+        return (uint8_t)fsm->mbap.pdu_length;
+    default:
+        return 0; // Corrupted state: nothing can be read
     }
 }
 
@@ -95,7 +102,7 @@ modbus_tcp_dispatch_result_t modbus_tcp_fsm_dispatch(modbus_tcp_fsm_t *fsm,
 
         // Dispatch instruction - leave room for MBAP header
         modbus_dispatch_result_t dispatch_state =
-            modbus_dispatch_PDU(fsm->context, wire_request, fsm->mbap.pdu_length,
+            modbus_dispatch_PDU(fsm->context, wire_request, (uint8_t)fsm->mbap.pdu_length,
                                 wire_response + MODBUS_TCP_MBAP_BYTES_SIZE,
                                 response_capacity - MODBUS_TCP_MBAP_BYTES_SIZE);
 
@@ -121,5 +128,12 @@ modbus_tcp_dispatch_result_t modbus_tcp_fsm_dispatch(modbus_tcp_fsm_t *fsm,
             .status = MODBUS_TCP_DISPATCH_ST_OK,
         };
     }
+    default:
+        // Corrupted state: start over, and tell the caller the stream can't be trusted.
+        modbus_tcp_fsm_reset(fsm);
+        return (modbus_tcp_dispatch_result_t){
+            .write_size = 0,
+            .status = MODBUS_TCP_DISPATCH_ST_BAD_MBAP,
+        };
     }
 }

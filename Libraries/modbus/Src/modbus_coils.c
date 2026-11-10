@@ -9,7 +9,7 @@ static const uint8_t READ_COILS_FIXED_RESPONSE_SIZE = 2;
 // Function Code: 0x01
 modbus_dispatch_result_t dispatch_read_coils(modbus_context_t *context, const uint8_t *wire_request,
                                              uint8_t request_length, uint8_t *wire_response,
-                                             uint8_t response_capacity)
+                                             size_t response_capacity)
 {
     uint8_t function_code = wire_request[0];
 
@@ -90,7 +90,7 @@ static const uint8_t WRITE_SINGLE_COIL_FIXED_RESPONSE_SIZE = 5;
 modbus_dispatch_result_t dispatch_write_single_coil(modbus_context_t *context,
                                                     const uint8_t *wire_request,
                                                     uint8_t request_length, uint8_t *wire_response,
-                                                    uint8_t response_capacity)
+                                                    size_t response_capacity)
 {
     uint8_t function_code = wire_request[0];
 
@@ -171,7 +171,7 @@ modbus_dispatch_result_t dispatch_write_multiple_coils(modbus_context_t *context
                                                        const uint8_t *wire_request,
                                                        uint8_t request_length,
                                                        uint8_t *wire_response,
-                                                       uint8_t response_capacity)
+                                                       size_t response_capacity)
 {
     uint8_t function_code = wire_request[0];
 

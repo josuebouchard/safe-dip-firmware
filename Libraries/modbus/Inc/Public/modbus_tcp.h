@@ -9,6 +9,9 @@
 
 #define MODBUS_TCP_MBAP_BYTES_SIZE 7
 
+// The largest PDU the Modbus specification allows: function code plus 252 data bytes.
+#define MODBUS_TCP_MAX_PDU_SIZE 253
+
 typedef struct modbus_tcp_mbap
 {
     uint16_t transaction_id;
@@ -17,7 +20,8 @@ typedef struct modbus_tcp_mbap
     uint8_t unit_id;
 } modbus_tcp_mbap_t;
 
-// wire_request must be at least 7 bytes long
+// wire_request must be at least 7 bytes long. Fails on a protocol id other than 0, and
+// on a length field that doesn't hold a PDU of 1 to MODBUS_TCP_MAX_PDU_SIZE bytes.
 bool modbus_tcp_parse_mbap(const uint8_t *wire_request, uint8_t request_length,
                            modbus_tcp_mbap_t *out_mbap);
 
