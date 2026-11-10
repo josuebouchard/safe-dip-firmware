@@ -11,11 +11,14 @@ template <typename T> static constexpr std::int8_t sign(T value) noexcept
 
 StepperController::SpeedProfile::SpeedProfile(float max_speed, float acceleration,
                                               float landing_speed, float homing_speed) noexcept
-    : max_speed(max_speed), acceleration(acceleration),
+    : // At least 1 step/s: the two speeds below are clamped into [1, max_speed].
+      max_speed(std::max(max_speed, 1.0F)),
+      // A zero acceleration would never ramp, and should_decelerate() divides by it.
+      acceleration(std::max(acceleration, 1.0F)),
       // A zero landing speed would stall short of the target.
-      landing_speed(std::min(std::max(landing_speed, 1.0F), max_speed)),
+      landing_speed(std::min(std::max(landing_speed, 1.0F), this->max_speed)),
       // Same bounds: a zero homing speed would never reach the switch.
-      homing_speed(std::min(std::max(homing_speed, 1.0F), max_speed))
+      homing_speed(std::min(std::max(homing_speed, 1.0F), this->max_speed))
 {
 }
 
