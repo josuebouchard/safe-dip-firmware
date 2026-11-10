@@ -24,7 +24,7 @@ var indexHTML []byte
 // Table layout, from the enums in App/app/modbus_map.cpp and App/machine/faults.hpp
 const (
 	diCount = 7
-	hrCount = 6
+	hrCount = 7
 
 	irFaultsActive = 5
 	irFaultFirst   = 6
@@ -155,7 +155,7 @@ func main() {
 		address, aErr := strconv.ParseUint(r.URL.Query().Get("address"), 10, 16)
 		value, vErr := strconv.ParseUint(r.URL.Query().Get("value"), 10, 16)
 		if err != nil || aErr != nil || vErr != nil || address >= hrCount {
-			writeError(w, http.StatusBadRequest, errors.New("bad request: host, port, address (0-5), value (0-65535) required"))
+			writeError(w, http.StatusBadRequest, errors.New("bad request: host, port, address (0-6), value (0-65535) required"))
 			return
 		}
 		if err := client.WriteRegister(t, uint16(address), uint16(value)); err != nil {

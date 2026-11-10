@@ -104,10 +104,13 @@ The bit numbers are the order of `Fault` in
 | 3 | Y up position | mm | 0 | 0–200 |
 | 4 | Y down position | mm | 100 | 0–200 |
 | 5 | Dwell time | ms | 2000 | 0–60000 |
+| 6 | Effector settle time | ms | 300 | 0–5000 |
 
 - A written value takes effect the next time its operation starts. An operation
   already running keeps the value it started with.
 - `Y down position` is shared by the pick, dip, and deposit steps.
+- `Effector settle time` is how long `EFFECTOR_ENGAGE` and `EFFECTOR_DISENGAGE` wait after
+  switching the magnet, before the next operation starts. Both share it.
 - A multi-register write is checked in full before anything is applied: if any
   value is out of range, nothing changes and the server answers exception `0x04`
   (server failure). The library has no "illegal data value" path yet.

@@ -14,6 +14,9 @@ struct Recipe
     std::int32_t y_down_mm = 100;
 
     std::int32_t dwell_ms = 2000;
+
+    // How long to wait after switching the effector, before the next operation
+    std::int32_t effector_settle_ms = 300;
 };
 
 #endif // RECIPE_HPP

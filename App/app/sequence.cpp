@@ -51,8 +51,10 @@ Sequencer<Tick> &make_sequence(Machine &machine)
     static MoveStepperOperation move_y_up{machine.axis_y, machine.recipe.y_up_mm};
     static MoveStepperOperation move_y_down{machine.axis_y, machine.recipe.y_down_mm};
 
-    static EffectorOperation effector_engage{hardware::effector, true};
-    static EffectorOperation effector_disengage{hardware::effector, false};
+    static EffectorOperation effector_engage{hardware::effector, true,
+                                             machine.recipe.effector_settle_ms};
+    static EffectorOperation effector_disengage{hardware::effector, false,
+                                                machine.recipe.effector_settle_ms};
 
     static DwellOperation dwell{machine.recipe.dwell_ms};
 
