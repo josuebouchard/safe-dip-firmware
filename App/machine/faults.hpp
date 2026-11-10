@@ -12,7 +12,7 @@ enum class Fault : std::uint8_t
     e_stop,                // loop(): the e-stop reads pressed
     operation_interrupted, // A move was stopped short of its target by something else
     operation_timed_out,   // An operation ran longer than allowed
-    x_homing_failed,       // Homing X: the switch stuck, or was hit far from expected
+    x_homing_failed,       // Homing X: the switch still reads pressed after backing off
     y_homing_failed,       // Same, for Y
     x_limit_hit,           // The X switch read pressed during a move
     y_limit_hit,           // Same, for Y

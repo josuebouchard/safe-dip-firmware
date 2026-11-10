@@ -37,14 +37,13 @@ class HomeStepperOperation : public Operation<Tick>
 {
   public:
     HomeStepperOperation(const Axis &axis, std::int32_t back_off_steps,
-                         std::uint32_t timeout_ms, std::int32_t drift_tolerance_steps) noexcept
-        : axis_{axis}, back_off_steps_{back_off_steps}, timeout_ms_{timeout_ms},
-          drift_tolerance_steps_{drift_tolerance_steps}
+                         std::uint32_t timeout_ms) noexcept
+        : axis_{axis}, back_off_steps_{back_off_steps}, timeout_ms_{timeout_ms}
     {
     }
     // Stored by reference, so a temporary would dangle.
     HomeStepperOperation(const Axis &&axis, std::int32_t back_off_steps,
-                         std::uint32_t timeout_ms, std::int32_t drift_tolerance_steps) = delete;
+                         std::uint32_t timeout_ms) = delete;
 
     void start(Tick &ctx) noexcept override;
     PollResult poll(Tick &ctx) noexcept override;
@@ -53,13 +52,8 @@ class HomeStepperOperation : public Operation<Tick>
     const Axis &axis_;
     std::int32_t back_off_steps_;
     std::uint32_t timeout_ms_; // Covers the whole operation: the search and the back-off
-    std::int32_t drift_tolerance_steps_;
     bool is_backing_off_ = false;
     std::uint32_t start_time_ = 0;
-
-    // Deliberately not reset in start(): it says whether an earlier run set the
-    // origin that this run checks for lost steps.
-    bool has_origin_ = false;
 };
 
 #endif // MOVEMENT_OPERATIONS_HPP

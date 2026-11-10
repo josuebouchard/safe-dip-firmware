@@ -84,9 +84,8 @@ The bit numbers are the order of `Fault` in
   - While homing: no fault. Homing expects the switch.
   - While the sequencer is stopped: the axis stops if it's moving toward the switch,
     but no fault is raised, because only a running operation reports one.
-- **Homing failed:** the drift check compares against the origin set by that axis's
-  previous home, so the first home after a reset can only fail on a stuck switch. A drift
-  failure makes the next home set a new origin.
+- **Homing failed:** the switch still reads pressed after the back-off, so it's stuck or
+  miswired.
 
 ## Holding registers (FC 03 read, FC 06 / FC 16 write)
 

@@ -42,13 +42,11 @@ Sequencer<Tick> &make_sequence(Machine &machine)
         machine.axis_x,
         Machine::SCALE_X.steps_from_mm(HOMING_BACK_OFF_MM),
         homing_timeout_ms(Machine::SCALE_X, Machine::X_TRAVEL_MM, machine.speed_profile_x),
-        Machine::SCALE_X.steps_from_mm(HOMING_DRIFT_TOLERANCE_MM),
     };
     static HomeStepperOperation home_y{
         machine.axis_y,
         Machine::SCALE_Y.steps_from_mm(HOMING_BACK_OFF_MM),
         homing_timeout_ms(Machine::SCALE_Y, Machine::Y_TRAVEL_MM, machine.speed_profile_y),
-        Machine::SCALE_Y.steps_from_mm(HOMING_DRIFT_TOLERANCE_MM),
     };
 
     static MoveStepperOperation move_x_input{machine.axis_x, machine.recipe.x_input_mm};

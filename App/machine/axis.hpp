@@ -25,7 +25,7 @@ struct Axis
     bool Inputs::*limit_pressed;
 
     Fault limit_hit;     // The switch read pressed during a move
-    Fault homing_failed; // The switch misread while homing: stuck, or hit far from expected
+    Fault homing_failed; // Homing: the switch still reads pressed after backing off
 };
 
 #endif // AXIS_HPP
