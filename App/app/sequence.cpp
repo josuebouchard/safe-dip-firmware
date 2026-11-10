@@ -13,24 +13,17 @@
 #include <tuple>
 
 // How far past the switch hit the origin is set. Far enough to clear a microswitch's
-// release travel, which is usually under 1 mm. Too short reads as a stuck switch.
-constexpr std::int32_t HOMING_BACK_OFF_MM = 2;
-
-// How far from the expected spot a switch hit can be before it counts as lost steps.
-// It covers the switch's repeatability and how far the axis coasts before loop() sees
-// the switch, both well under 1 mm. It must exceed the back-off: a switch that only
-// just released at the end of the last back-off can read pressed again at position 0,
-// which is a back-off away from the expected hit.
-constexpr std::int32_t HOMING_DRIFT_TOLERANCE_MM = 3;
-static_assert(HOMING_DRIFT_TOLERANCE_MM > HOMING_BACK_OFF_MM);
+// release travel. Per axis, so each can be tuned on the machine on its own.
+constexpr std::int32_t HOMING_BACK_OFF_MM_X = 40;
+constexpr std::int32_t HOMING_BACK_OFF_MM_Y = 20;
 
 // The longest search covers the whole travel and the back-off at homing speed. Half as
 // long again, plus a second for the ramps, so a slow but working axis doesn't time out.
-static std::uint32_t homing_timeout_ms(const AxisScale &scale, std::int32_t travel_mm,
-                                       const StepperController::SpeedProfile &profile) noexcept
+static constexpr std::uint32_t homing_timeout_ms(const AxisScale &scale, std::int32_t travel_mm,
+                                                 const StepperController::SpeedProfile &profile,
+                                                 std::int32_t back_off_mm) noexcept
 {
-    const auto search_steps =
-        static_cast<float>(scale.steps_from_mm(travel_mm + HOMING_BACK_OFF_MM));
+    const auto search_steps = static_cast<float>(scale.steps_from_mm(travel_mm + back_off_mm));
     return static_cast<std::uint32_t>(1500.0F * search_steps / profile.homing_speed) + 1000U;
 }
 
@@ -40,13 +33,15 @@ Sequencer<Tick> &make_sequence(Machine &machine)
 {
     static HomeStepperOperation home_x{
         machine.axis_x,
-        Machine::SCALE_X.steps_from_mm(HOMING_BACK_OFF_MM),
-        homing_timeout_ms(Machine::SCALE_X, Machine::X_TRAVEL_MM, machine.speed_profile_x),
+        Machine::SCALE_X.steps_from_mm(HOMING_BACK_OFF_MM_X),
+        homing_timeout_ms(Machine::SCALE_X, Machine::X_TRAVEL_MM, machine.speed_profile_x,
+                          HOMING_BACK_OFF_MM_X),
     };
     static HomeStepperOperation home_y{
         machine.axis_y,
-        Machine::SCALE_Y.steps_from_mm(HOMING_BACK_OFF_MM),
-        homing_timeout_ms(Machine::SCALE_Y, Machine::Y_TRAVEL_MM, machine.speed_profile_y),
+        Machine::SCALE_Y.steps_from_mm(HOMING_BACK_OFF_MM_Y),
+        homing_timeout_ms(Machine::SCALE_Y, Machine::Y_TRAVEL_MM, machine.speed_profile_y,
+                          HOMING_BACK_OFF_MM_Y),
     };
 
     static MoveStepperOperation move_x_input{machine.axis_x, machine.recipe.x_input_mm};
@@ -69,8 +64,8 @@ Sequencer<Tick> &make_sequence(Machine &machine)
         // Home
         // &home_y,
         &move_y_up,
-        // &home_x,
-        &move_x_input,
+        &home_x,
+        // &move_x_input,
 
         // Pick
         &move_y_down,
