@@ -18,8 +18,8 @@
 #include <cstdint>
 #include <cstdio>
 
-constexpr std::uint8_t ECHO_SOCKET = 0;
-constexpr std::uint16_t ECHO_PORT = 502;
+constexpr std::uint8_t MODBUS_SOCKET = 0;
+constexpr std::uint16_t MODBUS_PORT = 502;
 
 static modbus_tcp_task_t modbus_task;
 
@@ -70,7 +70,7 @@ void setup()
     uint8_t version = getVERSIONR();
     std::printf("W5500 version register: 0x%02X (expect 0x04)\r\n", version);
 
-    modbus_tcp_task_init(&modbus_task, ECHO_SOCKET, ECHO_PORT, &modbus_ctx);
+    modbus_tcp_task_init(&modbus_task, MODBUS_SOCKET, MODBUS_PORT, &modbus_ctx);
 
     // Initialize stepper controllers
     machine.controller_x.initialize(now);

@@ -18,6 +18,13 @@
 // building it binds operations to the members above.
 struct Machine
 {
+    Machine() = default;
+
+    // The controllers, axes and operations hold references to this object's own
+    // members, so a copy would still drive the original's.
+    Machine(const Machine &) = delete;
+    Machine &operator=(const Machine &) = delete;
+
     // Set on both drivers' DIP switches: 200 full steps x 8 microsteps.
     static constexpr std::int32_t PULSES_PER_REV = 1600;
 
