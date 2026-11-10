@@ -67,6 +67,13 @@ void StepperDriver::set_speed(std::int32_t steps_per_second) noexcept
 
 void StepperDriver::stop_immediately() noexcept
 {
+    // Already stopped: the channel is disarmed and parked, so there is nothing to
+    // reconfigure. loop() calls this on every pass while a fault is latched.
+    if (!is_armed_)
+    {
+        return;
+    }
+
     config_.timer_channel.stop_interrupt();
     speed_requested_.store(0, std::memory_order_release);
     is_armed_ = false;
