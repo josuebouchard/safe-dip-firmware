@@ -62,8 +62,8 @@ Sequencer<Tick> &make_sequence(Machine &machine)
     // index after them.
     static std::array<Operation<Tick> *, 13> operations = {
         // Home
-        // &home_y,
-        &move_y_up,
+        &home_y,
+        // &move_y_up,
         &home_x,
         // &move_x_input,
 
