@@ -144,6 +144,6 @@ void loop()
 
     modbus_tcp_task_run(&modbus_task);
 
-    // Measure the loop time. The first loop will show 0 us.
+    // Last, so the time covers the whole pass, Modbus included.
     record_loop_time(start_cycles);
 }

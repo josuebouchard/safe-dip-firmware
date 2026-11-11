@@ -58,8 +58,8 @@ Sequencer<Tick> &make_sequence(Machine &machine)
 
     // The position in this array is the operation index on Modbus (input register 0).
     // docs/modbus-map.md and the STAGES list in tools/modbus_monitor/index.html copy
-    // this order, so change them together. Enabling home_y / home_x shifts every
-    // index after them.
+    // this order, so change them together. Each home operation takes the slot of the
+    // move it replaces, so swapping one back doesn't shift the indices.
     static std::array<Operation<Tick> *, 13> operations = {
         // Home
         &home_y,

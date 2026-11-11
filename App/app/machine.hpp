@@ -36,7 +36,7 @@ struct Machine
     Recipe recipe;
     Faults faults;
 
-    // Time from reading inputs to serving Modbus in one loop pass, in µs, saturated at 65535.
+    // Time of one whole loop pass, Modbus included, in µs, saturated at 65535.
     std::uint16_t loop_time_us = 0;
     std::uint16_t loop_time_max_us = 0; // Since reset
 
@@ -57,8 +57,7 @@ struct Machine
     StepperController controller_x{speed_profile_x, hardware::stepper_driver_x};
     StepperController controller_y{speed_profile_y, hardware::stepper_driver_y};
 
-    // What operations get to drive each axis. Only the X switch is wired so far: the
-    // Y input reads false in read_inputs().
+    // What operations get to drive each axis.
     Axis axis_x{
         .controller = controller_x,
         .scale = SCALE_X,

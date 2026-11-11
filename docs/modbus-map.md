@@ -36,7 +36,8 @@ Read each position as one two-register request so both words come from the same
 moment.
 
 Loop time is measured with the DWT cycle counter, from just before the inputs are
-read to just before Modbus is served, so serving Modbus isn't counted. Both registers
+read to the end of the pass, so it includes serving Modbus and is close to the loop
+period. Both registers
 saturate at 65535 µs. The max only resets with the MCU.
 
 Operation index, which is the position in the array in
@@ -45,8 +46,8 @@ too, so all three change together:
 
 | Index | Stage | Operation |
 |---|---|---|
-| 0 | Home | `MOVE_Y_UP` |
-| 1 | Home | `MOVE_X_INPUT` |
+| 0 | Home | `HOME_Y` |
+| 1 | Home | `HOME_X` |
 | 2 | Pick | `MOVE_Y_DOWN` |
 | 3 | Pick | `EFFECTOR_ENGAGE` |
 | 4 | Pick | `MOVE_Y_UP` |
@@ -76,7 +77,7 @@ The bit numbers are the order of `Fault` in
 | 3 | 8 | X homing failed | Homing X | The X switch still read pressed after backing off, or was hit too far from where the count expected it |
 | 4 | 16 | Y homing failed | Homing Y | The same, for the Y switch |
 | 5 | 32 | X limit hit | A move on X | The X switch read pressed before the move reached its target, in either direction |
-| 6 | 64 | Y limit hit | A move on Y | The same, for the Y switch. It can't happen yet: the Y switch input reads 0 until it's wired |
+| 6 | 64 | Y limit hit | A move on Y | The same, for the Y switch |
 
 - **Clearing:** one start press clears every latched fault, unless the e-stop is still
   pressed. Clearing doesn't start the machine: that takes a second press, which restarts

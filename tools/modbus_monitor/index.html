@@ -127,7 +127,7 @@
       <div>Max since reset<span id="lrst">—</span></div>
     </div>
     <div class="chart"><canvas id="cl" aria-label="Loop time over time"></canvas><div class="tip"></div></div>
-    <small style="color:var(--muted)">Inputs to just before Modbus, in µs. One pass is sampled per poll, so
+    <small style="color:var(--muted)">Whole loop pass, Modbus included, in µs. One pass is sampled per poll, so
       average, min and max cover the samples; spikes between polls only show in max since reset.</small>
   </section>
 
@@ -154,7 +154,7 @@ const LAMPS = [
   ["effector", "Effector engaged", "good"], ["fault", "Fault", "bad"],
 ];
 const STAGES = [
-  ["Home", ["MOVE_Y_UP", "MOVE_X_INPUT"]],
+  ["Home", ["HOME_Y", "HOME_X"]],
   ["Pick", ["MOVE_Y_DOWN", "EFFECTOR_ENGAGE", "MOVE_Y_UP"]],
   ["Dip", ["MOVE_X_DIP", "MOVE_Y_DOWN", "DWELL", "MOVE_Y_UP"]],
   ["Deposit", ["MOVE_X_OUTPUT", "MOVE_Y_DOWN"]],
