@@ -142,8 +142,8 @@ void loop()
         machine.controller_y.process(now);
     }
 
-    // Modbus is left out: it's the part we don't control.
-    record_loop_time(start_cycles);
-
     modbus_tcp_task_run(&modbus_task);
+
+    // Measure the loop time. The first loop will show 0 us.
+    record_loop_time(start_cycles);
 }
