@@ -11,6 +11,7 @@ flowchart TD
     app --> control
     app --> drivers
     app --> comms
+    app --> debounce
     app --> HAL
 
     operations --> sequencer
@@ -34,8 +35,8 @@ flowchart TD
 [`CMakeLists.txt`](CMakeLists.txt) declares these dependencies with
 `target_link_libraries()`, and the compiler enforces them: including a header from
 a layer you don't depend on is a build error. To add a file, list it under its layer
-there, and include other files by name alone. `machine` and `sequencer` contain only
-headers, so they're declared with `add_app_header_layer()`.
+there, and include other files by name alone. `machine`, `sequencer` and `debounce`
+contain only headers, so they're declared with `add_app_header_layer()`.
 
 ## The mental model
 
@@ -48,6 +49,8 @@ headers, so they're declared with `add_app_header_layer()`.
   cycle. A move knows it drives *an* axis, not that it's X.
 - **The sequencer** runs a list of operations that all take the same context. It knows
   nothing else.
+- **Debounce** filters turn a raw input level into one the rest of the code can trust.
+  They are pure logic: `read_inputs()` feeds them the pin and the time.
 - **`app`** wires one concrete machine together: which axis is X, which switch is its,
   what the cycle is, and what Modbus shows.
 

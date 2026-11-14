@@ -3,8 +3,8 @@
 
 #include <cstdint>
 
-// Turns a raw button level into one event per press.
-// Only triggers the event on debounced rising-edge.
+// Debounce on press and release + rising edge detection (a -|P|-), output is one
+// event per press.
 class ButtonPress
 {
   public:

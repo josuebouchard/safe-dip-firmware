@@ -55,6 +55,9 @@ target_link_libraries(machine INTERFACE control)
 # app/sequencer_instance.cpp.
 add_app_header_layer(sequencer)
 
+# Turns raw input levels into debounced ones. Pure logic, no dependencies.
+add_app_header_layer(debounce)
+
 add_app_layer(operations
     operations/movement_operations.cpp
     operations/timer_operations.cpp
@@ -73,4 +76,4 @@ add_app_layer(app
     app/sequence.cpp
     app/sequencer_instance.cpp
 )
-target_link_libraries(app PUBLIC operations sequencer machine control drivers comms stm32cubemx)
+target_link_libraries(app PUBLIC operations sequencer machine control drivers comms debounce stm32cubemx)
