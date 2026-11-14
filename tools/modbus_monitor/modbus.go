@@ -69,13 +69,13 @@ func (c *Client) call(target string, pdu []byte) ([]byte, error) {
 func (c *Client) roundTrip(target string, pdu []byte) ([]byte, error) {
 	if c.conn == nil || c.target != target {
 		c.closeLocked()
-		conn, err := net.DialTimeout("tcp", target, time.Second)
+		conn, err := net.DialTimeout("tcp", target, 500*time.Millisecond)
 		if err != nil {
 			return nil, err
 		}
 		c.conn, c.target = conn, target
 	}
-	c.conn.SetDeadline(time.Now().Add(time.Second))
+	c.conn.SetDeadline(time.Now().Add(500 * time.Millisecond))
 
 	// MBAP header: transaction id, protocol id (0), length, unit id.
 	c.tid++
