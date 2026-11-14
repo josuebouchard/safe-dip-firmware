@@ -23,13 +23,12 @@ struct Machine
 
     // X: 2GT belt (2 mm pitch) on a 20-tooth pulley, 40 mm per rev.
     static constexpr AxisScale SCALE_X = AxisScale::pulley(PULSES_PER_REV, 20, 2);
-    // Y: 8 mm acme leadscrew, 2 mm pitch x 4 starts = 8 mm lead.
-    static constexpr AxisScale SCALE_Y = AxisScale::leadscrew(PULSES_PER_REV, 8);
+    // Y: 8 mm acme leadscrew (Tr8x2), 2 mm pitch x 1 start = 2 mm lead.
+    static constexpr AxisScale SCALE_Y = AxisScale::leadscrew(PULSES_PER_REV, 2);
 
     // Usable travel from the origin set by homing, in mm. Y can't exceed the 300 mm
     // screw, less the nut and the end supports.
-    // @todo: set from the measured axis travel
-    static constexpr std::int32_t X_TRAVEL_MM = 400;
+    static constexpr std::int32_t X_TRAVEL_MM = 550;
     static constexpr std::int32_t Y_TRAVEL_MM = 200;
 
     Inputs inputs;
@@ -48,8 +47,8 @@ struct Machine
         SCALE_X.steps_per_mm() * 50.0F,  // homing_speed
     };
     StepperController::SpeedProfile speed_profile_y{
-        SCALE_Y.steps_per_mm() * 50.0F, // max_speed
-        SCALE_Y.steps_per_mm() * 40.0F, // acceleration
+        SCALE_Y.steps_per_mm() * 20.0F, // max_speed
+        SCALE_Y.steps_per_mm() * 10.0F, // acceleration
         SCALE_Y.steps_per_mm() * 0.5F,  // landing_speed
         SCALE_Y.steps_per_mm() * 10.0F, // homing_speed
     };
