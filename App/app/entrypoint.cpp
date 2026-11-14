@@ -4,6 +4,7 @@
 #include "ethernet_if.h"
 #include "hardware.hpp"
 #include "inputs.hpp"
+#include "limit_filter.hpp"
 #include "machine.hpp"
 #include "modbus_map.hpp"
 #include "modbus_tcp_task.h"
@@ -26,15 +27,20 @@ static Machine machine;
 static modbus_context_t modbus_ctx = modbus_map_make_context(machine);
 
 static ButtonPress start_button;
+static LimitFilter limit_x_filter{3};
+static LimitFilter limit_y_filter{3};
 
 // The only place that knows pins and polarity.
-static Inputs read_inputs() noexcept
+static Inputs read_inputs(std::uint32_t now_ms) noexcept
 {
+    const bool limit_x_raw = (HAL_GPIO_ReadPin(X_HOME_GPIO_Port, X_HOME_Pin) == GPIO_PIN_SET);
+    const bool limit_y_raw = (HAL_GPIO_ReadPin(Y_HOME_GPIO_Port, Y_HOME_Pin) == GPIO_PIN_SET);
+
     return Inputs{
         .e_stop_pressed = (HAL_GPIO_ReadPin(E_STOP_GPIO_Port, E_STOP_Pin) == GPIO_PIN_RESET),
         .start_pressed = (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET),
-        .limit_x_pressed = (HAL_GPIO_ReadPin(X_HOME_GPIO_Port, X_HOME_Pin) == GPIO_PIN_SET),
-        .limit_y_pressed = (HAL_GPIO_ReadPin(Y_HOME_GPIO_Port, Y_HOME_Pin) == GPIO_PIN_SET),
+        .limit_x_pressed = limit_x_filter.update(limit_x_raw, now_ms),
+        .limit_y_pressed = limit_y_filter.update(limit_y_raw, now_ms),
     };
 }
 
@@ -83,10 +89,11 @@ void loop()
 {
     const std::uint32_t start_cycles = DWT->CYCCNT;
 
-    machine.inputs = read_inputs();
+    const uint32_t now = HAL_GetTick();
+
+    machine.inputs = read_inputs(now);
     const Inputs &inputs = machine.inputs;
 
-    const uint32_t now = HAL_GetTick();
     const bool start_press = start_button.update(inputs.start_pressed, now);
 
     if (inputs.limit_x_pressed && machine.controller_x.current_speed_signed() < 0)
