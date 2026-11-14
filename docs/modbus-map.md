@@ -74,7 +74,7 @@ The bit numbers are the order of `Fault` in
 | 0 | 1 | E-stop | `loop()` | The e-stop reads pressed, including a broken wire |
 | 1 | 2 | Operation interrupted | A move | Something other than its limit switch stopped it before its target |
 | 2 | 4 | Operation timed out | Homing | It didn't finish within its timeout |
-| 3 | 8 | X homing failed | Homing X | The X switch still read pressed after backing off, or was hit too far from where the count expected it |
+| 3 | 8 | X homing failed | Homing X | The X switch still read pressed after backing off |
 | 4 | 16 | Y homing failed | Homing Y | The same, for the Y switch |
 | 5 | 32 | X limit hit | A move on X | The X switch read pressed before the move reached its target, in either direction |
 | 6 | 64 | Y limit hit | A move on Y | The same, for the Y switch |
@@ -98,11 +98,11 @@ The bit numbers are the order of `Fault` in
 
 | Address | Name | Unit | Default | Range |
 |---|---|---|---|---|
-| 0 | X input position | mm | 0 | 0–400 |
-| 1 | X dip position | mm | 200 | 0–400 |
-| 2 | X output position | mm | 400 | 0–400 |
+| 0 | X input position | mm | 0 | 0–550 |
+| 1 | X dip position | mm | 250 | 0–550 |
+| 2 | X output position | mm | 500 | 0–550 |
 | 3 | Y up position | mm | 0 | 0–200 |
-| 4 | Y down position | mm | 200 | 0–200 |
+| 4 | Y down position | mm | 100 | 0–200 |
 | 5 | Dwell time | ms | 2000 | 0–60000 |
 
 - A written value takes effect the next time its operation starts. An operation
@@ -115,7 +115,6 @@ The bit numbers are the order of `Fault` in
 - Positions are whole millimetres from the origin set by homing. Each move converts
   its position to steps when it starts, through `Machine::SCALE_X` / `SCALE_Y`.
 - The position ranges are the axis travel (`Machine::X_TRAVEL_MM`, `Y_TRAVEL_MM`).
-  Both are placeholders until the axes are measured.
 - Positions are in mm here but the live positions (input registers 1–4) are in steps.
 
 ## Coils (FC 01 / 05 / 15)

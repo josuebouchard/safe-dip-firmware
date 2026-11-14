@@ -171,12 +171,12 @@ instead of letting it crash.
 - **Pull-up to 3.3 V, never 5 V.** A 5 V pull-up would exceed the FT rating ($V_{DD}$ + 4 V) while
   the MCU is unpowered and gives little extra margin. The cable only carries GND and the signal,
   so a short to the frame cannot damage anything.
-- **Noise:** add an external 2.2 kΩ pull-up to 3.3 V at the board (the internal ~40 kΩ pull-up is
-  too weak near the stepper cables) and 100 nF from the pin to GND (≈ 0.2 ms filter). Use twisted
-  pair (signal + GND) and route it away from the stepper wiring. Impedance matters more than
-  voltage: a stiff 3.3 V pull-up is quieter than a weak 5 V one.
-- **Software:** accept a state change only after it has been stable for several samples (for
-  example 3 reads in a row at 1 kHz).
+- **Noise:** each switch cable is a twisted pair (signal + GND), routed away from the stepper
+  wiring, and the software debounce below filters what still gets through. The internal ~40 kΩ
+  pull-up is weak, so if false hits remain, add a 10 nF capacitor from the pin to GND at the board.
+- **Software:** `LimitFilter` (`App/debounce/limit_filter.hpp`) counts a press only after the
+  pin has read high for `press_ms` without a break; a release counts at once. Raise the time if noise
+  still gets through, keeping in mind the axis runs on past the switch for that long.
 - Both pins are FT, and both also carry TIM1 channels (CH1, CH2) if one is ever needed for capture.
 - **No switch at the far end:** travel away from home is limited only in software. Home the axis
   first, then reject any move past the known travel length.

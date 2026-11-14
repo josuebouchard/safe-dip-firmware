@@ -61,7 +61,7 @@ every pass:
 
 ```mermaid
 flowchart TD
-    A["Read inputs and the time, once"] --> B["Debounce the start button"]
+    A["Read the time and the inputs, once.<br/>Debounce the limit switches"] --> B["Debounce the start button"]
     B --> C["Backstop: stop any axis moving into its limit switch"]
     C --> D{"E-stop pressed?"}
     D -- yes --> D1["Raise e_stop"] --> E

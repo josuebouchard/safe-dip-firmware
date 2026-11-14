@@ -8,8 +8,8 @@
 // A press counts only once the switch has read pressed for press_ms without a break,
 // so a noise spike from the stepper drivers can't fault a move. A release counts at once.
 //
-// The delay lets the axis run on past the switch: 3 ms is ~0.6 mm on X at its
-// 200 mm/s max speed. Raise it if false hits get through, up to what the overrun allows.
+// The delay lets the axis run on past the switch by press_ms times its speed. Raise it
+// if false hits get through, up to what that overrun allows.
 class LimitFilter
 {
   public:
