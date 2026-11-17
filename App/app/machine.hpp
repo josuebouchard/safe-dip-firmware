@@ -33,10 +33,20 @@ struct Machine
     // Y: 8 mm acme leadscrew (Tr8x2), 2 mm pitch x 1 start = 2 mm lead.
     static constexpr AxisScale SCALE_Y = AxisScale::leadscrew(PULSES_PER_REV, 2);
 
-    // Usable travel from the origin set by homing, in mm. Y can't exceed the 300 mm
-    // screw, less the nut and the end supports.
-    static constexpr std::int32_t X_TRAVEL_MM = 550;
-    static constexpr std::int32_t Y_TRAVEL_MM = 200;
+    // Physical stroke in mm, measured from the surface nearest the limit switch to the far end,
+    // ignoring the switch's own size. Y can't exceed the 300 mm screw, less the nut and the end
+    // supports.
+    static constexpr std::int32_t X_PHYSICAL_MM = 590;
+    static constexpr std::int32_t Y_PHYSICAL_MM = 220;
+
+    // How far past the switch hit the origin is set. Far enough to clear a microswitch's
+    // release travel. Moving it moves the origin, so every recipe value shifts with it.
+    static constexpr std::int32_t X_HOMING_BACK_OFF_MM = 40;
+    static constexpr std::int32_t Y_HOMING_BACK_OFF_MM = 20;
+
+    // Usable travel from the origin set by homing, in mm.
+    static constexpr std::int32_t X_TRAVEL_MM = X_PHYSICAL_MM - X_HOMING_BACK_OFF_MM;
+    static constexpr std::int32_t Y_TRAVEL_MM = Y_PHYSICAL_MM - Y_HOMING_BACK_OFF_MM;
 
     Inputs inputs;
     Recipe recipe;
