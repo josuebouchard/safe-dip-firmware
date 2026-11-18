@@ -96,15 +96,15 @@ The bit numbers are the order of `Fault` in
 
 ## Holding registers (FC 03 read, FC 06 / FC 16 write)
 
-| Address | Name | Unit | Default | Range |
-|---|---|---|---|---|
-| 0 | X input position | mm | 0 | 0–550 |
-| 1 | X dip position | mm | 250 | 0–550 |
-| 2 | X output position | mm | 500 | 0–550 |
-| 3 | Y up position | mm | 0 | 0–200 |
-| 4 | Y down position | mm | 100 | 0–200 |
-| 5 | Dwell time | ms | 2000 | 0–60000 |
-| 6 | Effector settle time | ms | 300 | 0–5000 |
+| Address | Name | Unit |
+|---|---|---|
+| 0 | X input position | mm |
+| 1 | X dip position | mm |
+| 2 | X output position | mm |
+| 3 | Y up position | mm |
+| 4 | Y down position | mm |
+| 5 | Dwell time | ms |
+| 6 | Effector settle time | ms |
 
 - A written value takes effect the next time its operation starts. An operation
   already running keeps the value it started with.
@@ -114,10 +114,13 @@ The bit numbers are the order of `Fault` in
 - A multi-register write is checked in full before anything is applied: if any
   value is out of range, nothing changes and the server answers exception `0x04`
   (server failure). The library has no "illegal data value" path yet.
-- Values live in RAM and return to the defaults on reset.
+- Values live in RAM and return to the defaults on reset. The defaults are in
+  `App/app/recipe.hpp`.
 - Positions are whole millimetres from the origin set by homing. Each move converts
   its position to steps when it starts, through `Machine::SCALE_X` / `SCALE_Y`.
-- The position ranges are the axis travel (`Machine::X_TRAVEL_MM`, `Y_TRAVEL_MM`).
+- The range of each register is in `HOLDING_REGISTERS` in `App/app/modbus_map.cpp`. Positions are
+  bounded by the axis travel (`Machine::X_TRAVEL_MM`, `Y_TRAVEL_MM`); the other registers
+  by the width of the register.
 - Positions are in mm here but the live positions (input registers 1–4) are in steps.
 
 ## Coils (FC 01 / 05 / 15)

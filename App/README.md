@@ -160,6 +160,17 @@ the bindings that give operations their capabilities. Types only, with no instan
   - Limit switches are at the negative end of each axis. Homing and the backstop
     rely on it.
 
+### `debounce`: can I trust this level?
+
+Turns a raw pin level into a stable one. `LimitFilter` delays a press and releases at
+once, and `ButtonPress` gives one event per press.
+
+- **May use:** nothing.
+- **Rules:**
+  - Pure logic: take the level and the time as arguments, and never read a pin or a clock.
+  - The limit delay adds overrun, because the axis keeps moving for the delay past the
+    switch.
+
 ### `sequencer`: how do I run a list of steps?
 
 Runs steps in order, and defines the interface a step must implement. Both are
@@ -203,7 +214,7 @@ its axes, its cycle, its Modbus registers and the main loop.
 
 | File | What it holds |
 |---|---|
-| [`machine.hpp`](app/machine.hpp) | `Machine`: the inputs, recipe, faults, controllers, axes and sequencer |
+| [`machine.hpp`](app/machine.hpp) | `Machine`: the inputs, recipe, faults, axis dimensions (stroke, homing back-off, travel), controllers, axes and sequencer |
 | [`sequence.cpp`](app/sequence.cpp) | The operations and the cycle. The only file that knows which operations exist |
 | [`sequencer_instance.cpp`](app/sequencer_instance.cpp) | The one compiled copy of `Sequencer<Tick>` |
 | [`entrypoint.cpp`](app/entrypoint.cpp) | `read_inputs()`, the only place that knows pins, and `loop()` |
