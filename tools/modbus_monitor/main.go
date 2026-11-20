@@ -23,7 +23,7 @@ var indexHTML []byte
 
 // Table layout, from the enums in App/app/modbus_map.cpp and App/machine/faults.hpp
 const (
-	diCount = 7
+	diCount = 8
 	hrCount = 7
 
 	irFaultsActive = 5
@@ -34,6 +34,7 @@ const (
 )
 
 type State struct {
+	Trigger   bool     `json:"trigger"`
 	EStop     bool     `json:"e_stop"`
 	Start     bool     `json:"start"`
 	Running   bool     `json:"running"`
@@ -78,13 +79,14 @@ func poll(c *Client, target string) (*State, error) {
 // newState maps the raw tables to their meaning.
 func newState(di []bool, ir, hr []uint16) *State {
 	return &State{
-		EStop:     di[0],
-		Start:     di[1],
-		Running:   di[2],
-		XAtTarget: di[3],
-		YAtTarget: di[4],
-		Effector:  di[5],
-		Fault:     di[6],
+		Trigger:   di[0],
+		EStop:     di[1],
+		Start:     di[2],
+		Running:   di[3],
+		XAtTarget: di[4],
+		YAtTarget: di[5],
+		Effector:  di[6],
+		Fault:     di[7],
 		OpIndex:   ir[0],
 		X:         signed32(ir[1], ir[2]),
 		Y:         signed32(ir[3], ir[4]),

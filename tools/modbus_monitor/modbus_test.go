@@ -7,7 +7,8 @@ import (
 )
 
 func TestNewStateMapsFaultRegisters(t *testing.T) {
-	di := []bool{false, false, false, false, false, false, true}
+	di := make([]bool, diCount)
+	di[7] = true // Fault active
 	ir := make([]uint16, irCount)
 	ir[0] = 6
 	ir[irFaultsActive] = 3

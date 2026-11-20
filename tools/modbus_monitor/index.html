@@ -56,7 +56,7 @@
   .stages { display: flex; flex-wrap: wrap; gap: 10px; }
   .stage { flex: 1 1 auto; }
   .stage > div:first-child { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
-  .ops { display: flex; gap: 4px; }
+  .ops { display: flex; flex-wrap: wrap; gap: 4px; }
   .op { padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border); font-size: 12px;
         font-family: ui-monospace, monospace; white-space: nowrap; color: var(--text-2); }
   .op.done { color: var(--muted); }
@@ -118,6 +118,11 @@
     <div class="chart"><canvas id="cy" aria-label="Y position over time"></canvas><div class="tip"></div></div>
   </section>
 
+  <section>
+    <h2>Cycle</h2>
+    <div class="stages" id="stages"></div>
+  </section>
+
   <section class="wide">
     <h2>Loop time (60 s)</h2>
     <div class="readout">
@@ -133,11 +138,6 @@
   </section>
 
   <section class="wide">
-    <h2>Cycle</h2>
-    <div class="stages" id="stages"></div>
-  </section>
-
-  <section class="wide">
     <h2>Parameters (holding registers)</h2>
     <table>
       <thead><tr><th>Addr</th><th>Name</th><th>Value</th><th>Range</th><th>Set</th></tr></thead>
@@ -150,20 +150,20 @@
 <script>
 // Mirrors the board's Modbus map
 const LAMPS = [
-  ["e_stop", "E-stop", "bad"], ["start", "Start", "good"], ["running", "Running", "good"],
+  ["trigger", "Piece trigger", "good"], ["e_stop", "E-stop", "bad"], ["start", "Start", "good"], ["running", "Running", "good"],
   ["x_at_target", "X at target", "good"], ["y_at_target", "Y at target", "good"],
   ["effector", "Effector engaged", "good"], ["fault", "Fault", "bad"],
 ];
 const STAGES = [
   ["Home", ["HOME_Y", "HOME_X"]],
-  ["Pick", ["MOVE_Y_DOWN", "EFFECTOR_ENGAGE", "MOVE_Y_UP"]],
+  ["Pick", ["WAIT_FOR_PIECE", "MOVE_Y_DOWN", "EFFECTOR_ENGAGE", "MOVE_Y_UP"]],
   ["Dip", ["MOVE_X_DIP", "MOVE_Y_DOWN", "DWELL", "MOVE_Y_UP"]],
   ["Deposit", ["MOVE_X_OUTPUT", "MOVE_Y_DOWN"]],
   ["Release", ["EFFECTOR_DISENGAGE", "MOVE_Y_UP"]],
 ];
 const OPS = STAGES.flatMap(([, ops]) => ops);
 // From Machine::SCALE_X / SCALE_Y in App/app/machine.hpp
-const X_STEPS_PER_MM = 40, Y_STEPS_PER_MM = 200;
+const X_STEPS_PER_MM = 40, Y_STEPS_PER_MM = 800;
 const PARAMS = [
   ["X input position", "mm", 550], ["X dip position", "mm", 550],
   ["X output position", "mm", 550], ["Y up position", "mm", 200],
@@ -318,9 +318,9 @@ function drawGantry(d) {
   const [xIn, xDip, xOut, yUp, yDown] = d.params;
   // The stations are in mm and the live position in steps, so convert it to draw both.
   const x = d.x / X_STEPS_PER_MM, y = d.y / Y_STEPS_PER_MM;
-  // Scale to whatever is largest: configured limits, stations, or where the axis actually is.
-  const xMax = Math.max(400, xIn, xDip, xOut, Math.abs(x));
-  const yMax = Math.max(200, yUp, yDown, Math.abs(y));
+  // Scale to the full travel, so the drawing doesn't rescale as values change.
+  const xMax = Math.max(PARAMS[0][2], xIn, xDip, xOut, Math.abs(x));
+  const yMax = Math.max(PARAMS[3][2], yUp, yDown, Math.abs(y));
   const L = 30, R = 440, T = 30, B = 200;
   const sx = (v) => L + (v / xMax) * (R - L);
   const sy = (v) => T + (v / yMax) * (B - T);
