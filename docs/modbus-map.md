@@ -10,13 +10,14 @@ writing past the end of a table returns exception `0x02` (illegal data address).
 
 | Address | Name | Meaning |
 |---|---|---|
-| 0 | E-stop pressed | 1 while pressed (`E_STOP` low), as read at the start of the loop pass |
-| 1 | Start pressed | 1 while pressed (`B1` low), as read at the start of the loop pass |
-| 2 | Sequencer running | Set by a start press. Cleared by any fault, on the pass it is raised |
-| 3 | X at target | X axis is in position mode and on its target step |
-| 4 | Y at target | Y axis is in position mode and on its target step |
-| 5 | Effector engaged | Commanded state of `EFFECTOR`, not feedback from the magnet |
-| 6 | Fault active | 1 while any fault is latched, see [Faults](#faults) |
+| 0 | Piece trigger | 1 while `PIECE_TRIGGER` reads low (a piece is waiting), as read at the start of the loop pass |
+| 1 | E-stop pressed | 1 while pressed (`E_STOP` low), as read at the start of the loop pass |
+| 2 | Start pressed | 1 while pressed (`B1` low), as read at the start of the loop pass |
+| 3 | Sequencer running | Set by a start press. Cleared by any fault, on the pass it is raised |
+| 4 | X at target | X axis is in position mode and on its target step |
+| 5 | Y at target | Y axis is in position mode and on its target step |
+| 6 | Effector engaged | Commanded state of `EFFECTOR`, not feedback from the magnet |
+| 7 | Fault active | 1 while any fault is latched, see [Faults](#faults) |
 
 ## Input registers (FC 04, read-only)
 
@@ -48,17 +49,18 @@ too, so all three change together:
 |---|---|---|
 | 0 | Home | `HOME_Y` |
 | 1 | Home | `HOME_X` |
-| 2 | Pick | `MOVE_Y_DOWN` |
-| 3 | Pick | `EFFECTOR_ENGAGE` |
-| 4 | Pick | `MOVE_Y_UP` |
-| 5 | Dip | `MOVE_X_DIP` |
-| 6 | Dip | `MOVE_Y_DOWN` |
-| 7 | Dip | `DWELL` |
-| 8 | Dip | `MOVE_Y_UP` |
-| 9 | Deposit | `MOVE_X_OUTPUT` |
-| 10 | Deposit | `MOVE_Y_DOWN` |
-| 11 | Release | `EFFECTOR_DISENGAGE` |
-| 12 | Release | `MOVE_Y_UP` |
+| 2 | Pick | `WAIT_FOR_PIECE` |
+| 3 | Pick | `MOVE_Y_DOWN` |
+| 4 | Pick | `EFFECTOR_ENGAGE` |
+| 5 | Pick | `MOVE_Y_UP` |
+| 6 | Dip | `MOVE_X_DIP` |
+| 7 | Dip | `MOVE_Y_DOWN` |
+| 8 | Dip | `DWELL` |
+| 9 | Dip | `MOVE_Y_UP` |
+| 10 | Deposit | `MOVE_X_OUTPUT` |
+| 11 | Deposit | `MOVE_Y_DOWN` |
+| 12 | Release | `EFFECTOR_DISENGAGE` |
+| 13 | Release | `MOVE_Y_UP` |
 
 ## Faults
 

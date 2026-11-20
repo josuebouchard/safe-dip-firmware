@@ -18,6 +18,7 @@ The driver objects that use these pins are created once in
 | X home switch | Contact | `X_HOME` | D7 | CN9 | PA8 | GPIO input, internal pull-up, NC contact (high = home) |
 | Y home switch | Contact | `Y_HOME` | D8 | CN5 | PA9 | GPIO input, internal pull-up, NC contact (high = home) |
 | Effector relay | Input | `EFFECTOR` | D6 | CN9 | PB10 | GPIO output, **open-drain**, released = engaged |
+| Piece trigger | Contact | `PIECE_TRIGGER` | A5 | CN8 | PC0 | GPIO input, internal pull-up, active low (low = piece present) |
 | W5500 Ethernet | Reset | `W5500_RST` | D9 | CN5 | PC7 | GPIO output, push-pull, idle high |
 | W5500 Ethernet | Chip select | `SPI_CS` | D10 | CN5 | PB6 | GPIO output, push-pull, idle high |
 | W5500 Ethernet | MOSI | — | D11 | CN5 | PA7 | SPI1_MOSI |
@@ -26,7 +27,7 @@ The driver objects that use these pins are created once in
 | ST-LINK virtual COM port | TX / RX | `USART_TX` / `USART_RX` | — | — | PA2 / PA3 | USART2, 115200 8N1 |
 | On-board user button (B1) | Contact | `B1` | — | — | PC13 | blue button, polled (no EXTI handler) |
 
-Free on the headers: D2, D3 (SWO), A2, A5. A2 (PA4) is not 5 V tolerant and has no timer channel.
+Free on the headers: D2, D3 (SWO), A2. A2 (PA4) is not 5 V tolerant and has no timer channel.
 
 ### Planned (not yet in the `.ioc`)
 
@@ -199,8 +200,27 @@ is exact even if the interrupt runs late.
 - **Measurement:** save `CCR3` on the rising edge, then `width = (uint16_t)(CCR3 − t_start)` on the
   falling edge; the unsigned subtraction handles a counter wrap. Distance ≈ `width / 58` cm.
 - `US_TRIG` can be a plain GPIO pulse or TIM4_CH4 in one-pulse mode, which needs no CPU timing.
-- PB8 and PB9 are the I2C1 pins. If I2C is ever needed, move `US_ECHO` to D2 (PA10, TIM1_CH3) and
-  `US_TRIG` to A5 (PC0).
+- PB8 and PB9 are the I2C1 pins. If I2C is ever needed, move `US_ECHO` to D2 (PA10, TIM1_CH3); `US_TRIG`
+  would need another free pin, since A5 (PC0) is now `PIECE_TRIGGER`.
+
+## Piece trigger (active low, 3.3 V pull-up)
+
+`PIECE_TRIGGER` (PC0, A5) is a GPIO input with the internal pull-up on. The sequence's
+`WAIT_FOR_PIECE` step holds the pick cycle until the pin reads low. Wire a dry contact or an
+open-collector/open-drain sensor output between the pin and GND: it pulls the pin low when a piece
+is present and releases it otherwise.
+
+| Pin reads | Meaning |
+|---|---|
+| Low | Piece present, the cycle continues |
+| High | No piece, or sensor unplugged or wire broken: the cycle waits |
+
+- **Fails safe:** a broken wire reads high, so the machine waits instead of picking at nothing.
+- Pull-up to 3.3 V, never 5 V, for the same reason as the home switches. PC0 is FT, so a sensor
+  output that swings to 5 V is tolerated while the MCU is powered, but a sourcing (PNP) sensor needs
+  a divider or a buffer, since it would fight the pull-up.
+- **Software:** read once per loop pass in `read_inputs()` (`App/app/entrypoint.cpp`), and exposed on
+  Modbus as discrete input 0. There is no debounce: add a filter if the sensor chatters.
 
 ## Buttons
 
