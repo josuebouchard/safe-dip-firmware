@@ -26,3 +26,5 @@ mx.scratch/
 # OS debris
 .DS_Store
 Thumbs.db
+# Go build output
+tools/modbus_monitor/modbus_monitor
