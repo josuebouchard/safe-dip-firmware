@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstdio>
+#include <stm32f4xx_hal_gpio.h>
 
 constexpr std::uint8_t MODBUS_SOCKET = 0;
 constexpr std::uint16_t MODBUS_PORT = 502;
@@ -38,9 +39,11 @@ static Inputs read_inputs(std::uint32_t now_ms) noexcept
 
     return Inputs{
         .e_stop_pressed = (HAL_GPIO_ReadPin(E_STOP_GPIO_Port, E_STOP_Pin) == GPIO_PIN_RESET),
-        .start_pressed = (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET),
+        .start_pressed = (HAL_GPIO_ReadPin(START_GPIO_Port, START_Pin) == GPIO_PIN_RESET),
         .limit_x_pressed = limit_x_filter.update(limit_x_raw, now_ms),
         .limit_y_pressed = limit_y_filter.update(limit_y_raw, now_ms),
+        .trigger_active =
+            (HAL_GPIO_ReadPin(PIECE_TRIGGER_GPIO_Port, PIECE_TRIGGER_Pin) == GPIO_PIN_RESET),
     };
 }
 
@@ -57,7 +60,8 @@ static void enter_safe_state() noexcept
 static void record_loop_time(std::uint32_t start_cycles) noexcept
 {
     const std::uint32_t elapsed_us = (DWT->CYCCNT - start_cycles) / (SystemCoreClock / 1000000U);
-    machine.loop_time_us = static_cast<std::uint16_t>(std::min<std::uint32_t>(elapsed_us, UINT16_MAX));
+    machine.loop_time_us =
+        static_cast<std::uint16_t>(std::min<std::uint32_t>(elapsed_us, UINT16_MAX));
     machine.loop_time_max_us = std::max(machine.loop_time_max_us, machine.loop_time_us);
 }
 

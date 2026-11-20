@@ -6,6 +6,7 @@
 #include "movement_operations.hpp"
 #include "operation.hpp"
 #include "timer_operations.hpp"
+#include "trigger_operations.hpp"
 
 #include <array>
 #include <cstdint>
@@ -53,18 +54,19 @@ Sequencer<Tick> &make_sequence(Machine &machine)
 
     static DwellOperation dwell{machine.recipe.dwell_ms};
 
+    static WaitForTriggerOperation wait_for_piece{};
+
     // The position in this array is the operation index on Modbus (input register 0).
     // docs/modbus-map.md and the STAGES list in tools/modbus_monitor/index.html copy
     // this order, so change them together. Each home operation takes the slot of the
     // move it replaces, so swapping one back doesn't shift the indices.
-    static std::array<Operation<Tick> *, 13> operations = {
+    static std::array<Operation<Tick> *, 14> operations = {
         // Home
         &home_y,
-        // &move_y_up,
         &home_x,
-        // &move_x_input,
 
         // Pick
+        &wait_for_piece,
         &move_y_down,
         &effector_engage,
         &move_y_up,

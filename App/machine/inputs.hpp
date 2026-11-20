@@ -9,6 +9,7 @@ struct Inputs
     bool start_pressed = false;
     bool limit_x_pressed = false;
     bool limit_y_pressed = false;
+    bool trigger_active = false;
 };
 
 #endif // INPUTS_HPP
