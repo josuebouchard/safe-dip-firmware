@@ -17,7 +17,7 @@ static_assert(Recipe{}.y_up_mm <= Y_MAX_MM && Recipe{}.y_down_mm <= Y_MAX_MM);
 
 enum DiscreteInput : std::uint16_t
 {
-    DI_PIECE_TRIGGER_ACTIVE,
+    DI_TRIGGER_ACTIVE,
     DI_E_STOP_PRESSED,
     DI_START_PRESSED,
     DI_SEQUENCER_RUNNING,
@@ -80,7 +80,7 @@ static bool read_discrete_input(const Machine &machine, std::uint16_t address) n
 {
     switch (address)
     {
-    case DI_PIECE_TRIGGER_ACTIVE:
+    case DI_TRIGGER_ACTIVE:
         return machine.inputs.trigger_active;
     case DI_E_STOP_PRESSED:
         return machine.inputs.e_stop_pressed;

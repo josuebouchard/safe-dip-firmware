@@ -346,11 +346,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PIECE_TRIGGER_Pin */
-  GPIO_InitStruct.Pin = PIECE_TRIGGER_Pin;
+  /*Configure GPIO pin : TRIGGER_Pin */
+  GPIO_InitStruct.Pin = TRIGGER_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(PIECE_TRIGGER_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(TRIGGER_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : DIR_y_Pin */
   GPIO_InitStruct.Pin = DIR_y_Pin;

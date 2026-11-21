@@ -10,9 +10,9 @@ writing past the end of a table returns exception `0x02` (illegal data address).
 
 | Address | Name | Meaning |
 |---|---|---|
-| 0 | Piece trigger | 1 while `PIECE_TRIGGER` reads low (a piece is waiting), as read at the start of the loop pass |
+| 0 | Piece trigger | 1 while `TRIGGER` reads low (a piece is waiting), as read at the start of the loop pass |
 | 1 | E-stop pressed | 1 while pressed (`E_STOP` low), as read at the start of the loop pass |
-| 2 | Start pressed | 1 while pressed (`B1` low), as read at the start of the loop pass |
+| 2 | Start pressed | 1 while pressed (`START` low), as read at the start of the loop pass |
 | 3 | Sequencer running | Set by a start press. Cleared by any fault, on the pass it is raised |
 | 4 | X at target | X axis is in position mode and on its target step |
 | 5 | Y at target | Y axis is in position mode and on its target step |

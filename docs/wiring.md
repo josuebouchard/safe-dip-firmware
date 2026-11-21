@@ -10,15 +10,15 @@ The driver objects that use these pins are created once in
 | Device | Signal | Label | Arduino | Header | MCU pin | Mode |
 |---|---|---|---|---|---|---|
 | X stepper driver | Step | `PULSE_x` | A0 | CN8 | PA0 | TIM2_CH1, output compare toggle, **open-drain** |
-| X stepper driver | Direction | `DIR_x` | A3 | CN8 | PB0 | GPIO output, **open-drain**, idle released |
 | Y stepper driver | Step | `PULSE_y` | A1 | CN8 | PA1 | TIM2_CH2, output compare toggle, **open-drain** |
+| X stepper driver | Direction | `DIR_x` | A3 | CN8 | PB0 | GPIO output, **open-drain**, idle released |
 | Y stepper driver | Direction | `DIR_y` | A4 | CN8 | PC1 | GPIO output, **open-drain**, idle released |
+| Piece trigger | Contact | `TRIGGER` | A5 | CN8 | PC0 | GPIO input, internal pull-up, active low (low = piece present) |
 | Emergency stop button | Contact | `E_STOP` | D4 | CN9 | PB5 | GPIO input, internal pull-down, NC contact to 3.3 V (low = pressed) |
 | Start button | Contact | `START` | D5 | CN9 | PB4 | GPIO input, internal pull-up, active low |
+| Effector relay | Input | `EFFECTOR` | D6 | CN9 | PB10 | GPIO output, **open-drain**, released = engaged |
 | X home switch | Contact | `X_HOME` | D7 | CN9 | PA8 | GPIO input, internal pull-up, NC contact (high = home) |
 | Y home switch | Contact | `Y_HOME` | D8 | CN5 | PA9 | GPIO input, internal pull-up, NC contact (high = home) |
-| Effector relay | Input | `EFFECTOR` | D6 | CN9 | PB10 | GPIO output, **open-drain**, released = engaged |
-| Piece trigger | Contact | `PIECE_TRIGGER` | A5 | CN8 | PC0 | GPIO input, internal pull-up, active low (low = piece present) |
 | W5500 Ethernet | Reset | `W5500_RST` | D9 | CN5 | PC7 | GPIO output, push-pull, idle high |
 | W5500 Ethernet | Chip select | `SPI_CS` | D10 | CN5 | PB6 | GPIO output, push-pull, idle high |
 | W5500 Ethernet | MOSI | — | D11 | CN5 | PA7 | SPI1_MOSI |
@@ -28,13 +28,6 @@ The driver objects that use these pins are created once in
 | On-board user button (B1) | Contact | `B1` | — | — | PC13 | blue button, polled (no EXTI handler) |
 
 Free on the headers: D2, D3 (SWO), A2. A2 (PA4) is not 5 V tolerant and has no timer channel.
-
-### Planned (not yet in the `.ioc`)
-
-| Device | Signal | Label | Arduino | Header | MCU pin | Mode |
-|---|---|---|---|---|---|---|
-| Ultrasonic sensor | Trigger | `US_TRIG` | D14 | CN5 | PB9 | GPIO output, push-pull, idle low (or TIM4_CH4 one-pulse) |
-| Ultrasonic sensor | Echo | `US_ECHO` | D15 | CN5 | PB8 | TIM4_CH3, input capture, both edges |
 
 ## Stepper drivers (common anode, 5 V)
 
@@ -144,8 +137,7 @@ the stepper optos.
 
 Verified against the STM32F446 datasheet (DS10693), Table 10 "pin and ball descriptions":
 
-- **FT (5 V tolerant):** PA0, PA1, PB0, PC1, PB4, PB5, PB10, PA8, PA9, PA10, PC0, PB8, PB9
-  (PB8 and PB9 checked against DS10693 Rev 11).
+- **FT (5 V tolerant):** PA0, PA1, PB0, PC1, PB4, PB5, PB10, PA8, PA9, PA10, PC0
 - **TTa (NOT 5 V tolerant):** PA4 (A2) and PA5 (D13) — both are DAC outputs. Never feed either a
   5 V signal. This is why `DIR_x` sits on A3 rather than A2.
 
@@ -182,30 +174,9 @@ instead of letting it crash.
 - **No switch at the far end:** travel away from home is limited only in software. Home the axis
   first, then reject any move past the known travel length.
 
-## Ultrasonic sensor (HC-SR04 type, 5 V)
-
-TIM4 is free (only TIM2 is used, by the steppers), so `US_ECHO` is measured by TIM4_CH3 input
-capture on both edges. The hardware latches `CNT` into `CCR3` on each edge, so the pulse width
-is exact even if the interrupt runs late.
-
-| Sensor pin | Connects to | Notes |
-|---|---|---|
-| VCC | Nucleo 5V pin | |
-| Trig | D14 (PB9) | 10 µs high pulse starts a measurement; a 3.3 V high usually triggers 5 V modules |
-| Echo | D15 (PB8) | 5 V output; PB8 is FT, internal pull-up off |
-| GND | Nucleo GND | |
-
-- **Timing:** TIM4 runs from the 84 MHz APB1 timer clock. With prescaler 83 it ticks at 1 µs. The
-  echo pulse is at most ~38 ms (no echo), which fits the 16-bit counter (65.5 ms).
-- **Measurement:** save `CCR3` on the rising edge, then `width = (uint16_t)(CCR3 − t_start)` on the
-  falling edge; the unsigned subtraction handles a counter wrap. Distance ≈ `width / 58` cm.
-- `US_TRIG` can be a plain GPIO pulse or TIM4_CH4 in one-pulse mode, which needs no CPU timing.
-- PB8 and PB9 are the I2C1 pins. If I2C is ever needed, move `US_ECHO` to D2 (PA10, TIM1_CH3); `US_TRIG`
-  would need another free pin, since A5 (PC0) is now `PIECE_TRIGGER`.
-
 ## Piece trigger (active low, 3.3 V pull-up)
 
-`PIECE_TRIGGER` (PC0, A5) is a GPIO input with the internal pull-up on. The sequence's
+`TRIGGER` (PC0, A5) is a GPIO input with the internal pull-up on. The sequence's
 `WAIT_FOR_PIECE` step holds the pick cycle until the pin reads low. Wire a dry contact or an
 open-collector/open-drain sensor output between the pin and GND: it pulls the pin low when a piece
 is present and releases it otherwise.

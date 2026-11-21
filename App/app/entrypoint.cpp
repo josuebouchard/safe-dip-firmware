@@ -43,7 +43,7 @@ static Inputs read_inputs(std::uint32_t now_ms) noexcept
         .limit_x_pressed = limit_x_filter.update(limit_x_raw, now_ms),
         .limit_y_pressed = limit_y_filter.update(limit_y_raw, now_ms),
         .trigger_active =
-            (HAL_GPIO_ReadPin(PIECE_TRIGGER_GPIO_Port, PIECE_TRIGGER_Pin) == GPIO_PIN_RESET),
+            (HAL_GPIO_ReadPin(TRIGGER_GPIO_Port, TRIGGER_Pin) == GPIO_PIN_RESET),
     };
 }
 

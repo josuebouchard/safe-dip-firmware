@@ -60,8 +60,8 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define B1_Pin GPIO_PIN_13
 #define B1_GPIO_Port GPIOC
-#define PIECE_TRIGGER_Pin GPIO_PIN_0
-#define PIECE_TRIGGER_GPIO_Port GPIOC
+#define TRIGGER_Pin GPIO_PIN_0
+#define TRIGGER_GPIO_Port GPIOC
 #define DIR_y_Pin GPIO_PIN_1
 #define DIR_y_GPIO_Port GPIOC
 #define PULSE_x_Pin GPIO_PIN_0
