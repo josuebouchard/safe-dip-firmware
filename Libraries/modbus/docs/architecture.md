@@ -37,19 +37,19 @@ This has three concrete benefits:
 
 ## A Single Public Entry Point
 
-The entire public API surface is one function:
+The PDU layer of the public API is one function. A separate, optional module (`modbus_tcp.h`) adds the Modbus TCP framing on top of it and calls this function once the header is parsed:
 
 ```c
-size_t modbus_dispatch_PDU(modbus_context_t *context,
-                           const uint8_t    *wire_request,
-                           uint8_t           request_length,
-                           uint8_t          *wire_response,
-                           uint8_t           response_capacity);
+modbus_dispatch_result_t modbus_dispatch_PDU(modbus_context_t *context,
+                                             const uint8_t    *wire_request,
+                                             uint8_t           request_length,
+                                             uint8_t          *wire_response,
+                                             size_t            response_capacity);
 ```
 
 This is intentional. From the caller's perspective, Modbus is a request-response protocol: bytes arrive, bytes go out. The internal complexity — function code dispatch, validation, packing, exception generation — is an implementation detail the caller should not need to understand.
 
-The function returns the number of bytes written into `wire_response`, including exception responses. A return value of `0` means the response buffer was too small to write anything. In all other cases, a valid Modbus PDU has been written and is ready to transmit.
+The function returns a result with a `status` and a `response_length`. With `MODBUS_DISPATCH_ST_OK`, `response_length` bytes of a valid Modbus PDU, an exception response included, have been written to `wire_response` and are ready to transmit. Any other status says why nothing was written, for example `MODBUS_DISPATCH_ST_RESPONSE_TOO_SMALL` when the response buffer cannot hold the response. An earlier version returned only the length, with `0` meaning that the buffer was too small.
 
 This design also makes the library easy to integrate into any transport layer. The caller handles framing (device address, CRC) and passes only the PDU payload to the library. This matches the Modbus specification's own layering: the PDU is defined independently of the transport.
 
@@ -150,15 +150,15 @@ VLAs are valid C99 but are banned by MISRA-C because their size is determined at
 For stricter environments, the right solution is not a fixed-size array but a **caller-provided buffer**:
  
 ```c
-size_t modbus_dispatch_PDU(modbus_context_t *context,
-                           const uint8_t    *wire_request,
-                           uint8_t           request_length,
-                           uint8_t          *wire_response,
-                           uint8_t           response_capacity,
-                           bool             *coil_buffer,
-                           uint16_t          coil_buffer_size,
-                           uint16_t         *register_buffer,
-                           uint16_t          register_buffer_size);
+modbus_dispatch_result_t modbus_dispatch_PDU(modbus_context_t *context,
+                                             const uint8_t    *wire_request,
+                                             uint8_t           request_length,
+                                             uint8_t          *wire_response,
+                                             size_t            response_capacity,
+                                             bool             *coil_buffer,
+                                             uint16_t          coil_buffer_size,
+                                             uint16_t         *register_buffer,
+                                             uint16_t          register_buffer_size);
 ```
  
 The caller decides where the memory lives — stack, static storage, or elsewhere — and the library makes no allocation decision at all. This is the most embedded-friendly pattern: the library is a pure function over caller-owned memory, with zero allocation policy of its own.

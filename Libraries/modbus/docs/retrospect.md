@@ -56,7 +56,7 @@ MISRA bans VLAs because their size is a runtime value — static analysers canno
 The cleanest solution for stricter environments is not a fixed-size array but letting the caller provide the buffer:
 
 ```c
-size_t modbus_dispatch_PDU(...,
+modbus_dispatch_result_t modbus_dispatch_PDU(...,
                            bool    *coil_buffer,
                            uint16_t coil_buffer_size);
 ```
