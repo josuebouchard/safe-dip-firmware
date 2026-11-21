@@ -1,0 +1,5 @@
+Copyright (c) 2026 Josué Bouchard. All rights reserved.
+
+This code is publicly visible for viewing and portfolio purposes only. You may not copy, modify, distribute, or use this code without explicit written permission from the copyright owner.
+
+The code in Drivers/ (STM32 HAL and CMSIS, from STMicroelectronics) and Libraries/WIZNET/ (the WIZnet ioLibrary) is third-party and remains under its own licenses, which are included alongside it.
