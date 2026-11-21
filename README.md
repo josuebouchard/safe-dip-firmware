@@ -61,7 +61,15 @@ cmake --preset Release
 cmake --build --preset Release
 ```
 
-To watch a running machine, start the monitor from `tools/modbus_monitor` with `go run .` and open <http://127.0.0.1:8000>.
+To watch a running machine, first build the monitor with [Go](https://go.dev/dl/), then run it:
+
+```sh
+cd tools/modbus_monitor
+go build
+./modbus_monitor
+```
+
+Then open <http://127.0.0.1:8000> in a browser. The page opens a connection to the board over Modbus TCP, and only one client can be connected to the board at a time.
 
 ## Repository layout
 
